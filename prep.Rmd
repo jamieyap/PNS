@@ -1,0 +1,109 @@
+---
+title: 'Preparatory Steps and Work Environment'
+author: ""
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output:
+  pdf_document:
+    fig_caption: yes
+    number_sections: yes
+geometry: margin=1in
+urlcolor: magenta
+---
+
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(tidy = TRUE, message = FALSE, warning = FALSE)
+knitr::opts_chunk$set(fig.pos = 'H')
+```
+
+
+```{r, echo = FALSE, warning = FALSE}
+library(rmarkdown)
+library(knitr)
+library(kableExtra)
+library(formatR)
+```
+
+# Preparatory steps
+Prior to performing calculations, let us first set up our work environment. Create the following folder structure on your machine:
+
+\begin{verbatim}
+\MARS_data_files
+  \input_data
+    \BreakFree
+      breakfree_quit_dates.csv
+      Rice_EMAs.csv
+      \puffMarker_data_and_dataQuality_phones_output
+      \puffmarker_unzipped
+    \OnTrack
+    \PNS
+      pns_quit_dates.csv
+      Post_Quit_About_to_Slip.csv
+      Post_Quit_About_to_Slip_Part2.csv
+      Post_Quit_Already_Slipped.csv
+      Post_Quit_Random.csv
+      Post_Quit_Urge.csv
+    \STEPS
+  \output_data
+    \BreakFree
+    \OnTrack
+    \PNS
+    \STEPS
+  \plots
+    \BreakFree
+    \OnTrack
+    \PNS
+    \STEPS
+  \summary_stats
+    \BreakFree
+    \OnTrack
+    \PNS
+    \STEPS
+\end{verbatim}
+
+Download the Github repository https://github.com/jamieyap/MARS and save contents to a folder named MARS on your machine. 
+Run the following lines of code in an R console:
+
+```{r}
+# Creates or reads existing user-specific .Renviron file
+user.renviron = path.expand(file.path("~", ".Renviron")) 
+
+# Opens user-specific .Renviron file
+file.edit(user.renviron)
+```
+
+After running this, an `.Renviron` file will pop up. Specify the location of the folder for input data, output data, code, plots, and summary statistics. For example on a machine running on a Windows OS, specify the following in the .Renviron file
+
+\begin{verbatim}
+path.code = "~/MARS"
+path.input_data = "~/MARS_data_files/input_data"
+path.output_data = "~/MARS_data_files/output_data"
+path.plots = "~/MARS_data_files/plots"
+path.summary_stats = "~/MARS_data_files/summary_stats"
+folder.puffmarker_data = "puffMarker_data_and_dataQuality_phones_output"
+folder.puffmarker_unzipped = "puffmarker_unzipped"
+\end{verbatim}
+\vspace{0.5cm}
+
+In the above, replace $~$ with the path where the MARS folder is stored. Now, restart R so that these paths can be loaded into R's namespace. 
+
+# List of packages used
+
+* `dplyr`
+* `assertthat`
+* `ggplot2`
+
+# Display session information
+
+To facilitate reproducibility, we display details on the set-up of our work environment when running power calculation computations in illustrative examples below.
+
+```{r, echo=FALSE}
+library(dplyr)
+library(assertthat)
+library(ggplot2)
+```
+
+
+```{r}
+sessionInfo()
+```
