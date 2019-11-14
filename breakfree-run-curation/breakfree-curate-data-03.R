@@ -10,6 +10,8 @@ library(dplyr)
 path.code <- Sys.getenv("path.code")
 path.input_data <- Sys.getenv("path.input_data")
 path.output_data <- Sys.getenv("path.output_data")
+
+setup.puffmarker <- FALSE
 source(file.path(path.code,"breakfree-run-curation/breakfree-setup.R"))
 
 #------------------------------------------------------------------------------
@@ -94,7 +96,7 @@ df.all <- df.all %>% filter(random.assessment.id>1) %>%
          Scared._lag1, Disgusted._lag1, Angry._lag1,Sad._lag1)
 
 
-write.csv(df.all, file.path(path.output_data, "BreakFree/df.analysis.05.csv"), row.names = FALSE)
+write.csv(df.all, file.path(path.output_data, "BreakFree/df.analysis.engagement.01.csv"), row.names = FALSE)
 
 
 

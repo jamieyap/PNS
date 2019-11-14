@@ -22,11 +22,9 @@ breakfree.quit.dates <- SetClock(df.quit.dates = breakfree.quit.dates, study.dur
 write.csv(breakfree.quit.dates, file.path(path.output_data, "BreakFree/out_quit_dates.csv"), row.names = FALSE)
 
 #------------------------------------------------------------------------------
-# Read in raw data from Break Free study
+# Read in raw EMA data from Break Free study
 #------------------------------------------------------------------------------
-
 breakfree.ema <- read.csv(file.path(path.input_data, "BreakFree/Rice_EMAs.csv"), header = TRUE)
-breakfree.puffmarker.episodes <- read.csv(file.path(path.input_data, "BreakFree/puffmarker_unzipped/puffmarker.smoking.episodes.csv"), header = TRUE)
 
 #------------------------------------------------------------------------------
 # Among EMAs delivered, check whether there is any indication that participant 
@@ -82,21 +80,31 @@ breakfree.ema <- breakfree.ema %>%
 # Create IDs for each person-EMA with >=1 question completed
 breakfree.ema[,"delivered.assessment.id"] <- CreateID(dat = breakfree.ema, sequence.along = "delivered.unixts", by.var = "id", id.name = "delivered.assessment.id")
 
-#------------------------------------------------------------------------------
-# Merge start.clock and end.clock information with puffmarker records; 
-# only retain observations delivered between start.clock and end.clock
-#------------------------------------------------------------------------------
 
-breakfree.puffmarker.episodes <- left_join(breakfree.quit.dates, breakfree.puffmarker.episodes, by = "id")
+if(setup.puffmarker==TRUE){
+  #------------------------------------------------------------------------------
+  # Read in raw puffmarker data from Break Free study
+  #------------------------------------------------------------------------------
+  source(file.path(path.code,"setup-puffmarker-data.R"))
+  breakfree.puffmarker.episodes <- read.csv(file.path(path.input_data, "BreakFree/puffmarker_unzipped/puffmarker.smoking.episodes.csv"), header = TRUE)
+  
+  #------------------------------------------------------------------------------
+  # Merge start.clock and end.clock information with puffmarker records; 
+  # only retain observations delivered between start.clock and end.clock
+  #------------------------------------------------------------------------------
+  
+  breakfree.puffmarker.episodes <- left_join(breakfree.quit.dates, breakfree.puffmarker.episodes, by = "id")
+  
+  breakfree.puffmarker.episodes <- breakfree.puffmarker.episodes %>% 
+    mutate(puffmarker.episode.unixts = V1/1000) %>%
+    mutate(puffmarker.episode.secs = puffmarker.episode.unixts - start.clock) %>%
+    filter(puffmarker.episode.unixts >= start.clock & puffmarker.episode.unixts <= end.clock) %>%
+    select(id, 
+           #start.clock, end.clock, 
+           #puffmarker.episode.unixts, 
+           puffmarker.episode.secs
+    )
+  
+  write.csv(breakfree.puffmarker.episodes, file.path(path.output_data,"BreakFree/breakfree.puffmarker.episodes.csv"), row.names = FALSE)
+}
 
-breakfree.puffmarker.episodes <- breakfree.puffmarker.episodes %>% 
-  mutate(puffmarker.episode.unixts = V1/1000) %>%
-  mutate(puffmarker.episode.secs = puffmarker.episode.unixts - start.clock) %>%
-  filter(puffmarker.episode.unixts >= start.clock & puffmarker.episode.unixts <= end.clock) %>%
-  select(id, 
-         #start.clock, end.clock, 
-         #puffmarker.episode.unixts, 
-         puffmarker.episode.secs
-  )
-
-write.csv(breakfree.puffmarker.episodes, file.path(path.output_data,"BreakFree/breakfree.puffmarker.episodes.csv"), row.names = FALSE)

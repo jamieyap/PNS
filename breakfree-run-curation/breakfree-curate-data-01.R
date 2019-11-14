@@ -10,6 +10,8 @@ library(dplyr)
 path.code <- Sys.getenv("path.code")
 path.input_data <- Sys.getenv("path.input_data")
 path.output_data <- Sys.getenv("path.output_data")
+
+setup.puffmarker <- TRUE
 source(file.path(path.code,"breakfree-run-curation/breakfree-setup.R"))
 
 #------------------------------------------------------------------------------
@@ -184,7 +186,6 @@ write.csv(df.analysis.02b, file.path(path.output_data,"BreakFree/df.analysis.02b
 # Provide smoking labels to time intervals according to Method 03, 04a, 04b
 # Begin data manipulation with df.analysis.01, df.analysis.02a, df.analysis.02b
 #------------------------------------------------------------------------------
-
 df.analysis.03 <- IntegratePuffmarkerEpisodes(df.ema = df.analysis.01, df.puffmarker = breakfree.puffmarker.episodes)
 write.csv(df.analysis.03, file.path(path.output_data,"BreakFree/df.analysis.03.csv"), row.names = FALSE)
 
