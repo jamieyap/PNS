@@ -61,8 +61,7 @@ Prior to performing calculations, let us first set up our work environment. Crea
     \STEPS
 \end{verbatim}
 
-Download the Github repository https://github.com/jamieyap/MARS and save contents to a folder named MARS on your machine. 
-Run the following lines of code in an R console:
+The `\puffMarker_data_and_dataQuality_phones_output` folder contains a zip file with puffmarker data for each participant. No files need to be placed in the `\puffmarker_unzipped` folder. Now, download the Github repository https://github.com/jamieyap/MARS and save contents to a folder named MARS on your machine. Run the following lines of code in an R console:
 
 ```{r}
 # Creates or reads existing user-specific .Renviron file
@@ -85,7 +84,7 @@ folder.puffmarker_unzipped = "puffmarker_unzipped"
 \end{verbatim}
 \vspace{0.5cm}
 
-In the above, replace $~$ with the path where the MARS folder is stored. Now, restart R so that these paths can be loaded into R's namespace. 
+In the above, replace `~` with the path where the MARS folder is stored. Now, restart R so that these paths can be loaded into R's namespace. 
 
 # List of packages used
 
@@ -93,9 +92,28 @@ In the above, replace $~$ with the path where the MARS folder is stored. Now, re
 * `assertthat`
 * `ggplot2`
 
+# Running the R scripts
+
+Once set up process described above is complete, the R scripts below can be run. Files in the `Depends on` column need to be run prior to running the files in the `R file` column. 
+
+## Break Free
+
+| R file | Depends on | Description |
+|:-----------------------------|:-----------------------------|:----------------------------------------------|
+| breakfree-curate-data-01.R | None | Lapse to smoking datasets |
+| breakfree-curate-data-02.R | breakfree-curate-data-01.R | Lapse to smoking datasets |
+| breakfree-curate-data-03.R | None | Engagement dataset |
+
+## PNS
+
+| R file | Depends on | Description |
+|:-----------------------------|:-----------------------------|:----------------------------------------------|
+| pns-curate-data-01.R | None | Lapse to smoking datasets |
+| pns-curate-data-02.R | None | Engagement dataset |
+
 # Display session information
 
-To facilitate reproducibility, we display details on the set-up of our work environment when running power calculation computations in illustrative examples below.
+To facilitate reproducibility, we display details on the set-up of our work environment below.
 
 ```{r, echo=FALSE}
 library(dplyr)
