@@ -145,9 +145,4 @@ df.engaged.02 <- df.all %>% select(id, start.clock, end.clock,
 
 write.csv(df.engaged.02, file.path(path.output_data, "PNS/df.analysis.engagement.02.csv"), row.names = FALSE)
 
-df.imputed.engaged.02 <- df.engaged.02 %>% 
-  mutate(bored = if_else(engaged.yes==1 & is.na(bored), which(rmultinom(n=1, size=1, prob=c(1/5,1/5,1/5,1/5,1/5)) > 0), bored))
-
-write.csv(df.imputed.engaged.02, file.path(path.output_data, "PNS/df.analysis.imputed.engagement.02.csv"), row.names = FALSE)
-
 
