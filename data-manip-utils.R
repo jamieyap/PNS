@@ -891,17 +891,6 @@ CheckWithin <- function(ref.df, ref.this.var, df, study){
       }
     }
     
-    # Only Post-Quit Random EMAs
-    these.times <- ref.df %>% filter(with.any.response==0 & assessment.type == "Post-Quit Random") %>% select(ref.this.var)
-    
-    if(length(as.numeric(unlist(these.times))) == 0){
-      df[,"count.random.ema.no.response"] <- 0
-    }else{
-      for(j in 1:nrow(df)){
-        df[j,"count.random.ema.no.response"] <- sum((these.times > df[j,"LB.seconds"]) & (these.times < df[j,"UB.seconds"]))
-      }
-    }
-    
   }else if(study == "BreakFree"){
     
     # ---------------------------------------------------------------------------

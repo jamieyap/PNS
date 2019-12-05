@@ -26,6 +26,7 @@ source(file.path(path.code,"pns-run-curation/pns-setup.R"))
 # Specify columns to select from different datasets
 these.cols.post.quit.about.to.slip <- c("id", 
                                         "with.any.response",
+                                        "engaged.yes",
                                         "record.status",
                                         "assessment.type", 
                                         "delivered.hrts",
@@ -36,7 +37,8 @@ these.cols.post.quit.about.to.slip <- c("id",
                                         "end.clock")
 
 these.cols.post.quit.about.to.slip.part2 <- c("id", 
-                                              "with.any.response", 
+                                              "with.any.response",
+                                              "engaged.yes",
                                               "record.status", 
                                               "assessment.type", 
                                               "delivered.hrts",
@@ -49,6 +51,7 @@ these.cols.post.quit.about.to.slip.part2 <- c("id",
 
 these.cols.post.quit.already.slipped <- c("id", 
                                           "with.any.response", 
+                                          "engaged.yes",
                                           "record.status", 
                                           "assessment.type",  
                                           "delivered.hrts",
@@ -62,6 +65,7 @@ these.cols.post.quit.already.slipped <- c("id",
 
 these.cols.post.quit.random <- c("id", 
                                  "with.any.response", 
+                                 "engaged.yes",
                                  "record.status", 
                                  "assessment.type",  
                                  "delivered.hrts",
@@ -76,6 +80,7 @@ these.cols.post.quit.random <- c("id",
 
 these.cols.post.quit.urge <- c("id", 
                                "with.any.response", 
+                               "engaged.yes",
                                "record.status", 
                                "assessment.type",  
                                "delivered.hrts",
@@ -128,10 +133,7 @@ df.all <- rbind(df.post.quit.about.to.slip,
                 df.post.quit.random,
                 df.post.quit.urge)
 
-df.all <- df.all %>%
-  mutate(engaged.yes = (with.any.response==1) | (with.any.response==0 & record.status=="FRAGMENT RECORD")) %>%
-  mutate(engaged.yes = as.numeric(engaged.yes)) %>%
-  arrange(id, assessment.unixts) %>% 
+df.all <- df.all %>% arrange(id, assessment.unixts) %>% 
   mutate(assessment.type = as.character(assessment.type), 
          delivered.hrts = as.character(delivered.hrts),
          assessment.hrts = as.character(assessment.hrts)) %>%
@@ -152,11 +154,10 @@ df.all <- df.all %>%
 
 # Create IDs for each person-EMA delivered
 df.all <- df.all %>% arrange(id, delivered.unixts)
-df.all[,"delivered.assessment.id"] <- CreateID(dat = df.all, sequence.along = "delivered.unixts", by.var = "id", id.name = "delivered.assessment.id")
-
-# Decision rule for observations with engaged.yes=1 and missing assessment.unixts timestamps
-df.all <- df.all %>%
-  mutate(assessment.unixts = if_else(is.na(assessment.unixts), delivered.unixts, assessment.unixts))
+df.all[,"delivered.assessment.id"] <- CreateID(dat = df.all, 
+                                               sequence.along = "delivered.unixts", 
+                                               by.var = "id", 
+                                               id.name = "delivered.assessment.id")
 
 #------------------------------------------------------------------------------
 # Exclude EMAs delivered but where there is no indication that participant 
@@ -169,10 +170,11 @@ df.all <- df.all %>%
 # technical issues, none of their responses were recorded
 
 df.analysis <- df.all %>% filter(engaged.yes == 1) 
-
-# Create IDs for each person-EMA delivered AND with an indication of any response
 df.analysis <- df.analysis %>% arrange(id, assessment.unixts)
-df.analysis[,"assessment.id"] <- CreateID(dat = df.analysis, sequence.along = "delivered.assessment.id", by.var = "id", id.name = "assessment.id")
+df.analysis[,"assessment.id"] <- CreateID(dat = df.analysis, 
+                                          sequence.along = "delivered.assessment.id", 
+                                          by.var = "id", 
+                                          id.name = "assessment.id")
 
 #------------------------------------------------------------------------------
 # Create end points of time intervals
@@ -204,7 +206,53 @@ for(i in 1:n.participants){
 }
 
 # bind_rows is dplyr's efficient implementation of do.call(rbind, my_list)
-df.analysis <- bind_rows(tmp.list) %>% arrange(id, assessment.unixts)
+df.analysis.tmp <- bind_rows(tmp.list) %>% arrange(id, assessment.unixts)
+
+#------------------------------------------------------------------------------
+# Individually inspect observations with interval.duration.hours=0 and
+# resolve issues
+#------------------------------------------------------------------------------
+
+df.analysis.tmp <- df.analysis.tmp %>% 
+  # Two consecutive Post-Quit About to Slip Part2 assessments delivered
+  mutate(smoking.qty = replace(smoking.qty, row.names(.)==2303, df.analysis.tmp[2304,"smoking.qty"]),
+         record.status = replace(record.status, row.names(.)==2303, df.analysis.tmp[2304,"record.status"])) %>%
+  # Two consecutive Post-Quit About to Slip Part2 assessments delivered
+  mutate(smoking.qty = replace(smoking.qty, row.names(.)==2938, df.analysis.tmp[2939,"smoking.qty"]),
+         record.status = replace(record.status, row.names(.)==2938, df.analysis.tmp[2939,"record.status"])) %>%
+  # Two consecutive Post-Quit About to Slip Part2 assessments delivered
+  mutate(smoking.qty = replace(smoking.qty, row.names(.)==2961, df.analysis.tmp[2962,"smoking.qty"]),
+         record.status = replace(record.status, row.names(.)==2961, df.analysis.tmp[2962,"record.status"])) %>%
+  # Two consecutive Post-Quit About to Slip Part2 assessments delivered
+  mutate(smoking.qty = replace(smoking.qty, row.names(.)==2974, df.analysis.tmp[2975,"smoking.qty"]),
+         record.status = replace(record.status, row.names(.)==2974, df.analysis.tmp[2975,"record.status"])) %>%
+  # Two consecutive Post-Quit About to Slip Part2 assessments delivered
+  mutate(smoking.qty = replace(smoking.qty, row.names(.)==3999, df.analysis.tmp[4000,"smoking.qty"]),
+         record.status = replace(record.status, row.names(.)==3999, df.analysis.tmp[4000,"record.status"])) %>%
+  # Two consecutive Post-Quit Already Slipped assessments delivered
+  mutate(smoking.qty = replace(smoking.qty, row.names(.)==4075, df.analysis.tmp[4076,"smoking.qty"]),
+         smoking.timing = replace(smoking.timing, row.names(.)==4075, df.analysis.tmp[4076,"smoking.timing"]),
+         record.status = replace(record.status, row.names(.)==4075, df.analysis.tmp[4076,"record.status"]))  %>%
+  # Two consecutive Post-Quit About to Slip Part2 assessments delivered
+  mutate(smoking.qty = replace(smoking.qty, row.names(.)==6526, df.analysis.tmp[6527,"smoking.qty"]),
+         record.status = replace(record.status, row.names(.)==6526, df.analysis.tmp[6527,"record.status"])) %>%
+  # Two consecutive Post-Quit About to Slip Part2 assessments delivered
+  mutate(smoking.qty = replace(smoking.qty, row.names(.)==6583, df.analysis.tmp[6584,"smoking.qty"]),
+         record.status = replace(record.status, row.names(.)==6583, df.analysis.tmp[6584,"record.status"])) %>%
+  # Two consecutive Post-Quit Urge assessments delivered
+  mutate(smoking.indicator = replace(smoking.indicator, row.names(.)==7422, df.analysis.tmp[7423,"smoking.indicator"]),
+         smoking.qty = replace(smoking.qty, row.names(.)==7422, df.analysis.tmp[7423,"smoking.qty"]),
+         smoking.timing = replace(smoking.timing, row.names(.)==7422, df.analysis.tmp[7423,"smoking.timing"]),
+         record.status = replace(record.status, row.names(.)==7422, df.analysis.tmp[7423,"record.status"])) 
+  
+df.analysis <- df.analysis.tmp %>% filter(!(row.names(.)%in%c(2304,2939,2962,2975,4000,4076,6527,6584,7423)))
+
+# Finally, of the remaining observations, create IDs for each 
+# person-EMA delivered AND with an indication of any response
+df.analysis[,"assessment.id"] <- CreateID(dat = df.analysis, 
+                                          sequence.along = "delivered.assessment.id", 
+                                          by.var = "id", 
+                                          id.name = "assessment.id")
 
 #------------------------------------------------------------------------------
 # Provide smoking labels to time intervals according to Method 01
