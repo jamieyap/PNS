@@ -38,7 +38,8 @@ df.post.quit.random <- SetUpPostQuit(df.raw = df.raw.post.quit.random,
 #------------------------------------------------------------------------------
 # Tasks specific to this dataset for analysis
 #------------------------------------------------------------------------------
-# Create a new variable so that for each row in the row data is checked: 
+# Create a new variable so that for each row in the raw data 
+# is checked: this new variable with.any.response
 # equals 1 if response to any question was recorded
 # equals 0 if no response to any question was recorded
 these.cols <- c("record.id",             

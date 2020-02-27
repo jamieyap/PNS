@@ -253,11 +253,7 @@ df.out <- CheckAnyResponse(df = df.out, drop.cols = these.cols)
 
 ```{r}
 df.out %>% 
-  mutate(check.condition = (
-    (with.any.response==1) | 
-      (with.any.response==0 & record.status=="FRAGMENT RECORD")
-    )
-    ) %>%
+  mutate(check.condition = (with.any.response==1)) %>%
   filter(check.condition) %>%
   group_by(id) %>%
   summarise(tot.prompts = n()) %>%
@@ -308,7 +304,7 @@ df.out %>%
   print(width=Inf)
 ```
 
-The table shows that all EMAs in `df.out` have the timestamp `delivered.unixts`. However, the EMAs having `responded==Missing` and `is.missing.assessment.unixts==FALSE` are unexpected. 
+The table shows that all EMAs in `df.out` have the timestamp `delivered.unixts`. However, the EMAs having `responded==Missing` and `is.missing.assessment.unixts==FALSE` are unexpected. Also, observe that when `with.any.response==1`, the associated EMA always has an `assessment.unixts` timestamp and an `delivered.unixts` timestamp. On the other hand, observe that when `with.any.response==0`, the associated EMA always has an `delivered.unixts` timestamp.
 
 ```{r}
 df.post.quit.random <- df.out
@@ -342,12 +338,18 @@ We see that there can be about a 5-minute to 20-minute time gap between `assessm
 quantile((df.post.quit.random$delay)/60, c(0, 0.50, 0.95, 1), na.rm = TRUE) # in minutes
 ```
 
-When participant engages EMA completion, then time when s/he began the assessment (the variable `assessment.unixts`) is associated with the EMA in the variable `time.unixts`. On the other hand when a participant does not engage in EMA completion, then the time when EMA was delivered (the variable `delivered.unixts`) is associated with the EMA in the variable `time.unixts`. Hence, time elapsed since quit is then the difference between `time.unixts` and Quit Time (the variable `start.clock`, which represents 4am on Quit Day). This is implemented using the code below.
+How many EMAs have `delay` greater than 20 minutes?
+
+```{r}
+df.post.quit.random %>% filter(delay > 20*60) %>% summarise(num.ema=n())
+```
+
+When participant engages EMA completion (i.e., `engaged.yes==1`), then time when s/he began the assessment (the variable `assessment.unixts`) is associated with the EMA in the variable `time.unixts`. On the other hand when a participant does not engage in EMA completion, then the time when EMA was delivered (the variable `delivered.unixts`) is associated with the EMA in the variable `time.unixts`. Hence, time elapsed since quit is then the difference between `time.unixts` and Quit Time (the variable `start.clock`, which represents 4am on Quit Day). This is implemented using the code below.
 
 ```{r, class.source="line-code"}
 # Implement decision rules for:
-# (1) Timestamp when engaged.yes=1 and missing assessment.unixts
-# (2) Timestamp when engaged.yes=1 and engaged.yes=0
+# (1) Timestamp when engaged.yes=1
+# (2) Timestamp when engaged.yes=0
 df.post.quit.random <- df.post.quit.random %>%
   mutate(time.unixts = if_else(engaged.yes == 1, assessment.unixts, delivered.unixts)) %>%
   mutate(time.unixts.scaled = time.unixts - start.clock) %>%
@@ -355,6 +357,10 @@ df.post.quit.random <- df.post.quit.random %>%
   mutate(assessment.unixts.scaled = assessment.unixts - start.clock)
 ```
 
+How many individuals at least 1 row during the 21 day post-quit period?
+```{r}
+length(unique(df.post.quit.random$id))
+```
 
 # Plots of the data
 
@@ -377,7 +383,106 @@ gg.all <- gg.all + labs(y="Each row is one participant's data")
 gg.all <- gg.all + labs(title = "Time of EMA delivery \nAll Random EMAs within 21-Day Post Quit Period")
 gg.all <- gg.all + labs(subtitle = "Shaded area denotes time between 10PM - 8AM \nEach point denotes one random EMA")
 gg.all <- gg.all + theme(axis.text.y = element_blank(), axis.ticks.y = element_blank())
+gg.all <- gg.all + theme(legend.position = "bottom")
 
+# Zoom to first few days
 gg.all + xlim(0,3)
+
+# Plot all days
 gg.all
 ```
+
+```{r}
+library(ggplot2)
+library(grid)
+library(gridExtra)
+set.seed(3798)
+
+df.plot <- df.post.quit.random %>%
+  mutate(t = time.unixts.scaled/(60*60*24) + 4/24) %>%  # t is 12AM on Quit Day
+  mutate(Affect6 = if_else(engaged.yes==0, as.integer(0), Affect6)) %>% # For plotting
+  mutate(Affect8 = if_else(engaged.yes==0, as.integer(0), Affect8)) %>%
+  mutate(engaged.yes = as.factor(engaged.yes))
+
+cols <- c("0" = "red", "1" = "blue")
+
+ids <- unique(df.plot$id)
+ids <- sample(ids, size=32)
+```
+
+
+```{r, fig.height=11, fig.width=8}
+collect.plots <- list()
+for(i in 1:length(ids)){
+  use.this.id <- ids[i]
+  df.plot.this.participant <- df.plot %>% filter(id==use.this.id)
+  gg.all <- ggplot(df.plot.this.participant)
+  
+  all.inc <- seq(1,21,1)
+  for(i in 1:length(all.inc)){
+    inc <- all.inc[i]
+    gg.all <- gg.all + annotate("rect", xmin= -2/24 + inc, xmax=8/24 + inc, ymin=0, ymax=5.2, alpha=0.2, fill="black") 
+  }
+  
+  gg.all <- gg.all + geom_point(aes(t, Affect6, color=engaged.yes), alpha=0.5)
+  gg.all <- gg.all + scale_colour_manual(values = cols)
+  #gg.all <- gg.all + labs(x = "No. of Days since 12AM on Quit Day")
+  #gg.all <- gg.all + labs(y="Response to EMA item")
+  gg.all <- gg.all + labs(x="", y="")
+  gg.all <- gg.all + scale_y_continuous(breaks = c(1,2,3,4,5), labels = c("1","2","3","4","5"))
+  gg.all <- gg.all + theme(legend.position = "None")
+  
+  # Plot all days
+  collect.plots <- append(collect.plots, list(gg.all))
+}
+
+plot.grid <- marrangeGrob(grobs = collect.plots, ncol=4, nrow = 8,
+                          top = textGrob("Time of EMA delivery versus response to Affect6 ('I feel angry.') on a 5-point Likert scale\nfor a sample of individuals from the PNS study\nAll Random EMAs within 21-Day Post Quit Period",
+                                         gp=gpar(fontsize=11,font=3)
+                                         ),
+                          bottom = textGrob("Shaded area denotes time between 10PM - 8AM \nEach point denotes one random EMA (red dots: engaged.yes=0, blue dots: engaged.yes=1)",
+                                         gp=gpar(fontsize=11,font=3)
+                                         )
+                          )
+
+plot.grid
+```
+
+```{r, fig.height=11, fig.width=8}
+collect.plots <- list()
+for(i in 1:length(ids)){
+  use.this.id <- ids[i]
+  df.plot.this.participant <- df.plot %>% filter(id==use.this.id)
+  gg.all <- ggplot(df.plot.this.participant)
+  
+  all.inc <- seq(1,21,1)
+  for(i in 1:length(all.inc)){
+    inc <- all.inc[i]
+    gg.all <- gg.all + annotate("rect", xmin= -2/24 + inc, xmax=8/24 + inc, ymin=0, ymax=5.2, alpha=0.2, fill="black") 
+  }
+  
+  gg.all <- gg.all + geom_point(aes(t, Affect8, color=engaged.yes), alpha=0.5)
+  gg.all <- gg.all + scale_colour_manual(values = cols)
+  #gg.all <- gg.all + labs(x = "No. of Days since 12AM on Quit Day")
+  #gg.all <- gg.all + labs(y="Response to EMA item")
+  gg.all <- gg.all + labs(x="", y="")
+  gg.all <- gg.all + scale_y_continuous(breaks = c(1,2,3,4,5), labels = c("1","2","3","4","5"))
+  gg.all <- gg.all + theme(legend.position = "None")
+  
+  # Plot all days
+  collect.plots <- append(collect.plots, list(gg.all))
+}
+
+plot.grid <- marrangeGrob(grobs = collect.plots, ncol=4, nrow = 8,
+                          top = textGrob("Time of EMA delivery versus response to Affect8 ('I feel restless.') on a 5-point Likert scale\nfor a sample of individuals from the PNS study\nAll Random EMAs within 21-Day Post Quit Period",
+                                         gp=gpar(fontsize=11,font=3)
+                                         ),
+                          bottom = textGrob("Shaded area denotes time between 10PM - 8AM \nEach point denotes one random EMA (red dots: engaged.yes=0, blue dots: engaged.yes=1)",
+                                         gp=gpar(fontsize=11,font=3)
+                                         )
+                          )
+
+plot.grid
+```
+
+
