@@ -10,7 +10,7 @@
 
 
 
-<meta name="date" content="2020-02-27" />
+<meta name="date" content="2020-03-02" />
 
 <title>Annotated Code and Summary Statistics</title>
 
@@ -376,7 +376,7 @@ summary {
 
 
 <h1 class="title toc-ignore">Annotated Code and Summary Statistics</h1>
-<h4 class="date">February 27, 2020</h4>
+<h4 class="date">March 02, 2020</h4>
 
 </div>
 
@@ -659,12 +659,29 @@ df.post.quit.random &lt;- df.post.quit.random %&gt;%
   mutate(time.unixts.scaled = time.unixts - start.clock) %&gt;%
   mutate(delivered.unixts.scaled = delivered.unixts - start.clock) %&gt;%
   mutate(assessment.unixts.scaled = assessment.unixts - start.clock)</code></pre>
-<p>How many individuals at least 1 row during the 21 day post-quit period?</p>
-<pre class="r"><code>length(unique(df.post.quit.random$id))</code></pre>
-<pre><code>## [1] 166</code></pre>
 </div>
-<div id="plots-of-the-data" class="section level1" number="4">
-<h1 number="4"><span class="header-section-number">4</span> Plots of the data</h1>
+<div id="number-of-participants-in-the-dataset" class="section level1" number="4">
+<h1 number="4"><span class="header-section-number">4</span> Number of participants in the dataset</h1>
+<p>Let us compare the number of participant IDs recorded in the post-quit random raw data, analytic dataset, and in a listing of quit dates recorded by study staff.</p>
+<pre class="r"><code>ids.with.QD &lt;- unique(pns.quit.dates$id)
+ids.raw &lt;- unique(df.raw$Part_ID)
+ids.analysis &lt;- unique(df.post.quit.random$id)
+
+n.with.QD &lt;- length(ids.with.QD)
+n.raw &lt;- length(ids.raw)
+n.analysis &lt;- length(ids.analysis)</code></pre>
+<p>Study staff recorded quit dates for 182 participants. However, only data from 166 participants have been recorded in post-quit random raw data.</p>
+<pre class="r"><code>ids.diff &lt;- setdiff(ids.with.QD, ids.raw)</code></pre>
+<p>None of the participant IDs recorded in <code>ids.diff</code> have any record in the post-quit random raw data:</p>
+<pre class="r"><code>ids.diff %in% n.raw</code></pre>
+<pre><code>##  [1] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+## [13] FALSE FALSE FALSE FALSE</code></pre>
+<p>Finally, let’s check whether the participant IDs that have a record with the post-quit random raw data are the same participant IDs that have a record in the analytic dataset.</p>
+<pre class="r"><code>setequal(ids.raw, ids.analysis)</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+</div>
+<div id="plots-of-the-data" class="section level1" number="5">
+<h1 number="5"><span class="header-section-number">5</span> Plots of the data</h1>
 <pre class="r"><code>library(ggplot2)
 df.plot &lt;- df.post.quit.random %&gt;%
   mutate(t = time.unixts.scaled/(60*60*24) + 4/24) %&gt;%  # t is 12AM on Quit Day

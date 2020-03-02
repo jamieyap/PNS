@@ -357,9 +357,35 @@ df.post.quit.random <- df.post.quit.random %>%
   mutate(assessment.unixts.scaled = assessment.unixts - start.clock)
 ```
 
-How many individuals at least 1 row during the 21 day post-quit period?
+# Number of participants in the dataset
+
+Let us compare the number of participant IDs recorded in the post-quit random raw data, analytic dataset, and in a listing of quit dates recorded by study staff.
+
 ```{r}
-length(unique(df.post.quit.random$id))
+ids.with.QD <- unique(pns.quit.dates$id)
+ids.raw <- unique(df.raw$Part_ID)
+ids.analysis <- unique(df.post.quit.random$id)
+
+n.with.QD <- length(ids.with.QD)
+n.raw <- length(ids.raw)
+n.analysis <- length(ids.analysis)
+```
+
+Study staff recorded quit dates for `r n.with.QD` participants. However, only data from `r n.raw` participants have been recorded in post-quit random raw data.
+
+```{r}
+ids.diff <- setdiff(ids.with.QD, ids.raw)
+```
+
+None of the participant IDs recorded in `ids.diff` have any record in the post-quit random raw data:
+
+```{r}
+ids.diff %in% n.raw
+```
+
+Finally, let's check whether the participant IDs that have a record with the post-quit random raw data are the same participant IDs that have a record in the analytic dataset.
+```{r}
+setequal(ids.raw, ids.analysis)
 ```
 
 # Plots of the data
