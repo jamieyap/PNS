@@ -225,5 +225,62 @@ GetFutureRecords <- function(df.this.group, cols.today, h){
   return(df.this.group)
 }
 
+CleanNumericScale <- function(df, col.name){
+  # About: Convert factor or character responses to numeric responses
+  # Args:
+  #   df: one individual's data frame
+  #   col.name: name of a column in df where conversion will take place
+  # Output:
+  #   df with column col.name transformed into numeric format
+  
+  response.0 <- grepl("0", as.character(df[,col.name]))
+  response.1 <- grepl("1", as.character(df[,col.name]))
+  response.2 <- grepl("2", as.character(df[,col.name]))
+  response.3 <- grepl("3", as.character(df[,col.name]))
+  response.4 <- grepl("4", as.character(df[,col.name]))
+  response.5 <- grepl("5", as.character(df[,col.name]))
+  
+  v <- case_when(
+    response.0 ~ 0,
+    response.1 ~ 1,
+    response.2 ~ 2,
+    response.3 ~ 3,
+    response.4 ~ 4,
+    response.5 ~ 5,
+    TRUE ~ NA_real_
+  )
+  df[,col.name] <- v
+  
+  return(df)
+}
+
+CleanLikertScale <- function(df, col.name){
+  # About: Convert factor or character responses to numeric responses
+  # Args:
+  #   df: one individual's data frame
+  #   col.name: name of a column in df where conversion will take place
+  # Output:
+  #   df with column col.name transformed into numeric format
+  
+  response.1 <- grepl("Strongly Disagree", as.character(df[,col.name]))
+  response.2 <- grepl("Disagree", as.character(df[,col.name]))
+  response.3 <- grepl("Neutral", as.character(df[,col.name]))
+  response.4 <- grepl("Agree", as.character(df[,col.name]))
+  response.5 <- grepl("Strongly Agree", as.character(df[,col.name]))
+  
+  v <- case_when(
+    response.1 ~ 1,
+    response.2 ~ 2,
+    response.3 ~ 3,
+    response.4 ~ 4,
+    response.5 ~ 5,
+    TRUE ~ NA_real_
+  )
+  df[,col.name] <- v
+  
+  return(df)
+}
+
+
 
 
