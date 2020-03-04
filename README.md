@@ -9,7 +9,7 @@ Getting started with using the code in this repository requires installing [R St
    
 After executing these commands on the console, you may be prompted with `Do you want to proceed? (y/N)` to install specific versions of R packages used by this repository that are unavailable on your machine. Responding `y` on the console initiates this process. 
 
-The integration of the [`renv`](https://rstudio.github.io/renv/articles/renv.html) R package with this repository enables users to execute code using *the same collection and versions of R packages used by developers of this repository*, anticipating the release of newer versions of these packages which may present possible inter-package issues.
+The integration of the [`renv`](https://rstudio.github.io/renv/articles/renv.html) R package with this repository enables users to execute code using *the same collection and versions of R packages used by developers of this repository*, anticipating the release of newer versions of these packages which may present possible inter-package compatibility issues.
 
 4. Run the script [`create-user-specific-environ.R`](https://github.com/jamieyap/MARS/blob/master/scripts-shared/create-user-specific-environ.R). This will create an `.Renviron` file in your current working directory and the file will be opened in R Studio. Place contents of [paths.txt](https://github.com/jamieyap/MARS/blob/master/paths.txt) into this `.Renviron` file, replacing the string `...` in `paths.txt` with relevant file paths on your machine.
 
