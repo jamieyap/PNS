@@ -62,6 +62,7 @@ CountWithin <- function(df.this.group, ones.col, current.ts, H){
   }
   vec.counts <- do.call(rbind, list.counts)
   vec.counts <- as.data.frame(vec.counts)
+  
   return(vec.counts)
 }
 
@@ -102,8 +103,49 @@ MeanWithin <- function(df.this.group, ones.col, current.ts, H, this.var){
   }
   vec.quantity <- do.call(rbind, list.quantity)
   vec.quantity <- as.data.frame(vec.quantity)
-  return(vec.quantity)
   
+  return(vec.quantity)
+}
+
+VarianceWithin <- function(df.this.group, ones.col, current.ts, H, this.var){
+  # About: ones.col is a column indicating which rows satisfy
+  #   some condition (i.e. equal to 1 if condition is satisfied). 
+  #   and equal to 0 if the condition is not satisfied. 
+  #   The number of rows with ones.col=1 in the past H hours from
+  #   current.ts are used to obtain the variance of this.var.
+  # Args: 
+  #   df.this.group: a data frame corresponding groups in the
+  #   data for which this counting operation is to be performed
+  #   (e.g. each group may be 1 participant)
+  # Output:
+  #   An array of variances with number of rows equal to 
+  #   number of current.ts entries in df.this.group
+  
+  df.this.group[,"pastH.ts"] <- df.this.group[,current.ts] - H*60*60
+  list.quantity <- list()
+  # For each row of df.this.group
+  for(i in 1:nrow(df.this.group)){
+    LB <- as.numeric(df.this.group[i,"pastH.ts"])
+    UB <- as.numeric(df.this.group[i,current.ts])
+    
+    df.subset <- df.this.group %>% 
+      filter((time.unixts.scaled >= LB) & (time.unixts.scaled <= UB))
+    
+    check.missing <- sum(is.na(df.subset[,this.var]))
+    if(check.missing == nrow(df.subset)){
+      quantity <- NA
+    }else{
+      these.vals <- df.subset[,this.var]
+      these.vals <- as.matrix(these.vals)
+      quantity <- var(these.vals, na.rm=TRUE)
+    }
+    
+    list.quantity <- append(list.quantity, quantity)
+  }
+  vec.quantity <- do.call(rbind, list.quantity)
+  vec.quantity <- as.data.frame(vec.quantity)
+  
+  return(vec.quantity)
 }
 
 MaxWithin <- function(df.this.group, ones.col, current.ts, H, this.var){
@@ -143,8 +185,8 @@ MaxWithin <- function(df.this.group, ones.col, current.ts, H, this.var){
   }
   vec.quantity <- do.call(rbind, list.quantity)
   vec.quantity <- as.data.frame(vec.quantity)
-  return(vec.quantity)
   
+  return(vec.quantity)
 }
 
 MinWithin <- function(df.this.group, ones.col, current.ts, H, this.var){
@@ -184,8 +226,8 @@ MinWithin <- function(df.this.group, ones.col, current.ts, H, this.var){
   }
   vec.quantity <- do.call(rbind, list.quantity)
   vec.quantity <- as.data.frame(vec.quantity)
-  return(vec.quantity)
   
+  return(vec.quantity)
 }
 
 GetFutureRecords <- function(df.this.group, cols.today, h){
@@ -280,7 +322,4 @@ CleanLikertScale <- function(df, col.name){
   
   return(df)
 }
-
-
-
 

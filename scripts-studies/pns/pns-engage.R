@@ -128,3 +128,18 @@ write.csv(df.post.quit.random,
           file.path(path.pns.output_data, "pns.analysis.engagement.csv"), 
           row.names=FALSE)
 
+#------------------------------------------------------------------------------
+# Optionally construct new features
+#------------------------------------------------------------------------------
+construct.features <- TRUE
+
+if(isTRUE(construct.features)){
+  source(file.path(path.pns.code, "pns-features.R"))
+  
+  # Clean up output and save
+  df.post.quit.random <- select(df.post.quit.random, -ones)
+  write.csv(df.post.quit.random, 
+            file.path(path.pns.output_data, "pns.engagement.with.new.vars.csv"), 
+            row.names=FALSE)
+}
+
