@@ -1,5 +1,6 @@
 library(dplyr)
 library(magrittr)
+library(purrr)
 library(assertthat)
 
 CheckAnyResponse <- function(df, drop.cols){
@@ -23,12 +24,28 @@ CheckAnyResponse <- function(df, drop.cols){
   # Begin tasks
   # ---------------------------------------------------------------------------
   df.items <- df %>% select(-drop.cols)
-  count.num.response <- df.items %>% is.na(.) %>% not(.) %>% rowSums(.)
-  with.any.response <- if_else(count.num.response > 0, 1, 0)
   
-  df <- df %>% 
-    mutate(count.num.response = count.num.response,
-           with.any.response = with.any.response)
+  if(ncol(df.items)>0){
+    df.items <- apply(df.items, 2, function(x){
+      x <- as.character(x)
+      x <- ifelse(is.na(x), NA_character_,
+                  ifelse(x=="", NA_character_, x))
+      return(x)
+    })
+    
+    # nrow(df.items)==NULL if df.items contains only 1 row
+    if(is.null(nrow(df.items))){
+      df.items <- as.matrix(df.items)
+      df.items <- t(df.items)
+    }
+    
+    count.num.response <- df.items %>% is.na(.) %>% not(.) %>% rowSums(.)
+    with.any.response <- if_else(count.num.response > 0, 1, 0)
+
+  }else{
+   with.any.response <- rep(0, times = nrow(df)) 
+  }
+  df <- df %>% mutate(with.any.response = with.any.response)
   
   return(df)
 }
@@ -267,6 +284,33 @@ GetFutureRecords <- function(df.this.group, cols.today, h){
   return(df.this.group)
 }
 
+CleanLikertScale <- function(df, col.name){
+  # About: Convert factor or character responses to numeric responses
+  # Args:
+  #   df: one individual's data frame
+  #   col.name: name of a column in df where conversion will take place
+  # Output:
+  #   df with column col.name transformed into numeric format
+  
+  response.1 <- grepl("Strongly Disagree", as.character(df[,col.name]))
+  response.2 <- grepl("Disagree", as.character(df[,col.name]))
+  response.3 <- grepl("Neutral", as.character(df[,col.name]))
+  response.4 <- grepl("Agree", as.character(df[,col.name]))
+  response.5 <- grepl("Strongly Agree", as.character(df[,col.name]))
+  
+  v <- case_when(
+    response.1 ~ 1,
+    response.2 ~ 2,
+    response.3 ~ 3,
+    response.4 ~ 4,
+    response.5 ~ 5,
+    TRUE ~ NA_real_
+  )
+  df[,col.name] <- v
+  
+  return(df)
+}
+
 CleanNumericScale <- function(df, col.name){
   # About: Convert factor or character responses to numeric responses
   # Args:
@@ -284,33 +328,6 @@ CleanNumericScale <- function(df, col.name){
   
   v <- case_when(
     response.0 ~ 0,
-    response.1 ~ 1,
-    response.2 ~ 2,
-    response.3 ~ 3,
-    response.4 ~ 4,
-    response.5 ~ 5,
-    TRUE ~ NA_real_
-  )
-  df[,col.name] <- v
-  
-  return(df)
-}
-
-CleanLikertScale <- function(df, col.name){
-  # About: Convert factor or character responses to numeric responses
-  # Args:
-  #   df: one individual's data frame
-  #   col.name: name of a column in df where conversion will take place
-  # Output:
-  #   df with column col.name transformed into numeric format
-  
-  response.1 <- grepl("Strongly Disagree", as.character(df[,col.name]))
-  response.2 <- grepl("Disagree", as.character(df[,col.name]))
-  response.3 <- grepl("Neutral", as.character(df[,col.name]))
-  response.4 <- grepl("Agree", as.character(df[,col.name]))
-  response.5 <- grepl("Strongly Agree", as.character(df[,col.name]))
-  
-  v <- case_when(
     response.1 ~ 1,
     response.2 ~ 2,
     response.3 ~ 3,
