@@ -247,7 +247,7 @@ MinWithin <- function(df.this.group, ones.col, current.ts, H, this.var){
   return(vec.quantity)
 }
 
-GetFutureRecords <- function(df.this.group, cols.today, h){
+GetFutureRecords <- function(df.this.group, cols.today, h, this.numeric){
   # About: Create new variables using past records
   # 
   # Args:
@@ -259,6 +259,8 @@ GetFutureRecords <- function(df.this.group, cols.today, h){
   #      enumerated in cols.today; can accomodate differing lags
   #      e.g. c(2,5) if we want to obtain assessment time and assessment type
   #      in the next 2 and next 5 prompts
+  #   this.numeric: array indicating which among cols.today is of numeric type
+  #      e.g. c(TRUE, FALSE)
   # Output:
   #   df.this.group with number of new columns equal to the length of h
   
@@ -271,15 +273,79 @@ GetFutureRecords <- function(df.this.group, cols.today, h){
   check.positive <- (is.numeric(h) & (h>0))
   assert_that(sum(!(check.positive))==0, msg = "elements of h must be positive")
   
+  check.equal <- (length(h) == length(this.numeric))
+  assert_that(isTRUE(check.equal), msg = "number of elements specified in h and this.numeric must be equal")
+  
   # ---------------------------------------------------------------------------
   # Begin tasks
   # ---------------------------------------------------------------------------
   for(i in 1:length(h)){
     new.col.name <- paste(cols.today[i], "_shift.plus.", h[i], sep="")
     future.records <- tail(df.this.group[, cols.today[i]], n=-h[i])
-    future.records <- as.numeric(unlist(future.records))
-    df.this.group[, new.col.name] <- c(future.records, rep(NA,h[i]))
+    
+    if(isTRUE(this.numeric[i])){
+      past.records <- as.numeric(unlist(past.records))
+      df.this.group[, new.col.name] <- c(rep(NA_real_,h[i]), past.records)
+    }else{
+      past.records <- as.character(unlist(past.records))
+      df.this.group[, new.col.name] <- c(rep(NA_character_,h[i]), past.records)
+    }
   }
+  
+  df.this.group <- as.data.frame(df.this.group)
+  
+  return(df.this.group)
+}
+
+GetPastRecords <- function(df.this.group, cols.today, h, this.numeric){
+  # About: Obtain past record of current value of a given column
+  # 
+  # Args:
+  # 
+  #   df.this.group: data frame whose rows all belong to one group 
+  #     e.g. all rows belong to one participant
+  #   cols.today: column names data of which we want to obtain past records
+  #     e.g. c("assessment.unixts","assessment.type")
+  #   h: how far back we want to obtain records
+  #     can accomodate differing lengths of time
+  #     e.g. c(1,3) if we want to obtain assessment time and assessment type 
+  #     from the past 1 or 3 prompts
+  #   this.numeric: array indicating which among cols.today is of numeric type
+  #      e.g. c(TRUE, FALSE)
+  # Output:
+  #   df.this.group with number of new columns equal to the length of h
+  
+  # ---------------------------------------------------------------------------
+  # Check validity of inputs
+  # ---------------------------------------------------------------------------
+  check.in <- cols.today %in% colnames(df.this.group)
+  assert_that(sum(!(check.in))==0, msg = "cols.today must be column names in data")
+  
+  check.positive <- (is.numeric(h) & (h>0))
+  assert_that(sum(!(check.positive))==0, msg = "elements of h must be positive")
+  
+  check.equal <- (length(h) == length(this.numeric))
+  assert_that(isTRUE(check.equal), msg = "number of elements specified in h and this.numeric must be equal")
+  
+  # ---------------------------------------------------------------------------
+  # Begin tasks
+  # ---------------------------------------------------------------------------
+  
+  for(i in 1:length(h)){
+    new.col.name <- paste(cols.today[i], "_shift.minus.", h[i], sep="")
+    past.records <- head(df.this.group[, cols.today[i]], n=-h[i])
+    
+    if(isTRUE(this.numeric[i])){
+      past.records <- as.numeric(unlist(past.records))
+      df.this.group[, new.col.name] <- c(rep(NA_real_,h[i]), past.records)
+    }else{
+      past.records <- as.character(unlist(past.records))
+      df.this.group[, new.col.name] <- c(rep(NA_character_,h[i]), past.records)
+    }
+    
+  }
+  
+  df.this.group <- as.data.frame(df.this.group)
   
   return(df.this.group)
 }

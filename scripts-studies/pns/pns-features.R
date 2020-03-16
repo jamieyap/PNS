@@ -47,10 +47,10 @@ for(i in 1:length(all.use.H)){
     df.post.quit.random[,tmp.var.name] <- df.post.quit.random %>% 
       group_by(id) %>%
       do(VarianceWithin(df.this.group = ., 
-                   ones.col = "ones", 
-                   current.ts = "time.unixts.scaled", 
-                   H=use.H,
-                   this.var=use.this.var)
+                        ones.col = "ones", 
+                        current.ts = "time.unixts.scaled", 
+                        H=use.H,
+                        this.var=use.this.var)
       ) %>%
       as.data.frame(.) %>%
       select("V1")

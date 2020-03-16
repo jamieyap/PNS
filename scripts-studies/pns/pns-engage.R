@@ -88,8 +88,7 @@ df.post.quit.random <- df.post.quit.random %>%
   mutate(engaged.yes = with.any.response)
 
 # Implement decision rules for:
-# (1) Timestamp when engaged.yes=1 and missing assessment.unixts
-# (2) Timestamp when engaged.yes=1 and engaged.yes=0
+# (1) Timestamp when engaged.yes=1 and engaged.yes=0
 df.post.quit.random <- df.post.quit.random %>%
   mutate(time.unixts = if_else(engaged.yes == 1, assessment.unixts, delivered.unixts)) %>%
   mutate(time.unixts.scaled = time.unixts - start.clock) %>%
