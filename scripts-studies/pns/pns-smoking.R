@@ -184,6 +184,41 @@ df.post.quit.already.slipped <- df.post.quit.already.slipped %>%
 # Obtain subset of columns from the original set of EMA items
 # and exclude all rows with engaged.yes==0
 #------------------------------------------------------------------------------
+# Create a list to contain data frames we will loop over
+# to apply the same set of data preparation tasks
+tmp.list.df <- list(df.post.quit.random = df.post.quit.random,
+                    df.post.quit.urge = df.post.quit.urge,
+                    df.post.quit.about.to.slip.part1 = df.post.quit.about.to.slip.part1,
+                    df.post.quit.about.to.slip.part2 = df.post.quit.about.to.slip.part2,
+                    df.post.quit.already.slipped = df.post.quit.already.slipped)
+
+for(i in 1:length(tmp.list.df)){
+  tmp.df <- tmp.list.df[[i]]
+  
+  # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+  # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+  
+  # Only retain EMAs with engaged.yes==1
+  tmp.df <- tmp.df %>% filter(engaged.yes==1)
+  
+  # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+  # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+  
+  # Save new info
+  tmp.list.df[[i]] <- tmp.df
+}
+
+df.post.quit.random <- tmp.list.df$df.post.quit.random
+df.post.quit.urge <- tmp.list.df$df.post.quit.urge
+df.post.quit.about.to.slip.part1 <- tmp.list.df$df.post.quit.about.to.slip.part1
+df.post.quit.about.to.slip.part2 <- tmp.list.df$df.post.quit.about.to.slip.part2
+df.post.quit.already.slipped <- tmp.list.df$df.post.quit.already.slipped
+
+remove(tmp.list.df, tmp.df)
+
+#------------------------------------------------------------------------------
+# Select columns to retain
+#------------------------------------------------------------------------------
 # Column names with reference information
 cols.ref <- c("id","record.id","assessment.type",
               "start.clock","end.clock",
@@ -206,7 +241,7 @@ for(i in 1:length(tmp.list.df)){
   # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
   # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
   
-  tmp.df <- tmp.df %>% filter(engaged.yes==1) %>% select(c(cols.ref, cols.items.smoking))
+  tmp.df <- tmp.df %>% select(c(cols.ref, cols.items.smoking))
   
   # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
   # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -223,6 +258,9 @@ outcomedf.post.quit.already.slipped <- tmp.list.df$df.post.quit.already.slipped
 
 remove(tmp.list.df, tmp.df)
 
+#------------------------------------------------------------------------------
+# Merge all data from different types of post quit EMA into one data frame
+#------------------------------------------------------------------------------
 outcomedf.all <- rbind(outcomedf.post.quit.random,
                        outcomedf.post.quit.urge,
                        outcomedf.post.quit.about.to.slip.part1,
@@ -272,7 +310,7 @@ outcomedf.all  <- outcomedf.all %>%
 
 # Identify which column names corresopnd to lower bound and upper bound of time intervals
 outcomedf.all <- outcomedf.all %>% 
-  rename(LB.ts = time.unixts.scaled_shift.minus.1, UB.ts = time.unixts.scaled,
+  mutate(LB.ts = time.unixts.scaled_shift.minus.1, UB.ts = time.unixts.scaled,
          LB.type = assessment.type_shift.minus.1, UB.type = assessment.type)
 
 # Create new time-related variables
@@ -282,13 +320,28 @@ outcomedf.all <- outcomedf.all %>%
   mutate(interval.duration.secs = UB.ts - LB.ts) %>%
   mutate(interval.duration.hours = interval.duration.secs/(60*60))
 
-# Rearrange columns
+#------------------------------------------------------------------------------
+# More preparatory steps to create smoking outcome variable:
+# Clean up raw responses to EMA smoking items
+#------------------------------------------------------------------------------
 outcomedf.all <- outcomedf.all %>% 
+  group_by(UB.type) %>% 
+  do(PNSCleanSmokingCount(df = .))
+
+outcomedf.all <- outcomedf.all %>% 
+  arrange(id, time.unixts) %>% 
+  group_by(id) %>% 
+  do(PNSCleanSmokingTime(df = .))
+
+# For each individual, rearrange rows chronologically
+outcomedf.all <- outcomedf.all %>% arrange(id, time.unixts) %>% 
   select(id, record.id, ema.id,
          start.clock, end.clock,
          LB.ts, UB.ts,
          LB.type, UB.type,
          interval.duration.hours,
-         smoking.indicator, smoking.qty, smoking.timing)
-
+         max.time, min.time,
+         num.cigs.smoked,
+         smoking.label,
+         everything())
 
