@@ -63,9 +63,14 @@ for(idx in 0:52){
 items.cc1 <- do.call(rbind, list.items)
 
 # Write out items.cc1 to a csv file
-#write.csv(items.cc1, 
-#          file.path(path.breakfree.output_data, "random.ema.items.cc1.csv"), 
-#          row.names=FALSE)
+write.out <- TRUE
+
+if(isTRUE(write.out)){
+  write.csv(items.cc1, 
+            file.path(path.breakfree.output_data, "randomEMA.items.cc1.csv"), 
+            row.names=FALSE)
+}
+
 
 ###############################################################################
 # Create an id-variable for each ema in the raw data
@@ -195,11 +200,11 @@ df.resp.cc1 <- df.resp.cc1 %>%
 ###############################################################################
 # Write out df.resp.cc1 to a csv file
 ###############################################################################
-write.out <- FALSE
+write.out <- TRUE
 
 if(isTRUE(write.out)){
   write.csv(df.resp.cc1, 
-            file.path(path.breakfree.output_data, "resp.random.ema.cc1.csv"), 
+            file.path(path.breakfree.output_data, "resp.randomEMA.cc1.csv"), 
             row.names=FALSE)
 }
 
@@ -312,11 +317,11 @@ df.smoking.items.cc1 <- df.smoking.items.cc1 %>%
 ###############################################################################
 # Write out df.smoking.items.cc1 to a csv file
 ###############################################################################
-write.out <- FALSE
+write.out <- TRUE
 
 if(isTRUE(write.out)){
   write.csv(df.smoking.items.cc1, 
-            file.path(path.breakfree.output_data, "df.smoking.items.cc1.csv"), 
+            file.path(path.breakfree.staged_data, "df.smoking.items.randomEMA.cc1.csv"), 
             row.names=FALSE)
 }
 

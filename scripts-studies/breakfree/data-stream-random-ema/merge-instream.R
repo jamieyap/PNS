@@ -16,19 +16,19 @@ source(file.path(path.shared.code, "shared-data-manip-utils.R"))
 
 ###############################################################################
 # The following files are saved in path.breakfree.output_data
-# random.ema.items.cc1.csv
-# random.ema.items.cc2.csv
-# resp.random.ema.cc1.csv
-# resp.random.ema.cc2.csv
+# randomEMA.items.cc1.csv
+# randomEMA.items.cc2.csv
+# resp.randomEMA.cc1.csv
+# resp.randomEMA.cc2.csv
 ###############################################################################
-random.ema.items.cc1 <- read.csv(file.path(path.breakfree.output_data, "random.ema.items.cc1.csv"), header = TRUE)
-random.ema.items.cc2 <- read.csv(file.path(path.breakfree.output_data, "random.ema.items.cc2.csv"), header = TRUE)
-resp.random.ema.cc1 <- read.csv(file.path(path.breakfree.output_data, "resp.random.ema.cc1.csv"), header = TRUE)
-resp.random.ema.cc2 <- read.csv(file.path(path.breakfree.output_data, "resp.random.ema.cc2.csv"), header = TRUE)
+randomEMA.items.cc1 <- read.csv(file.path(path.breakfree.output_data, "randomEMA.items.cc1.csv"), header = TRUE)
+randomEMA.items.cc2 <- read.csv(file.path(path.breakfree.output_data, "randomEMA.items.cc2.csv"), header = TRUE)
+resp.randomEMA.cc1 <- read.csv(file.path(path.breakfree.output_data, "resp.randomEMA.cc1.csv"), header = TRUE)
+resp.randomEMA.cc2 <- read.csv(file.path(path.breakfree.output_data, "resp.randomEMA.cc2.csv"), header = TRUE)
 
 # Merge affect items from CC1 data and CC2 data
-df.cc1 <- resp.random.ema.cc1 %>%
-  select(user.id, ema.id, status, 
+df.cc1 <- resp.randomEMA.cc1 %>%
+  select(user.id, random.ema.id, status, 
          prompt.ts, begin.ts, end.ts, mCerebrum.ts, with.any.response,
          active = item.4, angry = item.5, ashamed = item.6, calm = item.7, 
          determined = item.8, disgusted = item.9, enthusiastic = item.10,
@@ -39,8 +39,8 @@ df.cc1 <- resp.random.ema.cc1 %>%
          bored = item.23, joyful = item.24, attentive = item.25, 
          relaxed = item.26, motivation = item.27, urge = item.28)
 
-df.cc2 <- resp.random.ema.cc2 %>%
-  select(user.id, ema.id, status, 
+df.cc2 <- resp.randomEMA.cc2 %>%
+  select(user.id, random.ema.id, status, 
          prompt.ts, begin.ts, end.ts, mCerebrum.ts, with.any.response,
          active = item.4, angry = item.5, ashamed = item.6, calm = item.7, 
          determined = item.8, disgusted = item.9, enthusiastic = item.10,
@@ -52,6 +52,7 @@ df.cc2 <- resp.random.ema.cc2 %>%
          relaxed = item.26, motivation = item.27, urge = item.28)
 
 df.merged <- rbind(df.cc1, df.cc2)
+df.merged <- df.merged %>% arrange(user.id, prompt.ts)
 
 # Save output
-write.csv(df.merged, file.path(path.breakfree.output_data, "resp.random.ema.merged.csv"), row.names = FALSE)
+write.csv(df.merged, file.path(path.breakfree.output_data, "resp.randomEMA.merged.csv"), row.names = FALSE)

@@ -74,7 +74,7 @@ for(i in 1:length(ids.cc2)){
 
 write.csv(df.tabulate,
           file.path(path.breakfree.staged_data, 
-                    "df.tabulate.random.cc2.csv"), 
+                    "df.tabulate.randomEMA.cc2.csv"), 
           row.names = FALSE)
 
 # -----------------------------------------------------------------------------
