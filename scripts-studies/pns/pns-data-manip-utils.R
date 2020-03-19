@@ -124,7 +124,7 @@ SetUpPostQuit <- function(df.raw, df.time.frame){
 
 
 PNSCleanSmokingCount <- function(df){
-  # About: Clean up raw responses to smoking items in EMAs
+  # About: Clean up raw responses to smoking quantity items in EMAs
   # Args: 
   #   df: ***one*** of post quit random, post quit urge,
   #     post quit about to slip, post quit about to slip part 2,
@@ -256,6 +256,12 @@ PNSCleanSmokingCount <- function(df){
 }
 
 PNSCleanSmokingTime <- function(df){
+  # About: Clean up raw responses to smoking time items in EMAs
+  # Args: 
+  #   df: ***one*** individual's data frame
+  # Output:
+  #   dataset with cleaned up smoking item responses in one new
+  #   column: smoking.timing
   
   # Check that inputs are what is expected ------------------------------------
   # (1) all rows of df may only be from one and only one individual 
@@ -340,4 +346,215 @@ PNSCleanSmokingTime <- function(df){
   
   return(df)
 }
+
+PNSRefineSmokingTime <- function(df){
+  # About: Use responses to smoking timing items in EMAs to refine 
+  #        end points of reported time intervals with smoking
+  # Args: 
+  #   df: ***one*** individual's data frame
+  # Output:
+  #   dataset with narrower smoking intervals
+  
+  no.refinement.all.assessments <- (sum(!is.na(df$with.timing.conflict))==0)
+  
+  if(isTRUE(no.refinement.all.assessments)){
+    # No refinement of labels of time intervals
+    newdf <- df  %>% rename(interval.id = ema.id) %>%
+      # Just take a subset of columns
+      select(id, interval.id, 
+             start.clock, end.clock, 
+             LB.ts, UB.ts, 
+             smoking.label, num.cigs.smoked)
+  }else{
+    # Refinement of intervals are possible
+    n.assessments <- max(df$ema.id)
+    newdf.list <-  list()
+    
+    for(j in 1:n.assessments){
+      # Take subset of rows corresponding to assessment j
+      newdf.this.assessment <- df %>% filter(ema.id == j) %>% 
+        select(id, 
+               start.clock, end.clock, 
+               min.time, max.time, 
+               interval.duration.secs, 
+               LB.ts, UB.ts, 
+               smoking.label, num.cigs.smoked, 
+               with.timing.conflict)
+      
+      #########################################################################
+      #########################################################################
+      no.refinement.this.assessment <- (is.na(df[j,"with.timing.conflict"]))
+      
+      if(isTRUE(no.refinement.this.assessment)){
+        # Append new info to current info
+        newdf.this.assessment <- list(newdf.this.assessment)
+        newdf.list <- append(newdf.list, newdf.this.assessment)
+        # Do not proceed any further; move on to next assessment
+        next
+      }
+      
+      #########################################################################
+      #########################################################################
+      no.conflicting.info <- (df[j,"with.timing.conflict"] == 0)
+      
+      if(isTRUE(no.conflicting.info)){
+        
+        min.time <- newdf.this.assessment$min.time
+        max.time <- newdf.this.assessment$max.time
+        interval.duration.secs <- newdf.this.assessment$interval.duration.secs
+        
+        scenario.01 <- min.time>0 & max.time<interval.duration.secs
+        scenario.02 <- min.time==0 & max.time<interval.duration.secs
+        scenario.03 <- min.time>0 & max.time==interval.duration.secs
+        scenario.04 <- min.time==0 & max.time==interval.duration.secs
+        
+        Clean01 <- function(newdf.this.assessment){
+          newdf.this.assessment <- rbind(newdf.this.assessment,
+                                         newdf.this.assessment,
+                                         newdf.this.assessment)
+          
+          # First interval ----------------------------------------------------
+          newdf.this.assessment[1,"LB.ts"] <- newdf.this.assessment[1,"LB.ts"] # No change 
+          newdf.this.assessment[1,"UB.ts"] <- newdf.this.assessment[1,"UB.ts"] - newdf.this.assessment[1,"max.time"]
+          newdf.this.assessment[1,"smoking.label"] <- "NO"
+          newdf.this.assessment[1,"num.cigs.smoked"] <- 0
+          
+          # Second interval ---------------------------------------------------
+          newdf.this.assessment[2,"LB.ts"] <- newdf.this.assessment[2,"UB.ts"] - newdf.this.assessment[2,"max.time"] 
+          newdf.this.assessment[2,"UB.ts"] <- newdf.this.assessment[2,"UB.ts"] - newdf.this.assessment[2,"min.time"]
+          newdf.this.assessment[2,"smoking.label"] <- "YES"
+          newdf.this.assessment[2,"num.cigs.smoked"] <- newdf.this.assessment[2,"num.cigs.smoked"] # No change
+          
+          # Third interval ----------------------------------------------------
+          newdf.this.assessment[3,"LB.ts"] <- newdf.this.assessment[3,"UB.ts"] - newdf.this.assessment[3,"min.time"] 
+          newdf.this.assessment[3,"UB.ts"] <- newdf.this.assessment[3,"UB.ts"] # No change 
+          newdf.this.assessment[3,"smoking.label"] <- "NO"
+          newdf.this.assessment[3,"num.cigs.smoked"] <- 0
+          
+          return(newdf.this.assessment)
+        }
+        
+        Clean02 <- function(newdf.this.assessment){
+          newdf.this.assessment <- rbind(newdf.this.assessment,
+                                         newdf.this.assessment)
+          
+          # First interval ----------------------------------------------------
+          newdf.this.assessment[1,"LB.ts"] <- newdf.this.assessment[1,"LB.ts"] # No change 
+          newdf.this.assessment[1,"UB.ts"] <- newdf.this.assessment[1,"UB.ts"] - newdf.this.assessment[1,"max.time"]
+          newdf.this.assessment[1,"smoking.label"] <- "NO"
+          newdf.this.assessment[1,"num.cigs.smoked"] <- 0
+          
+          # Second interval ---------------------------------------------------
+          newdf.this.assessment[2,"LB.ts"] <- newdf.this.assessment[2,"UB.ts"] - newdf.this.assessment[2,"max.time"]
+          newdf.this.assessment[2,"UB.ts"] <- newdf.this.assessment[2,"UB.ts"]
+          newdf.this.assessment[2,"smoking.label"] <- "YES"
+          newdf.this.assessment[2,"num.cigs.smoked"] <- newdf.this.assessment[2,"num.cigs.smoked"]  # No change 
+          
+          return(newdf.this.assessment)
+        }
+        
+        Clean03 <- function(newdf.this.assessment){
+          newdf.this.assessment <- rbind(newdf.this.assessment,
+                                         newdf.this.assessment)
+          
+          # First interval ----------------------------------------------------
+          newdf.this.assessment[1,"LB.ts"] <- newdf.this.assessment[1,"LB.ts"] # No change 
+          newdf.this.assessment[1,"UB.ts"] <- newdf.this.assessment[1,"UB.ts"] - newdf.this.assessment[1,"min.time"]
+          newdf.this.assessment[1,"smoking.label"] <- "YES"
+          newdf.this.assessment[1,"num.cigs.smoked"] <- newdf.this.assessment[1,"num.cigs.smoked"]  # No change
+          
+          # Second interval ---------------------------------------------------
+          newdf.this.assessment[2,"LB.ts"] <- newdf.this.assessment[2,"UB.ts"] - newdf.this.assessment[2,"min.time"]
+          newdf.this.assessment[2,"UB.ts"] <- newdf.this.assessment[2,"UB.ts"]
+          newdf.this.assessment[2,"smoking.label"] <- "NO"
+          newdf.this.assessment[2,"num.cigs.smoked"] <- 0
+          
+          return(newdf.this.assessment)
+        }
+        
+        if(scenario.01){
+          newdf.this.assessment <- Clean01(newdf.this.assessment)
+        }else if(scenario.02){
+          newdf.this.assessment <- Clean02(newdf.this.assessment)
+        }else if(scenario.03){
+          newdf.this.assessment <- Clean03(newdf.this.assessment)
+        }else{
+          newdf.this.assessment <- newdf.this.assessment
+        }
+        
+        # Append new info to current info
+        newdf.this.assessment <- list(newdf.this.assessment)
+        newdf.list <- append(newdf.list, newdf.this.assessment)
+        next
+      }
+      
+      with.conflicting.info <- (df[j,"with.timing.conflict"] == 1)
+      if(with.conflicting.info){
+        # Do not modify time interval
+        newdf.this.assessment <- newdf.this.assessment
+        prevdf.this.assessment <- NULL
+        
+        # Append new info to current info
+        if(is.null(prevdf.this.assessment)){
+          newdf.this.assessment <- list(newdf.this.assessment)
+          newdf.list <- append(newdf.list, newdf.this.assessment)
+        }else{
+          newdf.list <- list(prevdf.this.assessment)
+          newdf.this.assessment <- list(newdf.this.assessment)
+          newdf.list <- append(newdf.list, newdf.this.assessment)
+        }
+      }
+      
+    } # End looping through all assessments
+    
+    newdf <- bind_rows(newdf.list)
+    num.intervals <- nrow(newdf)
+    newdf <- newdf %>% mutate(interval.id = 1:num.intervals) %>%
+      select(id, interval.id, 
+             start.clock, end.clock, 
+             LB.ts, UB.ts, 
+             smoking.label, num.cigs.smoked)
+  } # End big IF-ELSE statement
+  
+  return(newdf)
+}
+  
+SearchRecordID <- function(timestamp, df.covariate, past = TRUE){
+  # About: Gets record.id of most proximal EMA in the prior to (if
+  #        past==TRUE) timestamp or right after (if past==FALSE)
+  #        timestamp
+  # Args: 
+  #   timestamp: a timestamp
+  #   df.covariate: a data frame whose rows are records of
+  #     responses to Random EMA items
+  #   past: TRUE or FALSE to indicate whether a past or future
+  #     record is desired
+  # Output:
+  #   record.id of most proximal EMA in the prior to (if
+  #   past==TRUE) timestamp or right after (if past==FALSE)
+  #   timestamp
+  
+  assert_that(is.numeric(timestamp), msg = "timestamp must be in numeric format")
+  
+  if(isTRUE(past)){
+    # Get record.id from most proximal random EMA prior to timestamp
+    collect.idx <- which(df.covariate$time.unixts <= timestamp)
+    if(length(collect.idx) == 0){
+      this.record.id <- NA_character_
+    }else{
+      this.record.id <- as.character(df.covariate[max(collect.idx), ]$record.id)
+    }
+  }else{ 
+    # Get record.id from most proximal random EMA after timestamp
+    collect.idx <- which(df.covariate$time.unixts >= timestamp)
+    if(length(collect.idx) == 0){
+      this.record.id <- NA_character_
+    }else{
+      this.record.id <- as.character(df.covariate[min(collect.idx), ]$record.id)
+    }
+  }
+  
+  return(this.record.id)
+}
+
 

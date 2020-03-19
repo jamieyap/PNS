@@ -5,7 +5,10 @@
 all.use.vars <- c("Affect1","Affect2","Affect3","Affect4","Affect5",
                   "Affect6","Affect7","Affect8","Affect9","Affect10")
 # What time frame to consider?
-all.use.H <- c(48, 24*22) # past 2 days, since quit day
+# all.use.H = 48: past 2 days until present timestamp
+# all.use.H = 24*22: since quit day until present timestamp (since 
+#                   entire post quit period in the study is 21 days)
+all.use.H <- c(48, 24*22) 
 
 # More data processing steps...
 df.post.quit.random[,"ones"] <- 1  # Create a new column with ones

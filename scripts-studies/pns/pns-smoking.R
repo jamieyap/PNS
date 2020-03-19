@@ -130,10 +130,7 @@ for(i in 1:length(tmp.list.df)){
   tmp.df <- tmp.df %>%
     mutate(time.unixts = if_else(engaged.yes == 1 & !is.na(assessment.unixts), 
                                  assessment.unixts, 
-                                 delivered.unixts)) %>%
-    mutate(time.unixts.scaled = time.unixts - start.clock) %>%
-    mutate(delivered.unixts.scaled = delivered.unixts - start.clock) %>%
-    mutate(assessment.unixts.scaled = assessment.unixts - start.clock)
+                                 delivered.unixts))
   
   # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
   # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -222,7 +219,7 @@ remove(tmp.list.df, tmp.df)
 # Column names with reference information
 cols.ref <- c("id","record.id","assessment.type",
               "start.clock","end.clock",
-              "time.unixts","time.unixts.scaled")
+              "time.unixts")
 
 # Column names with smoking information
 cols.items.smoking <- c("smoking.indicator","smoking.qty","smoking.timing")
@@ -294,29 +291,29 @@ if(isTRUE(do.checks)){
 # Create end points of time inetrval
 #------------------------------------------------------------------------------
 outcomedf.all <- outcomedf.all %>% 
-  arrange(id, time.unixts.scaled) %>%
+  arrange(id, time.unixts) %>%
   group_by(id) %>%
   do(GetPastRecords(df.this.group = ., 
-                    cols.today = c("assessment.type", "time.unixts.scaled"), 
+                    cols.today = c("assessment.type", "time.unixts"), 
                     h = c(1,1),
                     this.numeric = c(FALSE, TRUE))
   )
 
 # Count number of EMAs per participant in outcomedf.all
 outcomedf.all  <- outcomedf.all %>%
-  arrange(id, time.unixts.scaled) %>%
+  arrange(id, time.unixts) %>%
   group_by(id) %>%
   do(.data = ., mutate(.data = ., ema.id = 1:nrow(.)))
 
 # Identify which column names corresopnd to lower bound and upper bound of time intervals
 outcomedf.all <- outcomedf.all %>% 
-  mutate(LB.ts = time.unixts.scaled_shift.minus.1, UB.ts = time.unixts.scaled,
+  mutate(LB.ts = time.unixts_shift.minus.1, UB.ts = time.unixts,
          LB.type = assessment.type_shift.minus.1, UB.type = assessment.type)
 
 # Create new time-related variables
 outcomedf.all <- outcomedf.all %>% 
   # Since LB.ts and UB.ts are in seconds elapsed ince start.clock
-  mutate(LB.ts = if_else(ema.id == 1, 0, LB.ts)) %>%
+  mutate(LB.ts = if_else(ema.id == 1, start.clock, LB.ts)) %>%
   mutate(interval.duration.secs = UB.ts - LB.ts) %>%
   mutate(interval.duration.hours = interval.duration.secs/(60*60))
 
@@ -335,13 +332,87 @@ outcomedf.all <- outcomedf.all %>%
 
 # For each individual, rearrange rows chronologically
 outcomedf.all <- outcomedf.all %>% arrange(id, time.unixts) %>% 
-  select(id, record.id, ema.id,
+  select(id, record.id, ema.id, time.unixts,
          start.clock, end.clock,
          LB.ts, UB.ts,
          LB.type, UB.type,
+         interval.duration.secs,
          interval.duration.hours,
          max.time, min.time,
          num.cigs.smoked,
          smoking.label,
-         everything())
+         with.timing.conflict)
+
+#------------------------------------------------------------------------------
+# More preparatory steps to create smoking outcome variable:
+# Refine end points based on reported timing of smoking event
+#------------------------------------------------------------------------------
+refined.outcomedf.all <- outcomedf.all %>% 
+  arrange(id, time.unixts) %>% 
+  group_by(id) %>% 
+  do(PNSRefineSmokingTime(df = .))
+
+# Now we have cleaned smoking outcome data
+write.csv(refined.outcomedf.all, 
+          file.path(path.pns.output_data, "pns.smoking.outcome.csv"), 
+          row.names = FALSE)
+
+#------------------------------------------------------------------------------
+# Option to add covariates
+#------------------------------------------------------------------------------
+df.covariates <- read.csv(file.path(path.pns.output_data, 
+                                    "pns.analysis.engagement.csv"),
+                          header = TRUE)
+
+list.df.covariates <- df.covariates %>% group_by(id) %>% do(covariates = data.frame(.))
+list.df.outcome <- refined.outcomedf.all %>% group_by(id) %>% do(outcome = data.frame(.))
+list.df <- left_join(x = list.df.outcome, y = list.df.covariates, by = "id")
+
+ids <- unique(list.df$id)
+n <- length(ids)
+
+list.refined.outcomedf.all.with.variables <- list()
+
+# Loop through all individuals
+for(i in 1:n){
+  this.id <- ids[i]
+  this.df.outcome <- list.df %>% 
+    filter(id == this.id) %>% 
+    select(outcome) %>% 
+    extract2(1) %>% extract2(1)
+  
+  this.df.covariate <- list.df %>% 
+    filter(id == this.id) %>% 
+    select(covariates) %>%
+    extract2(1) %>% extract2(1)
+  
+  this.df.outcome$past.record.id <- NA
+  this.df.outcome$future.record.id <- NA
+  
+  for(j in 1:nrow(this.df.outcome)){
+    # Get record.id from most proximal random EMA prior to LB.ts
+    use.ts <- this.df.outcome[j,]$LB.ts
+    this.record.id <- SearchRecordID(timestamp = use.ts, 
+                                     df.covariate = this.df.covariate, 
+                                     past = TRUE)
+    this.df.outcome[j,]$past.record.id <- this.record.id
+    
+    # Get record.id from most proximal random EMA after UB.ts
+    use.ts <- this.df.outcome[j,]$UB.ts
+    this.record.id <- SearchRecordID(timestamp = use.ts, 
+                                     df.covariate = this.df.covariate, 
+                                     past = FALSE)
+    this.df.outcome[j,]$future.record.id <- this.record.id
+  }
+  
+  list.refined.outcomedf.all.with.variables <- append(list.refined.outcomedf.all.with.variables,
+                                                      list(this.df.outcome))
+}
+
+refined.outcomedf.all.with.variables <- bind_rows(list.refined.outcomedf.all.with.variables)
+
+# Now we have cleaned smoking outcome data with a way to grab items from random EMAs
+write.csv(refined.outcomedf.all.with.variables, 
+          file.path(path.pns.output_data, "pns.smoking.outcome.with.variables.csv"), 
+          row.names = FALSE)
 

@@ -99,7 +99,9 @@ df.post.quit.random <- df.post.quit.random %>%
 # Obtain subset of columns from the original set of EMA items
 #------------------------------------------------------------------------------
 # Column names with reference information
-cols.ref <- c("id","record.id","start.clock","time.unixts.scaled","engaged.yes")
+cols.ref <- c("id","record.id",
+              "start.clock","time.unixts","time.unixts.scaled",
+              "engaged.yes")
 
 # Column names of questions framed in terms of the present time
 cols.items.now <- c("Urge1","Urge2","Urge3",
