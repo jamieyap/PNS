@@ -6,6 +6,7 @@
 # Paths for Por Nuestra Salud study
 # -----------------------------------------------------------------------------
 path.pns.input_data = "..."
+path.pns.staged_data = ".../Staged Data/PNS"
 path.pns.output_data = ".../Curated Data/PNS"
 path.pns.code = ".../MARS/scripts-studies/pns"
 

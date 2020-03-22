@@ -344,50 +344,91 @@ outcomedf.all <- outcomedf.all %>% arrange(id, time.unixts) %>%
          with.timing.conflict)
 
 #------------------------------------------------------------------------------
-# More preparatory steps to create smoking outcome variable:
-# Refine end points based on reported timing of smoking event
+# Version 01: no refinement of end points based on reported timing of
+# smoking event
 #------------------------------------------------------------------------------
-refined.outcomedf.all <- outcomedf.all %>% 
+df.smoking.01 <- outcomedf.all %>%
+  select(id, interval.id = ema.id, 
+         start.clock, end.clock, LB.ts, UB.ts,
+         smoking.label, num.cigs.smoked)
+
+# Now we have cleaned smoking outcome data
+write.csv(df.smoking.01, 
+          file.path(path.pns.output_data, "pns.smoking.01.csv"), 
+          row.names = FALSE)
+
+#------------------------------------------------------------------------------
+# Version 02: Refine end points based on reported timing of smoking event
+#------------------------------------------------------------------------------
+# More preparatory steps to create smoking outcome variable
+df.smoking.02 <- outcomedf.all %>% 
   arrange(id, time.unixts) %>% 
   group_by(id) %>% 
   do(PNSRefineSmokingTime(df = .))
 
 # Now we have cleaned smoking outcome data
-write.csv(refined.outcomedf.all, 
-          file.path(path.pns.output_data, "pns.smoking.outcome.csv"), 
+write.csv(df.smoking.02, 
+          file.path(path.pns.output_data, "pns.smoking.02.csv"), 
           row.names = FALSE)
 
 #------------------------------------------------------------------------------
-# Option to add covariates
+# For each row in use.df.smoking, search for the record id
+# of the most proximal Random EMA in the past and the most proximal
+# Random EMA in the future
+#
+# use.df.smoking can be set to any of the smoking outcome data frames above,
+# such as df.smoking.01, df.smoking.02
 #------------------------------------------------------------------------------
-df.covariates <- read.csv(file.path(path.pns.output_data, 
-                                    "pns.analysis.engagement.csv"),
-                          header = TRUE)
+this.file <- "pns.smoking.02"  # This can be changed to another file
 
-list.df.covariates <- df.covariates %>% group_by(id) %>% do(covariates = data.frame(.))
-list.df.outcome <- refined.outcomedf.all %>% group_by(id) %>% do(outcome = data.frame(.))
-list.df <- left_join(x = list.df.outcome, y = list.df.covariates, by = "id")
+# Read file
+use.df.smoking <- read.csv(file.path(path.pns.output_data, paste(this.file, ".csv", sep="")))
+use.name <- substring(this.file, first = 13)
 
-ids <- unique(list.df$id)
+# Convert use.df.smoking to a data frame with two columns
+# First column: each row is an individual's id
+# Second column: each row is a data frame containing rows in use.df.smoking
+# of the individual
+reshaped.use.df.smoking <- use.df.smoking %>% group_by(id) %>% do(outcome = data.frame(.))
+
+###############################################################################
+# Read in curated Random EMA data; this file.name may be changed to alternate
+# versions, e.g. pns.engagement.01.csv, pns.engagement.02.csv
+###############################################################################
+this.file.name <- "pns.postquitrandom.01.csv"
+
+# Continue --------------------------------------------------------------------
+use.df.covariates <- read.csv(file.path(path.pns.output_data, this.file.name), header = TRUE)
+
+# Convert use.df.covariates to a data frame with two columns
+# First column: each row is an individual's id
+# Second column: each row is a data frame containing rows in use.df.covariates
+# of the individual
+reshaped.use.df.covariates <- use.df.covariates %>% group_by(id) %>% do(covariates = data.frame(.))
+
+# Merge smoking outcome data frame and curated random EMA data 
+merged.df <- left_join(x = reshaped.use.df.smoking, y = reshaped.use.df.covariates, by = "id")
+
+# Now, loop through all individuals
+ids <- unique(merged.df$id)
 n <- length(ids)
 
-list.refined.outcomedf.all.with.variables <- list()
+list.reference.df <- list()
 
-# Loop through all individuals
 for(i in 1:n){
   this.id <- ids[i]
-  this.df.outcome <- list.df %>% 
+  this.df.outcome <- merged.df %>% 
     filter(id == this.id) %>% 
     select(outcome) %>% 
     extract2(1) %>% extract2(1)
   
-  this.df.covariate <- list.df %>% 
+  this.df.covariate <- merged.df %>% 
     filter(id == this.id) %>% 
     select(covariates) %>%
     extract2(1) %>% extract2(1)
   
-  this.df.outcome$past.record.id <- NA
-  this.df.outcome$future.record.id <- NA
+  this.df.outcome$proximal.past.record.id <- NA
+  this.df.outcome$proximal.future.record.id <- NA
   
   for(j in 1:nrow(this.df.outcome)){
     # Get record.id from most proximal random EMA prior to LB.ts
@@ -395,24 +436,85 @@ for(i in 1:n){
     this.record.id <- SearchRecordID(timestamp = use.ts, 
                                      df.covariate = this.df.covariate, 
                                      past = TRUE)
-    this.df.outcome[j,]$past.record.id <- this.record.id
+    this.df.outcome[j,]$proximal.past.record.id <- this.record.id
     
     # Get record.id from most proximal random EMA after UB.ts
     use.ts <- this.df.outcome[j,]$UB.ts
     this.record.id <- SearchRecordID(timestamp = use.ts, 
                                      df.covariate = this.df.covariate, 
                                      past = FALSE)
-    this.df.outcome[j,]$future.record.id <- this.record.id
+    this.df.outcome[j,]$proximal.future.record.id <- this.record.id
   }
   
-  list.refined.outcomedf.all.with.variables <- append(list.refined.outcomedf.all.with.variables,
-                                                      list(this.df.outcome))
+  list.reference.df <- append(list.reference.df, list(this.df.outcome))
 }
 
-refined.outcomedf.all.with.variables <- bind_rows(list.refined.outcomedf.all.with.variables)
+reference.df <- bind_rows(list.reference.df)
 
 # Now we have cleaned smoking outcome data with a way to grab items from random EMAs
-write.csv(refined.outcomedf.all.with.variables, 
-          file.path(path.pns.output_data, "pns.smoking.outcome.with.variables.csv"), 
+write.csv(reference.df, 
+          file.path(path.pns.output_data, 
+                    paste("pns", "reference", use.name,"csv", sep=".")), 
+          row.names = FALSE)
+
+#------------------------------------------------------------------------------
+# Using reference.df, append responses to Random EMAs in use.df.covariates
+#------------------------------------------------------------------------------
+drop.these.cols <- c("id", "record.id", 
+                     "start.clock", "end.clock",
+                     "time.unixts", "time.unixts.scaled", 
+                     "engaged.yes",
+                     "total.prompts.since.start")
+
+get.these.cols <- setdiff(colnames(use.df.covariates), drop.these.cols)
+new.cols.proximal.past <- paste(get.these.cols, "proximal.past", sep="_")
+new.cols.proximal.future <- paste(get.these.cols, "proximal.future", sep="_")
+
+# This will contain reference.df and new columns corresponding to
+# individuals' responses to Random EMA items for record id's 
+# in each row of reference.df
+list.reference.df.appended <- list()
+
+# Loop through all rows of reference.df
+for(i in 1:nrow(reference.df)){
+  # Work with row i
+  this.row <- reference.df[i,]
+  past.record.id <- this.row[["proximal.past.record.id"]]
+  future.record.id <- this.row[["proximal.future.record.id"]]
+  
+  # Get responses corresponding to most proximal random EMA
+  # in the past
+  if(!is.na(past.record.id)){
+    grabbed.data <- use.df.covariates %>% 
+      filter(record.id == past.record.id) %>% 
+      select(get.these.cols) %>%
+      set_colnames(new.cols.proximal.past)
+    
+    this.row[new.cols.proximal.past] <- grabbed.data
+  }else{
+    this.row[new.cols.proximal.past] <- NA
+  }
+  # Get responses corresponding to most proximal random EMA
+  # in the future
+  if(!is.na(future.record.id)){
+    grabbed.data <- use.df.covariates %>% 
+      filter(record.id == future.record.id) %>% 
+      select(get.these.cols) %>%
+      set_colnames(new.cols.proximal.future)
+    
+    this.row[new.cols.proximal.future] <- grabbed.data
+  }else{
+    this.row[new.cols.proximal.future] <- NA
+  }
+  
+  list.reference.df.appended <- append(list.reference.df.appended, 
+                                       list(this.row))
+}
+
+reference.df.appended <- bind_rows(list.reference.df.appended)
+
+write.csv(reference.df.appended, 
+          file.path(path.pns.output_data, 
+                    paste("pns", "reference", use.name,"appended.csv", sep=".")), 
           row.names = FALSE)
 

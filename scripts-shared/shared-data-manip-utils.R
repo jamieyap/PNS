@@ -104,8 +104,8 @@ MeanWithin <- function(df.this.group, ones.col, current.ts, H, this.var){
     LB <- as.numeric(df.this.group[i,"pastH.ts"])
     UB <- as.numeric(df.this.group[i,current.ts])
     
-    df.subset <- df.this.group %>% 
-      filter((time.unixts.scaled >= LB) & (time.unixts.scaled <= UB))
+    df.subset <- df.this.group %>%
+      filter((.data[[current.ts]] >= LB) & (.data[[current.ts]] <= UB))
     
     check.missing <- sum(is.na(df.subset[,this.var]))
     if(check.missing == nrow(df.subset)){
@@ -146,7 +146,7 @@ VarianceWithin <- function(df.this.group, ones.col, current.ts, H, this.var){
     UB <- as.numeric(df.this.group[i,current.ts])
     
     df.subset <- df.this.group %>% 
-      filter((time.unixts.scaled >= LB) & (time.unixts.scaled <= UB))
+      filter((.data[[current.ts]] >= LB) & (.data[[current.ts]] <= UB))
     
     check.missing <- sum(is.na(df.subset[,this.var]))
     if(check.missing == nrow(df.subset)){
@@ -187,7 +187,7 @@ MaxWithin <- function(df.this.group, ones.col, current.ts, H, this.var){
     UB <- as.numeric(df.this.group[i,current.ts])
     
     df.subset <- df.this.group %>% 
-      filter((time.unixts.scaled >= LB) & (time.unixts.scaled <= UB))
+      filter((.data[[current.ts]] >= LB) & (.data[[current.ts]] <= UB))
     
     check.missing <- sum(is.na(df.subset[,this.var]))
     if(check.missing == nrow(df.subset)){
@@ -228,7 +228,7 @@ MinWithin <- function(df.this.group, ones.col, current.ts, H, this.var){
     UB <- as.numeric(df.this.group[i,current.ts])
     
     df.subset <- df.this.group %>% 
-      filter((time.unixts.scaled >= LB) & (time.unixts.scaled <= UB))
+      filter((.data[[current.ts]] >= LB) & (.data[[current.ts]] <= UB))
     
     check.missing <- sum(is.na(df.subset[,this.var]))
     if(check.missing == nrow(df.subset)){

@@ -96,24 +96,7 @@ df.post.quit.random <- df.post.quit.random %>%
   mutate(assessment.unixts.scaled = assessment.unixts - start.clock)
 
 #------------------------------------------------------------------------------
-# Obtain subset of columns from the original set of EMA items
-#------------------------------------------------------------------------------
-# Column names with reference information
-cols.ref <- c("id","record.id",
-              "start.clock","time.unixts","time.unixts.scaled",
-              "engaged.yes")
-
-# Column names of questions framed in terms of the present time
-cols.items.now <- c("Urge1","Urge2","Urge3",
-                    "Affect1","Affect2","Affect3","Affect4","Affect5",
-                    "Affect6","Affect7","Affect8","Affect9","Affect10",
-                    "Expect1","Expect2","AbsSelfEff",
-                    "Motive1","Motive2")
-
-df.post.quit.random <- df.post.quit.random %>% select(c(cols.ref, cols.items.now))
-
-#------------------------------------------------------------------------------
-# Create new variables
+# Create new variables involving counts of Random EMAs
 #------------------------------------------------------------------------------
 df.post.quit.random <- df.post.quit.random %>% 
   mutate(ones=1) %>%
@@ -122,25 +105,81 @@ df.post.quit.random <- df.post.quit.random %>%
   mutate(total.prompts.since.start=cumsum(ones)) %>%
   select(-ones)
 
+###############################################################################
+# Sanity check: record.id values do not have any duplicates
+###############################################################################
+check.duplicates <- TRUE
+
+if(isTRUE(check.duplicates)){
+  assert_that(anyDuplicated(df.post.quit.random[["record.id"]])==0,
+              msg = "duplicate record id's")
+}
+
+#------------------------------------------------------------------------------
+# Obtain subset of columns from the original set of EMA items
+#------------------------------------------------------------------------------
+# Column names with reference information
+cols.ref <- c("id","record.id",
+              "start.clock","end.clock",
+              "time.unixts","time.unixts.scaled",
+              "engaged.yes",
+              "total.prompts.since.start")
+
+# Column names of questions framed in terms of the present time,
+# excluding smoking-related items
+cols.items.now <- c("Urge1","Urge2","Urge3",
+                    "Affect1","Affect2","Affect3","Affect4","Affect5",
+                    "Affect6","Affect7","Affect8","Affect9","Affect10",
+                    "Expect1","Expect2","AbsSelfEff",
+                    "Motive1","Motive2")
+
+# Column names of questions framed in terms of the present time,
+# including only smoking-related items
+cols.items.now.more <- c("CigAv",
+                         "SSPostQR1","SocialSet2","SSPostQR3", "SocialSet4",
+                         "SocialSet4","Restriction")
+
+# Column names of questions framed in terms of the past time
+cols.items.past <- c("Stressor1_PostQ_Random","Stressor2",
+                     "Lonely1","Lonely2","Lonely3",
+                     "D1PostQR",
+                     "Distract1","Distract2","Distract3","Distract4",
+                     "Consume1","C2PostQR")
+
+df.out.01 <- df.post.quit.random %>% select(c(cols.ref, cols.items.now))
+df.out.02 <- df.post.quit.random %>% select(c(cols.ref, cols.items.now, cols.items.past))
+df.out.03 <- df.post.quit.random %>% select(c(cols.ref, cols.items.now, cols.items.past, cols.items.now.more))
+
 #------------------------------------------------------------------------------
 # Save output
 #------------------------------------------------------------------------------
-write.csv(df.post.quit.random, 
-          file.path(path.pns.output_data, "pns.analysis.engagement.csv"), 
+write.csv(df.out.01, 
+          file.path(path.pns.output_data, "pns.postquitrandom.01.csv"), 
+          row.names=FALSE)
+
+write.csv(df.out.02, 
+          file.path(path.pns.output_data, "pns.postquitrandom.02.csv"), 
+          row.names=FALSE)
+
+write.csv(df.out.03, 
+          file.path(path.pns.output_data, "pns.postquitrandom.03.csv"), 
           row.names=FALSE)
 
 #------------------------------------------------------------------------------
 # Optionally construct new features
 #------------------------------------------------------------------------------
 construct.features <- TRUE
+df.out <- df.out.01
 
 if(isTRUE(construct.features)){
   source(file.path(path.pns.code, "pns-features.R"))
   
   # Clean up output and save
-  df.post.quit.random <- select(df.post.quit.random, -ones)
-  write.csv(df.post.quit.random, 
-            file.path(path.pns.output_data, "pns.engagement.with.new.vars.csv"), 
+  df.out <- select(df.out, -ones)
+  
+  write.csv(df.out, 
+            file.path(path.pns.output_data, 
+                      "pns.postquitrandom.with.new.vars.csv"), 
             row.names=FALSE)
 }
 

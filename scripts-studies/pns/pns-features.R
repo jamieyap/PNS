@@ -11,7 +11,7 @@ all.use.vars <- c("Affect1","Affect2","Affect3","Affect4","Affect5",
 all.use.H <- c(48, 24*22) 
 
 # More data processing steps...
-df.post.quit.random[,"ones"] <- 1  # Create a new column with ones
+df.out[,"ones"] <- 1  # Create a new column with ones
 
 for(i in 1:length(all.use.H)){
   # Loop over time frames
@@ -31,11 +31,11 @@ for(i in 1:length(all.use.H)){
     # =============================================================================
     tmp.var.name <- paste(use.this.var,"_mean.since.","past",use.H, "hours", sep="")
     
-    df.post.quit.random[,tmp.var.name] <- df.post.quit.random %>% 
+    df.out[,tmp.var.name] <- df.out %>% 
       group_by(id) %>%
       do(MeanWithin(df.this.group = ., 
                     ones.col = "ones", 
-                    current.ts = "time.unixts.scaled", 
+                    current.ts = "time.unixts", 
                     H=use.H,
                     this.var=use.this.var)
       ) %>%
@@ -47,11 +47,11 @@ for(i in 1:length(all.use.H)){
     # =============================================================================
     tmp.var.name <- paste(use.this.var,"_var.since.","past",use.H, "hours", sep="")
     
-    df.post.quit.random[,tmp.var.name] <- df.post.quit.random %>% 
+    df.out[,tmp.var.name] <- df.out %>% 
       group_by(id) %>%
       do(VarianceWithin(df.this.group = ., 
                         ones.col = "ones", 
-                        current.ts = "time.unixts.scaled", 
+                        current.ts = "time.unixts", 
                         H=use.H,
                         this.var=use.this.var)
       ) %>%
