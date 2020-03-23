@@ -1,4 +1,4 @@
-context("Construction of smoking intervals")
+context("Construction of smoking intervals: internal consistency of curated data")
 
 test_that(desc = "LB should come before UB", code = {
   actual.result <- sum(df[,"UB.ts"] - df[,"LB.ts"] < 0)

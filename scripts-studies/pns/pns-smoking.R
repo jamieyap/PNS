@@ -393,7 +393,7 @@ reshaped.use.df.smoking <- use.df.smoking %>% group_by(id) %>% do(outcome = data
 
 ###############################################################################
 # Read in curated Random EMA data; this file.name may be changed to alternate
-# versions, e.g. pns.engagement.01.csv, pns.engagement.02.csv
+# versions, e.g. pns.postquitrandom.XX.csv
 ###############################################################################
 this.file.name <- "pns.postquitrandom.01.csv"
 

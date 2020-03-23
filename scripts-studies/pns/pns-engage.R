@@ -147,8 +147,8 @@ cols.items.past <- c("Stressor1_PostQ_Random","Stressor2",
                      "Consume1","C2PostQR")
 
 df.out.01 <- df.post.quit.random %>% select(c(cols.ref, cols.items.now))
-df.out.02 <- df.post.quit.random %>% select(c(cols.ref, cols.items.now, cols.items.past))
-df.out.03 <- df.post.quit.random %>% select(c(cols.ref, cols.items.now, cols.items.past, cols.items.now.more))
+df.out.02 <- df.post.quit.random %>% select(c(cols.ref, cols.items.now, cols.items.now.more))
+df.out.03 <- df.post.quit.random %>% select(c(cols.ref, cols.items.now, cols.items.now.more, cols.items.past))
 
 #------------------------------------------------------------------------------
 # Save output

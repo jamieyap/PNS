@@ -1,0 +1,159 @@
+---
+title: "Por Nuestra Salud Study: Sanity Checks on Curated Data"
+geometry: margin=0.7in
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output:
+  pdf_document:
+    number_sections: yes
+  html_document:
+    number_sections: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, fig.align = "center")
+```
+
+# About
+In this file, we document sanity checks on the Por Nuestra Salud (PNS) study curated data. Curated data are expected to (1) be consistent with the study design, and (2) be internally consistent, i.e., having no conflicting information between rows or columns in the dataset. To this end, we use the `testthat` package to organize _programmatic checks_ on the curated data and the `ggplot2` package to create _visual checks_ on the curated data. 
+
+```{r, include = FALSE}
+library(dplyr)
+library(magrittr)
+library(assertthat)
+library(testthat)
+library(ggplot2)
+library(grid)
+library(gridExtra)
+
+path.pns.input_data <- Sys.getenv("path.pns.input_data")
+path.pns.staged_data <- Sys.getenv("path.pns.staged_data")
+path.pns.output_data <- Sys.getenv("path.pns.output_data")
+path.pns.code <- Sys.getenv("path.pns.code")
+path.shared.code <- Sys.getenv("path.shared.code")
+source(file.path(path.pns.code, "pns-data-manip-utils.R"))
+source(file.path(path.pns.code, "pns-plot-utils.R"))
+source(file.path(path.shared.code, "shared-data-manip-utils.R"))
+```
+
+
+```{r}
+use.samp.size <- 20
+pns.quit.dates <- read.csv(file.path(path.pns.input_data, "pns_quit_dates.csv"), header = TRUE)
+use.df.ids <- SampleAndRename(df = pns.quit.dates, use.seed = 754369, samp.size = use.samp.size)
+```
+
+Visual checks are displayed for the same sample of `r use.samp.size` randomly chosen PNS study participants.
+
+# Smoking Outcome Curated Datasets
+```{r}
+df.smoking.01 <- read.csv(file.path(path.pns.output_data, "pns.smoking.01.csv"), header = TRUE)
+df.smoking.02 <- read.csv(file.path(path.pns.output_data, "pns.smoking.02.csv"), header = TRUE)
+```
+
+## Programmatic Checks
+```{r}
+df <- df.smoking.01
+test_file(file.path(path.pns.code, "pns-test-file-01.R"))
+
+df <- df.smoking.02
+test_file(file.path(path.pns.code, "pns-test-file-01.R"))
+```
+
+\newpage
+## Visual Checks
+
+```{r, fig.height=7, fig.width=8}
+gg.smoking.01 <- PlotSmokingOutcome(df.smoking = df.smoking.01, df.ids = use.df.ids)
+gg.smoking.01
+```
+
+\newpage
+```{r, fig.height=7, fig.width=8}
+gg.smoking.02 <- PlotSmokingOutcome(df.smoking = df.smoking.02, df.ids = use.df.ids)
+gg.smoking.02
+```
+
+\newpage
+# Post-Quit Random Curated Datasets
+```{r}
+df.post.quit.random.01 <- read.csv(file.path(path.pns.output_data, "pns.postquitrandom.01.csv"), header = TRUE)
+```
+
+## Programmatic Checks
+```{r}
+df <- df.post.quit.random.01
+test_file(file.path(path.pns.code, "pns-test-file-02.R"))
+```
+
+\newpage
+## Visual Checks
+
+```{r, fig.height=7, fig.width=8}
+gg.pq.random <- PlotPostQuitEMATime(df.post.quit = df.post.quit.random.01, 
+                                    df.ids = use.df.ids, 
+                                    plot.days = 22, 
+                                    ema.type="random")
+
+gg.pq.random
+```
+
+\newpage
+```{r, fig.height=7, fig.width=8}
+gg.pq.random.zoom <- PlotPostQuitEMATime(df.post.quit = df.post.quit.random.01, 
+                                         df.ids = use.df.ids, 
+                                         plot.days = 3, 
+                                         ema.type="random")
+
+gg.pq.random.zoom
+```
+
+
+\newpage
+```{r}
+all.vars <- c(paste("Affect",c(6,8,10),sep=""))
+collect.plot.grid <- list()
+
+for(i in 1:length(all.vars)){
+  use.var.name <- all.vars[i]
+
+  collect.plots <- PlotPostQuitNumericResponses(df.post.quit = df.post.quit.random.01, 
+                                                var.name = use.var.name, 
+                                                df.ids = use.df.ids)
+  
+  text.top <- paste(use.var.name,
+                    "Time of EMA delivery versus response on a 5-point Likert scale", 
+                    "All Random EMAs within 21-Day Post Quit Period", 
+                    sep="\n")
+  text.bottom <- paste("Shaded area denotes time between 10PM - 8AM",
+                       "Each point denotes one random EMA (red dots: engaged.yes=0, blue dots: engaged.yes=1)",
+                       sep="\n")
+  
+  plot.grid <- marrangeGrob(grobs = collect.plots, 
+                            ncol=4, 
+                            nrow = 5,
+                            top = textGrob(text.top,gp=gpar(fontsize=11,font=3)),
+                            bottom = textGrob(text.bottom,gp=gpar(fontsize=11,font=3))
+                            )
+  
+  collect.plot.grid <- append(collect.plot.grid, list(plot.grid))
+}
+```
+
+\newpage
+```{r, fig.height=10, fig.width=8}
+collect.plot.grid[[1]]
+```
+
+\newpage
+```{r, fig.height=10, fig.width=8}
+collect.plot.grid[[2]]
+```
+
+\newpage
+```{r, fig.height=10, fig.width=8}
+collect.plot.grid[[3]]
+```
+
+
+
+
