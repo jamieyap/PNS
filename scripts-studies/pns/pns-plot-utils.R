@@ -7,6 +7,17 @@ library(grid)
 library(gridExtra)
 
 SampleAndRename <- function(df, use.seed, samp.size){
+  # About: chooses a sample of participant ID's of size samp.size
+  #   and provide new participant ID's beginning and ending 
+  #   at 1 and `use.samp.size`, respectively
+  # Args:
+  #   df: a data frame with a column for participant IDs
+  #   use.seed: seed to be specified in set.seed(use.seed)
+  #   samp.size: number of individuals to sample
+  # Output:
+  #   a data frame with one column for the original ID
+  #   and another column with a new ID which
+  #   can be used for plotting
   
   set.seed(use.seed)
   ids <- unique(df$id)
@@ -19,6 +30,19 @@ SampleAndRename <- function(df, use.seed, samp.size){
 }
 
 PlotSmokingOutcome <- function(df.smoking, df.ids){
+  # About: plots beginning and end time of smoking intervals
+  #   and colors smoking interval according to whether
+  #   it is labelled as YES, NO, UNKNOWN
+  # Args:
+  #   df.smoking: a data frame with a columns for beginning and end times
+  #     of smoking intervals, and labels YES, NO, UNKNOWN; this
+  #     data frame can contain rows from more than 1 participant
+  #   df.ids: data frame which is an output of the SampleAndRename() function;
+  #     the rows of df.ids only belong to the subset of participants in the PNS
+  #     study whose data we wish to visualize
+  # Output:
+  #   a ggplot2 object that can be used to display the plot
+  
   samp.size <- nrow(df.ids)
   df.plot.smoking <- left_join(x = df.ids, y = df.smoking, by = "id")
   df.plot.smoking <- df.plot.smoking %>% select(-id) %>% rename(id = new.id)
@@ -56,6 +80,22 @@ PlotSmokingOutcome <- function(df.smoking, df.ids){
 }
 
 PlotPostQuitEMATime <- function(df.post.quit, df.ids, plot.days, ema.type){
+  # About: plots time when Post-Quit EMA (any type) was either delivered
+  #   (for EMAs with engaged.yes=0) or time when participant began completion
+  #   (for EMAs with engaged.yes=1)
+  # Args:
+  #   df.post.quit: any curated post-quit dataset
+  #   df.ids: data frame which is an output of the SampleAndRename() function;
+  #     the rows of df.ids only belong to the subset of participants in the PNS
+  #     study whose data we wish to visualize
+  #   plot.days: number of days of data to use for plotting;
+  #     set plot.days=22 to plot the entire Post-Quit period for the PNS study;
+  #     set plot.days=3 to zoom into the first 3 days Post-Quit period
+  #   ema.type: a string describing the type of EMA; this will be
+  #     used to provide titles to plots; e.g. "random" forPost-Quit Random EMA
+  # Output:
+  #   a ggplot2 object that can be used to display the plot;
+  #   display multiple participants' data in a single plot
   
   samp.size <- nrow(df.ids)
   df.plot.post.quit <- left_join(x = df.ids, y = df.post.quit, by = "id")
@@ -89,6 +129,22 @@ PlotPostQuitEMATime <- function(df.post.quit, df.ids, plot.days, ema.type){
 }
 
 PlotPostQuitNumericResponses <- function(df.post.quit, var.name, df.ids){
+  # About: plots time when Post-Quit EMA (any type) was either delivered
+  #   (for EMAs with engaged.yes=0) or time when participant began completion
+  #   (for EMAs with engaged.yes=1), and in addition, responses to the EMA item
+  #   var.name
+  # Args:
+  #   df.post.quit: any curated post-quit dataset
+  #   var.name: column name in df.post.quit of variable we wish to plot
+  #   df.ids: data frame which is an output of the SampleAndRename() function;
+  #     the rows of df.ids only belong to the subset of participants in the PNS
+  #     study whose data we wish to visualize
+  # Output:
+  #   a ggplot2 object that can be used to display the plot;
+  #   display only one participant's data in a single plot: each participant
+  #   will have their own ggplot2 object; output of this function can the be used
+  #   with the function gridExtra::arrangeGrob() to display plots arranged in a
+  #   grid on a single page.
   
   samp.size <- nrow(df.ids)
   ids <- df.ids$new.id

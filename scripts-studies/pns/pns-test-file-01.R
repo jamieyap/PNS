@@ -54,3 +54,15 @@ test_that("Check whether LB of current interval equals UB of previous interval",
 })
 
 
+test_that(desc = "YES or NO intervals are at most 24 hours in length", code = {
+  max.len <- df %>% 
+    filter(smoking.label == "YES" | smoking.label == "NO") %>%
+    mutate(interval.length = (UB.ts - LB.ts)/(60*60)) %>%
+    select(interval.length) %>%
+    max()
+  
+  actual.result <- 1*(max.len <=24)
+  expected.result <- 1
+  expect_equal(object = actual.result, expected = expected.result)
+})
+
