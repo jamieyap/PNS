@@ -92,10 +92,14 @@ PlotPostQuitEMATime <- function(df.post.quit, df.ids, plot.days, ema.type){
   #     set plot.days=22 to plot the entire Post-Quit period for the PNS study;
   #     set plot.days=3 to zoom into the first 3 days Post-Quit period
   #   ema.type: a string describing the type of EMA; this will be
-  #     used to provide titles to plots; e.g. "random" forPost-Quit Random EMA
+  #     used to provide titles to plots; valid inputs are 
+  #     "random" for Post-Quit Random EMA
+  #     "urge" for Post-Quit Urge EMA
   # Output:
   #   a ggplot2 object that can be used to display the plot;
   #   display multiple participants' data in a single plot
+  
+  assert_that(ema.type %in% c("random", "urge"), msg = "valid ema.type must be used")
   
   samp.size <- nrow(df.ids)
   df.plot.post.quit <- left_join(x = df.ids, y = df.post.quit, by = "id")
@@ -114,15 +118,26 @@ PlotPostQuitEMATime <- function(df.post.quit, df.ids, plot.days, ema.type){
   }
   
   gg.all <- gg.all + geom_point(aes(t, id, color=engaged.yes), alpha=0.5)
+  cols <- c("0" = "red", "1" = "blue")
+  gg.all <- gg.all + scale_colour_manual(values = cols)
+  
   gg.all <- gg.all + labs(x = "No. of Days since 12AM on Quit Day")
   gg.all <- gg.all + labs(y=paste("Each row is one participant's data (sample size=",samp.size,")", sep=""))
   gg.all <- gg.all + scale_x_continuous(breaks = 0:21, limits = c(0,plot.days))
   gg.all <- gg.all + scale_y_continuous(breaks = 1:samp.size)
-  gg.all <- gg.all + theme(legend.position = "bottom")
   
-  # Add title
-  gg.all <- gg.all + labs(title = "Time of EMA delivery of EMAs within 21-Day Post Quit Period")
-  gg.all <- gg.all + labs(subtitle = paste("Shaded area denotes time between 10PM - 8AM \nEach point denotes one post-quit ",ema.type," EMA",sep=""))
+  # Add title and legend
+  if(ema.type=="random"){
+    gg.all <- gg.all + theme(legend.position = "bottom")
+    use.title <- "Time of EMA delivery (if engaged.yes=0) or time when participant began completion\nof EMA (if engaged.yes=1) within 21-Day Post Quit Period"
+    use.subtitle <- paste("Shaded area denotes time between 10PM - 8AM \nEach point denotes one post-quit ",ema.type," EMA",sep="")
+  }else{
+    gg.all <- gg.all + theme(legend.position = "none")
+    use.title <- "Time when participant began completion of EMA within 21-Day Post Quit Period"
+    use.subtitle <- paste("Shaded area denotes time between 10PM - 8AM \nEach point denotes one post-quit ",ema.type," EMA",sep="")
+  }
+  gg.all <- gg.all + labs(title = use.title)
+  gg.all <- gg.all + labs(subtitle = use.subtitle)
   
   return(gg.all)
   
@@ -157,8 +172,6 @@ PlotPostQuitNumericResponses <- function(df.post.quit, var.name, df.ids){
     mutate(engaged.yes = as.factor(engaged.yes)) %>%
     select(id, t, engaged.yes, newvar)
   
-  cols <- c("0" = "red", "1" = "blue")
-  
   collect.plots <- list()
   for(i in 1:length(ids)){
     use.this.id <- ids[i]
@@ -172,12 +185,14 @@ PlotPostQuitNumericResponses <- function(df.post.quit, var.name, df.ids){
     }
     
     gg.all <- gg.all + geom_point(aes(t, newvar, color=engaged.yes), alpha=0.5)
+    cols <- c("0" = "red", "1" = "blue")
     gg.all <- gg.all + scale_colour_manual(values = cols)
     #gg.all <- gg.all + labs(x = "No. of Days since 12AM on Quit Day")
     #gg.all <- gg.all + labs(y="Response to EMA item")
     gg.all <- gg.all + labs(x="", y="")
     gg.all <- gg.all + scale_y_continuous(breaks = c(1,2,3,4,5), labels = c("1","2","3","4","5"))
     gg.all <- gg.all + theme(legend.position = "None")
+    gg.all <- gg.all + labs(title = paste("Participant",use.this.id,sep=" ")) + theme(plot.title = element_text(size = 8, face = "bold"))
     
     # Plot all days
     collect.plots <- append(collect.plots, list(gg.all))

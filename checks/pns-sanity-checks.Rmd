@@ -35,9 +35,9 @@ source(file.path(path.shared.code, "shared-data-manip-utils.R"))
 
 
 ```{r}
-use.samp.size <- 20
+use.samp.size <- 30
 pns.quit.dates <- read.csv(file.path(path.pns.input_data, "pns_quit_dates.csv"), header = TRUE)
-use.df.ids <- SampleAndRename(df = pns.quit.dates, use.seed = 754369, samp.size = use.samp.size)
+use.df.ids <- SampleAndRename(df = pns.quit.dates, use.seed = 734369, samp.size = use.samp.size)
 ```
 
 All visual checks are displayed for the same sample of `r use.samp.size` randomly chosen PNS study participants: `SampleAndRename()` chooses a sample of participant ID's of size `use.samp.size` and provides new participant ID's beginning and ending at 1 and `use.samp.size`, respectively, for plotting. Functions used to create displays of visual checks, such as `SampleAndRename()`, `PlotSmokingOutcome()`, `PlotPostQuitEMATime()`, and `PlotPostQuitNumericResponses()` are defined in the script `pns-plot-utils.R`.
@@ -98,13 +98,13 @@ df.smoking.02 %>%
 
 
 \newpage
-```{r, fig.height=7, fig.width=8}
+```{r, fig.height=8.5, fig.width=8}
 gg.smoking.01 <- PlotSmokingOutcome(df.smoking = df.smoking.01, df.ids = use.df.ids)
 gg.smoking.01
 ```
 
 \newpage
-```{r, fig.height=7, fig.width=8}
+```{r, fig.height=8.5, fig.width=8}
 gg.smoking.02 <- PlotSmokingOutcome(df.smoking = df.smoking.02, df.ids = use.df.ids)
 gg.smoking.02
 ```
@@ -123,7 +123,9 @@ df.post.quit.random.01 <- read.csv(file.path(path.pns.output_data,
 ## Programmatic Checks
 The call `test_file(file.path(path.pns.code, "pns-test-file-02.R"))` triggers the following checks on the internal consistency of `df`, a given Post-Quit Random curated dataset: checks on whether ...
 
-1. order of total prompts since start should match order of time.unixts timestamps
+1. there are no missing `time.unixts` timestamps
+2. there are no missing `engaged.yes` values
+3. order of total prompts since start should match order of `time.unixts` timestamps
 
 If a given Post-Quit Random curated dataset passes all checks in `pns-test-file-02.R`, then the number of tests `Failed` will be displayed as `0`.
 
@@ -166,11 +168,11 @@ df %>%
 
 
 ## Visual Checks
-The design of the study was such that participants would not be prompted to Random EMAs during the evening. Timing or Random EMA delivery (for Random EMA's with `engaged.yes=0`) or timing of when an individual began completing a Random EMA (for Random EMA's with `engaged.yes=1`) are displayed with time of day marked in the background. The vast majority of Random EMA delivery or completion are expected to occur outside the 10pm-8am time window.
+The design of the study was such that participants would not be prompted to Random EMAs during the evening. Timing of Random EMA delivery (for Random EMA's with `engaged.yes=0`) or timing of when an individual began completing a Random EMA (for Random EMA's with `engaged.yes=1`) are displayed with time of day marked in the background. The vast majority of Random EMA delivery or completion are expected to occur outside the 10pm-8am time window.
 
 
 \newpage
-```{r, fig.height=7, fig.width=8}
+```{r, fig.height=8.5, fig.width=8}
 gg.pq.random <- PlotPostQuitEMATime(df.post.quit = df.post.quit.random.01, 
                                     df.ids = use.df.ids, 
                                     plot.days = 22, 
@@ -180,7 +182,7 @@ gg.pq.random
 ```
 
 \newpage
-```{r, fig.height=7, fig.width=8}
+```{r, fig.height=8.5, fig.width=8}
 gg.pq.random.zoom <- PlotPostQuitEMATime(df.post.quit = df.post.quit.random.01, 
                                          df.ids = use.df.ids, 
                                          plot.days = 3, 
@@ -212,7 +214,8 @@ for(i in 1:length(all.vars)){
                                                 df.ids = use.df.ids)
   
   text.top <- paste(use.var.name,
-                    "Time of EMA delivery versus response on a 5-point Likert scale", 
+                    "Time of EMA delivery (when engaged.yes=0) or time when participant began", 
+                    "completion of EMA (when engaged.yes=1) versus response on a 5-point Likert scale",
                     "All Random EMAs within 21-Day Post Quit Period", 
                     sep="\n")
   text.bottom <- paste("Shaded area denotes time between 10PM - 8AM",
@@ -221,10 +224,10 @@ for(i in 1:length(all.vars)){
                        sep="\n")
   
   plot.grid <- marrangeGrob(grobs = collect.plots, 
-                            ncol=4, 
-                            nrow = 5,
-                            top = textGrob(text.top,gp=gpar(fontsize=11,font=3)),
-                            bottom = textGrob(text.bottom,gp=gpar(fontsize=11,font=3))
+                            ncol=5, 
+                            nrow = 6,
+                            top = textGrob(text.top,gp=gpar(fontsize=9,font=3)),
+                            bottom = textGrob(text.bottom,gp=gpar(fontsize=9,font=3))
                             )
   
   collect.plot.grid <- append(collect.plot.grid, list(plot.grid))
@@ -232,20 +235,132 @@ for(i in 1:length(all.vars)){
 ```
 
 \newpage
-```{r, fig.height=10, fig.width=8}
+```{r, fig.height=8.5, fig.width=8}
 collect.plot.grid[[1]]
 ```
 
 \newpage
-```{r, fig.height=10, fig.width=8}
+```{r, fig.height=8.5, fig.width=8}
 collect.plot.grid[[2]]
 ```
 
 \newpage
-```{r, fig.height=10, fig.width=8}
+```{r, fig.height=8.5, fig.width=8}
 collect.plot.grid[[3]]
 ```
 
+\newpage
+# Post-Quit Urge Curated Datasets
+The post-quit urge curated datasets, named as `pns.postquiturge.XX.csv`, only differ in which subset of post-quit urge EMA items are included as columns, while the manner of constructing timestamps corresponding to each row are identical across all post-quit urge curated datasets. We choose one post-quit urge curated dataset on which to perform checks on consistency with study design and internal consistency.
+
+```{r}
+# pns.postquiturge.01.csv is the minimal post-quit urge curated dataset
+df.post.quit.urge.01 <- read.csv(file.path(path.pns.output_data, 
+                                             "pns.postquiturge.01.csv"), 
+                                   header = TRUE)
+```
+
+## Programmatic Checks
+We call `test_file(file.path(path.pns.code, "pns-test-file-02.R"))` to trigger checks on the internal consistency of a given Post-Quit Urge curated dataset. These checks are identical to those performed on the curated Pos-Quit Random dataset.
+
+```{r}
+df <- df.post.quit.urge.01
+test_file(file.path(path.pns.code, "pns-test-file-02.R"))
+```
 
 
+```{r}
+df <- df.post.quit.urge.01
+```
 
+The study is designed so that a participant can trigger any number of Post-Quit Urge EMAs. Across the 21-day Post-Quit period, we tabulate the number of Post-Quit Urge EMAs in the curated dataset per participant and then tabulate the mean, minimum, and maximum.
+
+```{r}
+df %>% 
+  group_by(id) %>% 
+  summarise(count = n()) %>%
+  summarise(mean.count = mean(count), 
+            min.count = min(count), 
+            max.count = max(count))
+```
+
+## Visual Checks
+The design of the study was such that participants would not be prompted to Random EMAs during the evening. However, participants can trigger Post-Quit Urge EMAs at any time of the day, including evenings. Timing of when an individual began completing an Urge EMA are displayed with time of day marked in the background. As expected, there are Post-Quit Urge EMAs triggered within the 10pm-8am time window.
+
+\newpage
+```{r, fig.height=8.5, fig.width=8}
+gg.pq.urge <- PlotPostQuitEMATime(df.post.quit = df.post.quit.urge.01, 
+                                    df.ids = use.df.ids, 
+                                    plot.days = 22, 
+                                    ema.type="urge")
+
+gg.pq.urge
+```
+
+\newpage
+```{r, fig.height=8.5, fig.width=8}
+gg.pq.urge <- PlotPostQuitEMATime(df.post.quit = df.post.quit.urge.01, 
+                                    df.ids = use.df.ids, 
+                                    plot.days = 3, 
+                                    ema.type="urge")
+
+gg.pq.urge
+```
+
+\newpage 
+
+Let us visually inspect the pattern of responses during the 21 day Post-Quit study period for select Post-Quit Urge EMA items.
+
+| Variable Name | Question |
+|:--------------:|:-------------------------------|
+| `Affect6` | I feel angry. |
+| `Affect7` | I feel anxious. |
+| `Affect8` | I feel restless. |
+
+```{r}
+all.vars <- c(paste("Affect",c(6,7,8),sep=""))
+collect.plot.grid <- list()
+
+for(i in 1:length(all.vars)){
+  use.var.name <- all.vars[i]
+
+  collect.plots <- PlotPostQuitNumericResponses(df.post.quit = df.post.quit.urge.01, 
+                                                var.name = use.var.name, 
+                                                df.ids = use.df.ids)
+  
+  text.top <- paste(use.var.name,
+                    "Time when participant began completion of EMA versus response on a 5-point Likert scale", 
+                    "All Urge EMAs within 21-Day Post Quit Period", 
+                    sep="\n")
+  text.bottom <- paste("Shaded area denotes time between 10PM - 8AM",
+                       "Each point denotes one urge EMA",
+                       sep="\n")
+  
+  plot.grid <- marrangeGrob(grobs = collect.plots, 
+                            ncol=5, 
+                            nrow = 6,
+                            top = textGrob(text.top,gp=gpar(fontsize=9,font=3)),
+                            bottom = textGrob(text.bottom,gp=gpar(fontsize=9,font=3))
+                            )
+  
+  collect.plot.grid <- append(collect.plot.grid, list(plot.grid))
+}
+```
+
+\newpage
+
+```{r, fig.height=8.5, fig.width=8}
+collect.plot.grid[[1]]
+```
+
+\newpage
+
+```{r, fig.height=8.5, fig.width=8}
+collect.plot.grid[[2]]
+```
+
+\newpage
+
+```{r, fig.height=8.5, fig.width=8}
+collect.plot.grid[[3]]
+```
