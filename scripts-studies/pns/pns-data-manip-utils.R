@@ -2,7 +2,7 @@ library(dplyr)
 library(magrittr)
 library(assertthat)
 
-SetTimeFrame <- function(df.quit.dates, study.duration, addtime){
+SetTimeFrame <- function(df.quit.dates, study.duration, addtime, remove.missing=TRUE){
   # About: Calculate start of clock and end of clock in unix time
   #   from list of participant quit dates
   # Args:
@@ -10,6 +10,9 @@ SetTimeFrame <- function(df.quit.dates, study.duration, addtime){
   #   study.duration: the duration of the study in days
   #   addtime: time difference in hours of unix timestamps created 
   #     on local machine and unix timestamps in raw data
+  #   remove.missing: if TRUE, individuals with missing quit dates will be removed;
+  #     if FALSE, individuals with missing quit dates will not be removed;
+  #     by default, we set remove.missing to TRUE
   # Output:
   #   data frame with start of clock and end of clock in unix time
   
@@ -18,36 +21,56 @@ SetTimeFrame <- function(df.quit.dates, study.duration, addtime){
   check <- sum(!hasName(df.quit.dates, c("id","quit.date")))
   assert_that(check==0, msg = "Column names must be: id, quit.date")
   
-  # (2) Check: quit date is in the correct format 
-  tmp.date.df <- as.character(df.quit.dates[,"quit.date"])
-  tmp.date.df <- strptime(tmp.date.df, format = "%m/%d/%Y")
+  # (2) Check: whether there are individuals with missing quit dates
+  tmp.date.df <- df.quit.dates
+  tmp.date.df[["quit.date"]] <- as.character(tmp.date.df[["quit.date"]])
+  tmp.date.df[["quit.date"]] <- if_else(tmp.date.df[["quit.date"]]=="", 
+                                        NA_character_, 
+                                        tmp.date.df[["quit.date"]])
+  any.missing <- sum(is.na(tmp.date.df[["quit.date"]]))
+  if(any.missing > 0){
+    tmp.date.df <- tmp.date.df %>% filter(!is.na(quit.date))
+  }
+  
+  # (3) Check: quit date is in the correct format (after removing individuals
+  #     with missing quit dates in tmp.date.df)
+  tmp.date.df <- strptime(tmp.date.df[["quit.date"]], format = "%m/%d/%Y")
   # Incorrectly formatted date will yield check=NA
   check <- sum(is.na(tmp.date.df))
   assert_that(check==0, msg = "quit.date MUST BE IN mm/dd/yyyy FORMAT")
+  remove(tmp.date.df)
   
   # Begin ---------------------------------------------------------------------
-  df.quit.dates[,"quit.date"] <- as.character(df.quit.dates[,"quit.date"])
+  df.quit.dates[["quit.date"]] <- as.character(df.quit.dates[["quit.date"]])
+  df.quit.dates[["quit.date"]] <- if_else(df.quit.dates[["quit.date"]]=="", 
+                                          NA_character_, 
+                                          df.quit.dates[["quit.date"]])
+  any.missing <- sum(is.na(df.quit.dates[["quit.date"]]))
+  if(any.missing > 0 & isTRUE(remove.missing)){
+    df.quit.dates <- df.quit.dates %>% filter(!is.na(quit.date))
+  }
   
   # Calculate timestamps corresponding to start and end of clock
-  df.quit.dates[,"quit.date"] <- as.POSIXct(strptime(df.quit.dates[,"quit.date"], format = "%m/%d/%Y"))
+  df.quit.dates[["quit.date"]] <- strptime(df.quit.dates[["quit.date"]], format = "%m/%d/%Y")
+  df.quit.dates[["quit.date"]] <- as.POSIXct(df.quit.dates[["quit.date"]])
   df.quit.dates$start.clock <- NA
   df.quit.dates$end.clock <- NA
   
   # 4AM on Quit Day 
-  df.quit.dates[,"start.clock"] <- as.numeric(df.quit.dates[,"quit.date"]) + 4*60*60 
+  df.quit.dates[["start.clock"]] <- as.numeric(df.quit.dates[["quit.date"]]) + 4*60*60 
   # 12AM on study.duration days after Quit Day
   total.duration <- study.duration*24*60*60  - 4*60*60
-  df.quit.dates[,"end.clock"] <- df.quit.dates[,"start.clock"] + total.duration
+  df.quit.dates[["end.clock"]] <- df.quit.dates[["start.clock"]] + total.duration
   
   # Adjust for time zone differences
-  df.quit.dates[,"start.clock"] <- df.quit.dates[,"start.clock"] + addtime*60*60 
-  df.quit.dates[,"end.clock"] <- df.quit.dates[,"end.clock"] + addtime*60*60
+  df.quit.dates[["start.clock"]] <- df.quit.dates[["start.clock"]] + addtime*60*60 
+  df.quit.dates[["end.clock"]] <- df.quit.dates[["end.clock"]] + addtime*60*60
   
   # ---------------------------------------------------------------------------
   # Clean up output
   # ---------------------------------------------------------------------------
-  df.quit.dates[,"quit.date"] <- strftime(df.quit.dates[,"quit.date"], format = "%m/%d/%Y")
-  df.quit.dates[,"quit.date"] <- as.character(df.quit.dates[,"quit.date"])
+  df.quit.dates[["quit.date"]] <- strftime(df.quit.dates[["quit.date"]], format = "%m/%d/%Y")
+  df.quit.dates[["quit.date"]] <- as.character(df.quit.dates[["quit.date"]])
   row.names(df.quit.dates) <- 1:nrow(df.quit.dates)
   df.time.frame <- df.quit.dates
   

@@ -126,6 +126,8 @@ The call `test_file(file.path(path.pns.code, "pns-test-file-02.R"))` triggers th
 1. there are no missing `time.unixts` timestamps
 2. there are no missing `engaged.yes` values
 3. order of total prompts since start should match order of `time.unixts` timestamps
+4. there are no missing `record.id` values
+5. there are no duplicate `record.id` values
 
 If a given Post-Quit Random curated dataset passes all checks in `pns-test-file-02.R`, then the number of tests `Failed` will be displayed as `0`.
 
@@ -364,3 +366,24 @@ collect.plot.grid[[2]]
 ```{r, fig.height=8.5, fig.width=8}
 collect.plot.grid[[3]]
 ```
+
+\newpage
+# Other Checks
+
+In this section, we collect other checks on the curated data.
+
+* Check that there are no duplicate record.id values across Post-Quit Random EMAs and Post-Quit Urge EMAs
+
+```{r}
+pqrandom.record.ids <- as.character(df.post.quit.random.01$record.id) 
+pqurge.record.ids <- as.character(df.post.quit.urge.01$record.id)
+pqall.record.ids <- c(pqrandom.record.ids, pqurge.record.ids)
+
+len1 <- length(pqrandom.record.ids) + length(pqurge.record.ids)
+len2 <- length(unique(pqall.record.ids))
+assert_that(len1 == len2, msg = "Duplicates were found")  # Displays msg if error
+```
+
+
+
+

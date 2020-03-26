@@ -26,3 +26,16 @@ test_that(desc = "Order of total prompts since start should match order of time.
   expect_equal(object = actual.result, expected = expected.result)
 })
 
+test_that(desc = "there are no missing record.id values", code = {
+  these.records <- as.character(df$record.id)
+  these.records <- replace(these.records, these.records=="", NA_character_)
+  actual.result <- sum(is.na(these.records))
+  expected.result <- 0
+  expect_equal(object = actual.result, expected = expected.result)
+})
+
+test_that(desc = "there are no duplicate record.id values", code = {
+  actual.result <- length(unique(as.character(df$record.id)))
+  expected.result <- nrow(df)
+  expect_equal(object = actual.result, expected = expected.result)
+})
