@@ -44,7 +44,8 @@ df.post.quit.random <- SetUpPostQuit(df.raw = df.raw.post.quit.random,
 # equals 0 if no response to any question was recorded
 these.cols <- c("record.id",             
                 "record.status",         
-                "id",                    
+                "id", 
+                "callnumr",
                 "Day",                   
                 "delivered.hrts",        
                 "InitiatedDate",         
@@ -172,7 +173,16 @@ construct.features <- TRUE
 df.out <- df.out.01
 
 if(isTRUE(construct.features)){
+  # Features: means and variances of responses
   source(file.path(path.pns.code, "pns-features.R"))
+  # Feature: variance of responses within a given EMA
+  df.more.features <- df.out %>% 
+    group_by(id, record.id) %>% 
+    summarise(variance.among.affect = var(c(Affect1, Affect2, Affect3, Affect4, 
+                                            Affect5, Affect6, Affect7, Affect8, 
+                                            Affect9, Affect10),
+                                          na.rm = TRUE))
+  df.out <- left_join(x = df.out, y = df.more.features, by = c("id", "record.id"))
   
   # Clean up output and save
   df.out <- select(df.out, -ones)
