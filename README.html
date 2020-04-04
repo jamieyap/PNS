@@ -398,7 +398,131 @@ summary {
 </div>
 <div id="how-this-repository-is-organized" class="section level1">
 <h1>2. How this Repository is Organized</h1>
-<p>This repository contains code for preparing, curating, and integrating multi-modal intensive longitudinal data, with the implementation of these tasks in R. Data come from multiple studies: the <a href="https://github.com/jamieyap/MARS/tree/master/scripts-shared"><code>scripts-shared</code></a> folder contains scripts that could be used across studies while the <a href="https://github.com/jamieyap/MARS/tree/master/scripts-studies"><code>scripts-studies</code></a> folder contains scripts that are specific to individual studies. Within each individual study, tasks are organized by type of data stream.</p>
+<p>This repository contains code for preparing, curating, and integrating multi-modal intensive longitudinal data, with the implementation of these tasks in R. Data come from multiple studies: the <a href="https://github.com/jamieyap/MARS/tree/master/scripts-shared"><code>scripts-shared</code></a> folder contains scripts that could be used across studies while the <a href="https://github.com/jamieyap/MARS/tree/master/scripts-studies"><code>scripts-studies</code></a> folder contains scripts that are specific to individual studies. Within each individual study, tasks are organized by type of data stream. The studies are briefly described below.</p>
+<table>
+<colgroup>
+<col width="21%"></col>
+<col width="78%"></col>
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center">Study</th>
+<th align="left">Brief Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">Por Nuestra Salud</td>
+<td align="left">The Por Nuestra Salud (PNS) study examines intrapersonal and contextual determinants of smoking cessation among Spanish-speaking Mexican American smokers attempting to quit.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="por-nuestra-salud" class="section level1">
+<h1>3. Por Nuestra Salud</h1>
+</div>
+<div id="essential" class="section level1">
+<h1>3.1 Essential</h1>
+<table>
+<thead>
+<tr class="header">
+<th align="center">File</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">TBA</td>
+<td align="left">TBA</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="more-details" class="section level1">
+<h1>3.2 More Details</h1>
+<div id="data-curation" class="section level2">
+<h2>3.2.1 Data Curation</h2>
+<table>
+<colgroup>
+<col width="21%"></col>
+<col width="78%"></col>
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center">File</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center"><a href="https://github.com/jamieyap/MARS/tree/master/scripts-studies/PNS/pns-engage.R"><code>pns-engage.R</code></a></td>
+<td align="left">Creates analytic dataset with engagement as outcome</td>
+</tr>
+<tr class="even">
+<td align="center"><a href="https://github.com/jamieyap/MARS/tree/master/scripts-studies/PNS/pns-smoking.R"><code>pns-smoking.R</code></a></td>
+<td align="left">Creates analytic dataset with self-reported smoking events as outcome</td>
+</tr>
+<tr class="odd">
+<td align="center"><a href="https://github.com/jamieyap/MARS/tree/master/scripts-studies/PNS/pns-urge.R"><code>pns-urge.R</code></a></td>
+<td align="left">Creates analytic dataset with self-reported timestamps when an urge to smoke occurred as outcome</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="tests-on-output-data" class="section level2">
+<h2>3.2.2 Tests on Output Data</h2>
+<table>
+<colgroup>
+<col width="21%"></col>
+<col width="78%"></col>
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center">File</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center"><a href="https://github.com/jamieyap/MARS/tree/master/checks/pns-sanity-checks.Rmd"><code>pns-sanity-checks.Rmd</code></a></td>
+<td align="left">Runs and collects results from <code>pns-test-file-01.R</code> and <code>pns-test-file-02.R</code> in a PDF file <a href="https://github.com/jamieyap/MARS/tree/master/checks/pns-sanity-checks.pdf"><code>pns-sanity-checks.pdf</code></a></td>
+</tr>
+<tr class="even">
+<td align="center"><a href="https://github.com/jamieyap/MARS/tree/master/scripts-studies/PNS/pns-test-file-01.R"><code>pns-test-file-01.R</code></a></td>
+<td align="left">A collection of checks on the construction of self-reported smoking events as outcome</td>
+</tr>
+<tr class="odd">
+<td align="center"><a href="https://github.com/jamieyap/MARS/tree/master/scripts-studies/PNS/pns-test-file-02.R"><code>pns-test-file-02.R</code></a></td>
+<td align="left">A collection of checks on the construction of Post-Quit Random or Urge EMA curated datasets</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="other" class="section level1">
+<h1>3.3 Other</h1>
+<table>
+<colgroup>
+<col width="21%"></col>
+<col width="78%"></col>
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center">File</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center"><a href="https://github.com/jamieyap/MARS/tree/master/scripts-studies/PNS/pns-data-manip-utils.R"><code>pns-data-manip-utils.R</code></a></td>
+<td align="left">A collection of functions to execute data preprocessing tasks specific to PNS raw data</td>
+</tr>
+<tr class="even">
+<td align="center"><a href="https://github.com/jamieyap/MARS/tree/master/scripts-studies/PNS/pns-plot-utils.R"><code>pns-plot-utils.R</code></a></td>
+<td align="left">A collection of functions to execute data visualization tasks specific to PNS curated data</td>
+</tr>
+</tbody>
+</table>
 </div>
 
 
