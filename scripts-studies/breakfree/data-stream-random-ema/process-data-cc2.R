@@ -105,10 +105,14 @@ max.ema.count <- do.call(rbind, max.ema.count)
 list.df.raw.random.STATUS.cc2 <- lapply(list.df.raw.random.STATUS.cc2, function(x){
   
   df <- x %>% 
-    select(user.id, V1, V4) %>% 
-    mutate(status = as.character(V4),
+    select(user.id, V1, V3, V4) %>% 
+    mutate(notification = as.character(V3),
+           status = as.character(V4),
            prompt.ts = as.character(V1)) %>%
-    filter(status=="MISSED") %>%
+    filter((notification=="NOTIFICATION_AFTER_DELAY" & status=="MISSED") | 
+             (notification=="NOTIFICATION_AFTER_DELAY" & status=="Cancel") | 
+             (notification=="NOTIFICATION_WITH_DELAY" & status=="MISSED") | 
+             (notification=="NOTIFICATION_WITH_DELAY" & status=="Cancel")) %>%
     mutate(prompt.ts = as.numeric(prompt.ts)) %>%
     select(user.id, prompt.ts, status)
   
