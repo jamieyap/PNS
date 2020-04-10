@@ -73,35 +73,8 @@ if(isTRUE(write.out)){
 }
 
 ###############################################################################
-# Create an id-variable for each ema in the raw data:
-# COMPLETED, ABANDONED_BY_TIMEOUT EMAs
-###############################################################################
-N <- length(list.df.raw.random.DATA.cc2)
-
-for(i in 1:N){
-  df.raw <- list.df.raw.random.DATA.cc2[[i]]
-  df.raw$random.ema.id <- 1:nrow(df.raw)
-  df.raw$ema.type <- "random"
-  list.df.raw.random.DATA.cc2[[i]] <- df.raw
-}
-
-###############################################################################
-# CHECK: determine the number of EMAs we have thus far per person
-###############################################################################
-max.ema.count <- lapply(list.df.raw.random.DATA.cc2, function(x){
-  df <- data.frame(user.id = as.character(unique(x$user.id)),
-                   M = as.numeric(max(x$random.ema.id)))
-  df$user.id <- as.character(df$user.id)
-  return(df)
-})
-
-max.ema.count <- do.call(rbind, max.ema.count)
-
-###############################################################################
-# Create an id-variable for each ema in the raw data:
-# MISSED EMAs
-###############################################################################
 # Obtain columns in each person's STATUS file corresponding to MISSED EMAs
+###############################################################################
 list.df.raw.random.STATUS.cc2 <- lapply(list.df.raw.random.STATUS.cc2, function(x){
   
   df <- x %>% 
@@ -126,54 +99,19 @@ list.df.raw.random.STATUS.cc2 <- lapply(list.df.raw.random.STATUS.cc2, function(
 # Remove NULL elements of the list
 list.df.raw.random.STATUS.cc2 <- discard(list.df.raw.random.STATUS.cc2, is.null)
 
-# Apply a function to each element of list.df.tmp
-list.df.raw.random.STATUS.cc2 <- lapply(list.df.raw.random.STATUS.cc2, function(this.df, counts.df = max.ema.count){
-  
-  this.user.id <- unique(this.df$user.id)
-  M <- counts.df[which(counts.df$user.id == this.user.id), "M"]
-  if(length(M)>0){
-    this.df$random.ema.id <- ((M+1):(M+nrow(this.df)))
-  }else{  # length(M)==0
-    this.df$random.ema.id <- (1:nrow(this.df))
-  }
-  
-  this.df$ema.type <- "random"
-  
-  return(this.df)
-})
-
 ###############################################################################
-# CHECK: determine the number of MISSED EMAs we have per person
+# Data preprocessing steps
 ###############################################################################
-max.ema.count.missed <- lapply(list.df.raw.random.STATUS.cc2, function(x){
-  df <- data.frame(user.id = unique(x$user.id),
-                   M = nrow(x))
-  df$user.id <- as.character(df$user.id)
-  return(df)
-})
-
-max.ema.count.missed <- do.call(rbind, max.ema.count.missed)
-
-###############################################################################
-# Grab raw data responses for each participant i and discard extraneous info:
-# Items rated on a 5-point Likert scale - Strongly Disagree to Strongly Agree
-###############################################################################
-find.this.string <- "{Strongly Disagree},{Disagree},{Neutral},{Agree},{Strongly Agree}"
-
-# collect.idx are question ids with responses find.this.string
-collect.idx <- items.cc2 %>% 
-  filter(question.options==find.this.string) %>%
-  select(question.id)
-
-# Change collect.idx from data frame to numeric array
-collect.idx <- c(as.matrix(collect.idx))
-
-# List to collect item responses
-list.resp.cc2 <- list()
 N <- length(list.df.raw.random.DATA.cc2)
+list.df.reference <- list()
 
 for(i in 1:N){
   df.raw <- list.df.raw.random.DATA.cc2[[i]]
+  
+  # Create an id-variable for each ema in the raw data having
+  # COMPLETED and ABANDONED_BY_TIMEOUT EMAs for merging responses
+  # within a participant
+  df.raw$merge.id <- 1:nrow(df.raw)
   
   # Create outcome variable/target
   check1 <- grepl("_response_", colnames(df.raw))
@@ -184,13 +122,13 @@ for(i in 1:N){
   # Calling the function CheckAnyResponse() creates with.any.response
   df.raw <- CheckAnyResponse(df = df.raw, drop.cols = drop.these.cols)
   
-  # Proceed with remaining steps ----------------------------------------------
   # Bring time variables to the left of the data frame
   # prompt.ts and begin.ts are two time variables used to anchor analyses
   df.raw <- df.raw %>% 
-    select(user.id, random.ema.id, ema.type, status,
+    select(user.id, status,
            start_time, end_time,
            mCerebrum_timestamp, mCerebrum_offset, everything()) %>%
+    mutate(status = as.character(status)) %>%
     rename(mCerebrum.ts = mCerebrum_timestamp) %>%
     rename(prompt.ts = start_time) %>%
     mutate(begin.ts = NA,
@@ -208,71 +146,143 @@ for(i in 1:N){
                                 NA)) %>%
       mutate(end.ts = end_time) %>%
       mutate(end.ts = replace(end.ts, is.na(begin.ts), NA))
-    
-    list.items <- list()
-    # There are 64 items in a Random EMA for CC2 participants
-    # The last item is a thank you message
-    # Thus, idx ranges from 1 to 63
-    for(idx in collect.idx){  
-      these.col.names <- grepl(paste("_",idx,"_",sep=""), all.col.names)
-      these.col.names <- all.col.names[these.col.names]
-      df.item <- df.raw %>% select(these.col.names) 
-      
-      # Note: Column names from CC1 to CC2 changed
-      # For each of the EMA items, get:
-      # question response: question_idx_response_0
-      idx.resp <- match(x = paste("questions_",idx,"_response_0", sep=""), table = these.col.names)
-      
-      if(!is.na(idx.resp)){
-        # Collect info into one data frame
-        question.resp <- df.item[these.col.names[idx.resp]]
-        question.resp <- as.data.frame(question.resp)
-        question.resp <- CleanLikertScale(df = question.resp, col.name = colnames(question.resp))
-        colnames(question.resp) <- paste("item.",idx, sep="")
-        list.items <- append(list.items,list(question.resp))
-      }else{
-        question.resp <- rep(NA, times = nrow(df.item))
-        question.resp <- as.data.frame(question.resp)
-        colnames(question.resp) <- paste("item.",idx, sep="")
-        list.items <- append(list.items,list(question.resp))
-      }
-    }
-    
-    df.resp <- do.call(cbind, list.items)
-    df <- df.raw %>% select(user.id, random.ema.id, ema.type, status, 
-                            prompt.ts, begin.ts, end.ts, mCerebrum.ts,
-                            with.any.response)
-    df <- cbind(df, df.resp)
-    list.resp.cc2 <- append(list.resp.cc2, list(df))
-  }else{
-    df.resp <- rep(NA, nrow(df.raw)*length(collect.idx))
-    df.resp <- matrix(df.resp, ncol = length(collect.idx))
-    df.resp <- as.data.frame(df.resp)
-    colnames(df.resp) <- paste("item.",collect.idx, sep="")
-    df <- df.raw %>% select(user.id, random.ema.id, ema.type, status, 
-                            prompt.ts, begin.ts, end.ts, mCerebrum.ts,
-                            with.any.response)
-    df <- cbind(df, df.resp) 
-    list.resp.cc2 <- append(list.resp.cc2, list(df))
   }
+  
+  # Rearrange columns
+  df.raw <- df.raw %>%
+    select(user.id, merge.id, status, 
+           prompt.ts, begin.ts, end.ts, mCerebrum.ts,
+           everything())
+  
+  df.ref <- df.raw %>%
+    select(user.id, merge.id, status, 
+           prompt.ts, begin.ts, end.ts, mCerebrum.ts,
+           with.any.response)
+  
+  # Save changes
+  list.df.raw.random.DATA.cc2[[i]] <- df.raw
+  list.df.reference <- append(list.df.reference, list(df.ref))
 }
 
-df.resp.cc2 <- do.call(rbind, list.resp.cc2)
-remove(list.resp.cc2, df.resp, df)
+df.reference <- bind_rows(list.df.reference)
+
+################################################################################
+# Create a list to collect various types of responses
+###############################################################################
+list.collect.all <- list()
+
+###############################################################################
+# Grab raw data responses for each participant i and discard extraneous info:
+# multiple_choice items
+###############################################################################
+find.this.string <- "multiple_choice"
+
+# collect.idx are question ids with response type find.this.string
+collect.idx <- items.cc2 %>% 
+  filter(question.type==find.this.string) %>%
+  select(question.id)
+
+# Change collect.idx from data frame to numeric array
+collect.idx <- c(as.matrix(collect.idx))
+
+# Grab items with responses find.this.string
+source(file.path(path.breakfree.code, "data-stream-random-ema/grab-single-response-items-cc2.R"))
+df.resp.cc2 <- df.resp.cc2 %>% mutate_at(vars(grep(pattern = "item.", x = .)), as.character)
+list.collect.all <- append(list.collect.all, list(df.resp.cc2))
+
+# Remove these variables from environment so that they can be reused
+remove(list.resp.cc2, df.resp, df, df.resp.cc2)
+
+###############################################################################
+# Grab raw data responses for each participant i and discard extraneous info:
+# number_picker items
+###############################################################################
+find.this.string <- "number_picker"
+
+# collect.idx are question ids with response type find.this.string
+collect.idx <- items.cc2 %>% 
+  filter(question.type==find.this.string) %>%
+  select(question.id)
+
+# Change collect.idx from data frame to numeric array
+collect.idx <- c(as.matrix(collect.idx))
+
+# Grab items with responses find.this.string
+source(file.path(path.breakfree.code, "data-stream-random-ema/grab-single-response-items-cc2.R"))
+df.resp.cc2 <- df.resp.cc2 %>% mutate_at(vars(grep(pattern = "item.", x = .)), as.numeric)
+
+list.collect.all <- append(list.collect.all, list(df.resp.cc2))
+
+# Remove these variables from environment so that they can be reused
+remove(list.resp.cc2, df.resp, df, df.resp.cc2)
+
+###############################################################################
+# Grab raw data responses for each participant i and discard extraneous info:
+# hour_minute items
+###############################################################################
+find.this.string <- "hour_minute"
+
+# collect.idx are question ids with response type find.this.string
+collect.idx <- items.cc2 %>% 
+  filter(question.type==find.this.string) %>%
+  select(question.id)
+
+# Change collect.idx from data frame to numeric array
+collect.idx <- c(as.matrix(collect.idx))
+
+# Grab items with responses find.this.string
+source(file.path(path.breakfree.code, "data-stream-random-ema/grab-single-response-items-cc2.R"))
+df.resp.cc2 <- df.resp.cc2 %>% mutate_at(vars(grep(pattern = "item.", x = .)), as.character)
+
+list.collect.all <- append(list.collect.all, list(df.resp.cc2))
+
+# Remove these variables from environment so that they can be reused
+remove(list.resp.cc2, df.resp, df, df.resp.cc2)
+
+###############################################################################
+# Grab raw data responses for each participant i and discard extraneous info:
+# multiple_select items
+###############################################################################
+find.this.string <- "multiple_select"
+
+# collect.idx are question ids with response type find.this.string
+collect.idx <- items.cc2 %>% 
+  filter(question.type==find.this.string) %>%
+  select(question.id)
+
+# Change collect.idx from data frame to numeric array
+collect.idx <- c(as.matrix(collect.idx))
+
+# Grab items with responses find.this.string
+source(file.path(path.breakfree.code, "data-stream-random-ema/grab-multiple-response-items-cc2.R"))
+df.resp.cc2 <- df.resp.cc2 %>% mutate_at(vars(grep(pattern = "item.", x = .)), as.character)
+
+list.collect.all <- append(list.collect.all, list(df.resp.cc2))
+
+# Remove these variables from environment so that they can be reused
+remove(list.resp.cc2, df.resp, df, df.resp.cc2)
+
+###############################################################################
+# Merge different types of information into one data frame per participant
+###############################################################################
+df.collect.all <- list.collect.all %>% reduce(left_join, by = c("user.id", "merge.id"))
+df.collect.all <- left_join(x = df.collect.all, y = df.reference)
+df.collect.all <- df.collect.all %>% select(-merge.id)
+
+# Remove these variables from environment 
+remove(list.collect.all)
 
 ###############################################################################
 # Prepare info on MISSED Random EMAs from STATUS files
 # for merging with COMPLETED and ABANDONED_BY_TIMEOUT Random EMAs from
 # DATA files
 ###############################################################################
-list.df.tmp <- lapply(list.df.raw.random.STATUS.cc2, function(x, use.col.names=colnames(df.resp.cc2)){
+list.df.tmp <- lapply(list.df.raw.random.STATUS.cc2, function(x, use.col.names=colnames(df.collect.all)){
   
   df.tmp <- matrix(NA, nrow(x), length(use.col.names))
   df.tmp <- as.data.frame(df.tmp)
   colnames(df.tmp) <- use.col.names
   df.tmp$user.id <- x$user.id
-  df.tmp$random.ema.id <- x$random.ema.id
-  df.tmp$ema.type <- x$ema.type
   df.tmp$status <- x$status
   df.tmp$prompt.ts <- x$prompt.ts
   # with.any.response=0 for all MISSED EMAs
@@ -285,12 +295,13 @@ df.tmp <- do.call(rbind, list.df.tmp)
 remove(list.df.tmp)
 
 ###############################################################################
-# Merge data in df.resp.cc2 and df.tmp
+# Merge data in df.collect.all and df.tmp
 ###############################################################################
-df.resp.cc2 <- rbind(df.resp.cc2, df.tmp)
+df.collect.all <- rbind(df.collect.all, df.tmp)
 
 # Now convert timestamps from milliseconds to seconds
-df.resp.cc2 <- df.resp.cc2 %>% 
+# and add human-readable time
+df.collect.all <- df.collect.all %>% 
   arrange(user.id, prompt.ts) %>%
   group_by(user.id) %>%
   mutate(prompt.ts = prompt.ts/1000,
@@ -298,161 +309,57 @@ df.resp.cc2 <- df.resp.cc2 %>%
          end.ts = end.ts/1000,
          mCerebrum.ts = mCerebrum.ts/1000)
 
-###############################################################################
-# Write out df.resp.cc2 to a csv file
-###############################################################################
-write.out <- TRUE
+# Add human-readable timestamps
+df.collect.all <- df.collect.all %>%
+  mutate(prompt.hrts = as.POSIXct(prompt.ts, tz = "CST6CDT", origin="1970-01-01"),
+         begin.hrts = as.POSIXct(begin.ts, tz = "CST6CDT", origin="1970-01-01"),
+         end.hrts = as.POSIXct(end.ts, tz = "CST6CDT", origin="1970-01-01"),
+         mCerebrum.hrts = as.POSIXct(mCerebrum.ts, tz = "CST6CDT", origin="1970-01-01"))
 
-if(isTRUE(write.out)){
-  write.csv(df.resp.cc2, 
-            file.path(path.breakfree.output_data, "resp.randomEMA.cc2.csv"), 
-            row.names=FALSE)
-}
+df.collect.all <- df.collect.all %>%
+  mutate(prompt.hrts = strftime(prompt.hrts, format="%Y-%m-%d %H:%M:%S %z", tz = "CST6CDT"),
+         begin.hrts = strftime(begin.hrts, format="%Y-%m-%d %H:%M:%S %z", tz = "CST6CDT"),
+         end.hrts = strftime(end.hrts, format="%Y-%m-%d %H:%M:%S %z", tz = "CST6CDT"),
+         mCerebrum.hrts = strftime(mCerebrum.hrts, format="%Y-%m-%d %H:%M:%S %z", tz = "CST6CDT"))
 
-###############################################################################
-# Grab raw data responses for each participant i and discard extraneous info:
-# Items related to smoking
-###############################################################################
-# collect.idx are question ids
-collect.idx <- c(39, 40, 41, 42, 43)
+df.collect.all$timezone.hrts <- "CST6CDT"
 
-# Change collect.idx from data frame to numeric array
-collect.idx <- c(as.matrix(collect.idx))
+df.collect.all <- df.collect.all %>%
+  mutate(prompt.hrts = as.character(prompt.hrts),
+         begin.hrts = as.character(begin.hrts),
+         end.hrts = as.character(end.hrts),
+         mCerebrum.hrts = as.character(mCerebrum.hrts))
 
-# List to collect item responses
-list.resp.cc2 <- list()
-N <- length(list.df.raw.random.DATA.cc2)
-
-
-for(i in 1:N){
-  df.raw <- list.df.raw.random.DATA.cc2[[i]]
-  
-  # Begin ---------------------------------------------------------------------
-  # Bring time variables to the left of the data frame
-  # prompt.ts and begin.ts are two time variables used to anchor analyses
-  df.raw <- df.raw %>% 
-    select(user.id, random.ema.id, ema.type, status,
-           start_time, end_time,
-           mCerebrum_timestamp, mCerebrum_offset, everything()) %>%
-    rename(mCerebrum.ts = mCerebrum_timestamp) %>%
-    rename(prompt.ts = start_time) %>%
-    mutate(begin.ts = NA,
-           end.ts = NA)
-  
-  all.col.names <- colnames(df.raw)
-  check <- (("questions_0_response_0") %in% all.col.names)
-  
-  if(isTRUE(check)){
-    # In raw data: questions_0_prompt_time = 0 all throughout
-    df.raw <- df.raw %>% 
-      mutate(begin.ts = questions_0_finish_time) %>%
-      mutate(begin.ts = replace(begin.ts, 
-                                (status=="ABANDONED_BY_TIMEOUT") & (questions_0_finish_time==0), 
-                                NA)) %>%
-      mutate(end.ts = end_time) %>%
-      mutate(end.ts = replace(end.ts, is.na(begin.ts), NA))
-    
-    list.items <- list()
-    for(idx in collect.idx){  
-      these.col.names <- grepl(paste("_",idx,"_",sep=""), all.col.names)
-      these.col.names <- all.col.names[these.col.names]
-      df.item <- df.raw %>% select(these.col.names) 
-      
-      # Note: Column names from CC1 to CC2 changed
-      # For each of the EMA items, get:
-      # question response: question_idx_response_0
-      idx.resp <- match(x = paste("questions_",idx,"_response_0", sep=""), table = these.col.names)
-      
-      if(!is.na(idx.resp)){
-        # Collect info into one data frame
-        question.resp <- df.item[these.col.names[idx.resp]]
-        question.resp <- as.data.frame(question.resp)
-        colnames(question.resp) <- paste("item.",idx, sep="")
-        list.items <- append(list.items,list(question.resp))
-      }else{
-        question.resp <- rep(NA, times = nrow(df.item))
-        question.resp <- as.data.frame(question.resp)
-        colnames(question.resp) <- paste("item.",idx, sep="")
-        list.items <- append(list.items,list(question.resp))
-      }
-    }
-    
-    df.resp <- do.call(cbind, list.items)
-    df <- df.raw %>% select(user.id, random.ema.id, ema.type, status, 
-                            prompt.ts, begin.ts, end.ts, mCerebrum.ts)
-    df <- cbind(df, df.resp)
-    list.resp.cc2 <- append(list.resp.cc2, list(df))
-  }else{
-    df.resp <- rep(NA, nrow(df.raw)*length(collect.idx))
-    df.resp <- matrix(df.resp, ncol = length(collect.idx))
-    df.resp <- as.data.frame(df.resp)
-    colnames(df.resp) <- paste("item.",collect.idx, sep="")
-    df <- df.raw %>% select(user.id, random.ema.id, ema.type, status, 
-                            prompt.ts, begin.ts, end.ts, mCerebrum.ts)
-    df <- cbind(df, df.resp) 
-    list.resp.cc2 <- append(list.resp.cc2, list(df))
-  }
-}
-
-df.smoking.items.cc2 <- do.call(rbind, list.resp.cc2)
-remove(list.resp.cc2, df.resp, df)
-
-###############################################################################
-# Prepare info on MISSED Random EMAs from STATUS files
-# for merging with COMPLETED and ABANDONED_BY_TIMEOUT Random EMAs from
-# DATA files
-###############################################################################
-list.df.tmp <- lapply(list.df.raw.random.STATUS.cc2, function(x, use.col.names=colnames(df.smoking.items.cc2)){
-  
-  df.tmp <- matrix(NA, nrow(x), length(use.col.names))
-  df.tmp <- as.data.frame(df.tmp)
-  colnames(df.tmp) <- use.col.names
-  df.tmp$user.id <- x$user.id
-  df.tmp$random.ema.id <- x$random.ema.id
-  df.tmp$ema.type <- x$ema.type
-  df.tmp$status <- x$status
-  df.tmp$prompt.ts <- x$prompt.ts
-  
-  return(df.tmp)
-})
-
-df.tmp <- do.call(rbind, list.df.tmp)
-remove(list.df.tmp)
-
-###############################################################################
-# Merge data in df.smoking.items.cc2 and df.tmp
-###############################################################################
-df.smoking.items.cc2 <- rbind(df.smoking.items.cc2, df.tmp)
-
-# Convert missing values to proper class types
-df.smoking.items.cc2 <- df.smoking.items.cc2 %>%
-  mutate(item.39 = as.character(item.39),
-         item.40 = as.numeric(item.40),
-         item.41 = as.character(item.41),
-         item.42 = as.character(item.42),
-         item.43 = as.character(item.43)) %>%
-  mutate(item.39 = if_else(item.39=="", NA_character_, item.39),
-         item.41 = if_else(item.41=="", NA_character_, item.41),
-         item.42 = if_else(item.42=="", NA_character_, item.42),
-         item.43 = if_else(item.43=="", NA_character_, item.43))
-
-# Now convert timestamps from milliseconds to seconds
-df.smoking.items.cc2 <- df.smoking.items.cc2 %>% 
-  arrange(user.id, prompt.ts) %>%
+# Add type and status
+df.collect.all <- df.collect.all %>% 
+  mutate(ema.type = "random") %>%
   group_by(user.id) %>%
-  mutate(prompt.ts = prompt.ts/1000,
-         begin.ts = begin.ts/1000,
-         end.ts = end.ts/1000,
-         mCerebrum.ts = mCerebrum.ts/1000)
+  mutate(ones=1) %>%
+  mutate(random.ema.id = cumsum(ones)) %>%
+  select(-ones)
+
+# Rearrange columns
+tmp.idx <- grep(pattern = "item.", x = colnames(df.collect.all))
+tmp.item.numbers <- substring(colnames(df.collect.all)[tmp.idx], first = 6)
+tmp.item.numbers <- as.numeric(tmp.item.numbers)
+tmp.item.numbers <- tmp.item.numbers[order(tmp.item.numbers)]
+tmp.item.names <- paste("item.",tmp.item.numbers,sep="")
+
+df.collect.all <- df.collect.all %>%
+  select(user.id, random.ema.id, ema.type, status,
+         prompt.hrts, begin.hrts, end.hrts, mCerebrum.hrts, timezone.hrts,
+         prompt.ts, begin.ts, end.ts, mCerebrum.ts,
+         with.any.response,
+         tmp.item.names,
+         everything())
 
 ###############################################################################
-# Write out df.smoking.items.cc2 to a csv file
+# Write out df.collect.all to a csv file
 ###############################################################################
 write.out <- TRUE
 
 if(isTRUE(write.out)){
-  write.csv(df.smoking.items.cc2, 
-            file.path(path.breakfree.staged_data, "df.smoking.items.randomEMA.cc2.csv"), 
+  write.csv(df.collect.all, 
+            file.path(path.breakfree.output_data, "randomEMA.responses.cc2.csv"), 
             row.names=FALSE)
 }
-
