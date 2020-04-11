@@ -81,13 +81,13 @@ list.df.raw.random.STATUS.cc2 <- lapply(list.df.raw.random.STATUS.cc2, function(
     select(user.id, V1, V3, V4) %>% 
     mutate(notification = as.character(V3),
            status = as.character(V4),
-           prompt.ts = as.character(V1)) %>%
+           prompt.unixts = as.character(V1)) %>%
     filter((notification=="NOTIFICATION_AFTER_DELAY" & status=="MISSED") | 
              (notification=="NOTIFICATION_AFTER_DELAY" & status=="Cancel") | 
              (notification=="NOTIFICATION_WITH_DELAY" & status=="MISSED") | 
              (notification=="NOTIFICATION_WITH_DELAY" & status=="Cancel")) %>%
-    mutate(prompt.ts = as.numeric(prompt.ts)) %>%
-    select(user.id, prompt.ts, status)
+    mutate(prompt.unixts = as.numeric(prompt.unixts)) %>%
+    select(user.id, prompt.unixts, status)
   
   if(nrow(df)==0){
     df <- NULL
@@ -123,16 +123,13 @@ for(i in 1:N){
   df.raw <- CheckAnyResponse(df = df.raw, drop.cols = drop.these.cols)
   
   # Bring time variables to the left of the data frame
-  # prompt.ts and begin.ts are two time variables used to anchor analyses
+  # prompt.unixts and begin.unixts are two time variables used to anchor analyses
   df.raw <- df.raw %>% 
-    select(user.id, status,
-           start_time, end_time,
-           mCerebrum_timestamp, mCerebrum_offset, everything()) %>%
+    select(user.id, status,start_time, end_time,everything()) %>%
     mutate(status = as.character(status)) %>%
-    rename(mCerebrum.ts = mCerebrum_timestamp) %>%
-    rename(prompt.ts = start_time) %>%
-    mutate(begin.ts = NA,
-           end.ts = NA)
+    rename(prompt.unixts = start_time) %>%
+    mutate(begin.unixts = NA,
+           end.unixts = NA)
   
   all.col.names <- colnames(df.raw)
   check <- (("questions_0_response_0") %in% all.col.names)
@@ -140,23 +137,22 @@ for(i in 1:N){
   if(isTRUE(check)){
     # In raw data: questions_0_prompt_time = 0 all throughout
     df.raw <- df.raw %>% 
-      mutate(begin.ts = questions_0_finish_time) %>%
-      mutate(begin.ts = replace(begin.ts, 
+      mutate(begin.unixts = questions_0_finish_time) %>%
+      mutate(begin.unixts = replace(begin.unixts, 
                                 (status=="ABANDONED_BY_TIMEOUT") & (questions_0_finish_time==0), 
                                 NA)) %>%
-      mutate(end.ts = end_time) %>%
-      mutate(end.ts = replace(end.ts, is.na(begin.ts), NA))
+      mutate(end.unixts = end_time) %>%
+      mutate(end.unixts = replace(end.unixts, is.na(begin.unixts), NA))
   }
   
   # Rearrange columns
   df.raw <- df.raw %>%
     select(user.id, merge.id, status, 
-           prompt.ts, begin.ts, end.ts, mCerebrum.ts,
-           everything())
+           prompt.unixts, begin.unixts, end.unixts, everything())
   
   df.ref <- df.raw %>%
     select(user.id, merge.id, status, 
-           prompt.ts, begin.ts, end.ts, mCerebrum.ts,
+           prompt.unixts, begin.unixts, end.unixts,
            with.any.response)
   
   # Save changes
@@ -266,7 +262,7 @@ remove(list.resp.cc2, df.resp, df, df.resp.cc2)
 # Merge different types of information into one data frame per participant
 ###############################################################################
 df.collect.all <- list.collect.all %>% reduce(left_join, by = c("user.id", "merge.id"))
-df.collect.all <- left_join(x = df.collect.all, y = df.reference)
+df.collect.all <- left_join(x = df.collect.all, y = df.reference, by = c("user.id", "merge.id"))
 df.collect.all <- df.collect.all %>% select(-merge.id)
 
 # Remove these variables from environment 
@@ -284,7 +280,7 @@ list.df.tmp <- lapply(list.df.raw.random.STATUS.cc2, function(x, use.col.names=c
   colnames(df.tmp) <- use.col.names
   df.tmp$user.id <- x$user.id
   df.tmp$status <- x$status
-  df.tmp$prompt.ts <- x$prompt.ts
+  df.tmp$prompt.unixts <- x$prompt.unixts
   # with.any.response=0 for all MISSED EMAs
   df.tmp$with.any.response <- rep(0, times=nrow(x))
   
@@ -302,33 +298,25 @@ df.collect.all <- rbind(df.collect.all, df.tmp)
 # Now convert timestamps from milliseconds to seconds
 # and add human-readable time
 df.collect.all <- df.collect.all %>% 
-  arrange(user.id, prompt.ts) %>%
+  arrange(user.id, prompt.unixts) %>%
   group_by(user.id) %>%
-  mutate(prompt.ts = prompt.ts/1000,
-         begin.ts = begin.ts/1000,
-         end.ts = end.ts/1000,
-         mCerebrum.ts = mCerebrum.ts/1000)
+  mutate(prompt.unixts = prompt.unixts/1000,
+         begin.unixts = begin.unixts/1000,
+         end.unixts = end.unixts/1000)
 
 # Add human-readable timestamps
 df.collect.all <- df.collect.all %>%
-  mutate(prompt.hrts = as.POSIXct(prompt.ts, tz = "CST6CDT", origin="1970-01-01"),
-         begin.hrts = as.POSIXct(begin.ts, tz = "CST6CDT", origin="1970-01-01"),
-         end.hrts = as.POSIXct(end.ts, tz = "CST6CDT", origin="1970-01-01"),
-         mCerebrum.hrts = as.POSIXct(mCerebrum.ts, tz = "CST6CDT", origin="1970-01-01"))
-
-df.collect.all <- df.collect.all %>%
+  mutate(prompt.hrts = as.POSIXct(prompt.unixts, tz = "CST6CDT", origin="1970-01-01"),
+         begin.hrts = as.POSIXct(begin.unixts, tz = "CST6CDT", origin="1970-01-01"),
+         end.hrts = as.POSIXct(end.unixts, tz = "CST6CDT", origin="1970-01-01")) %>%
   mutate(prompt.hrts = strftime(prompt.hrts, format="%Y-%m-%d %H:%M:%S %z", tz = "CST6CDT"),
          begin.hrts = strftime(begin.hrts, format="%Y-%m-%d %H:%M:%S %z", tz = "CST6CDT"),
-         end.hrts = strftime(end.hrts, format="%Y-%m-%d %H:%M:%S %z", tz = "CST6CDT"),
-         mCerebrum.hrts = strftime(mCerebrum.hrts, format="%Y-%m-%d %H:%M:%S %z", tz = "CST6CDT"))
-
-df.collect.all$timezone.hrts <- "CST6CDT"
-
-df.collect.all <- df.collect.all %>%
+         end.hrts = strftime(end.hrts, format="%Y-%m-%d %H:%M:%S %z", tz = "CST6CDT"))%>%
   mutate(prompt.hrts = as.character(prompt.hrts),
          begin.hrts = as.character(begin.hrts),
-         end.hrts = as.character(end.hrts),
-         mCerebrum.hrts = as.character(mCerebrum.hrts))
+         end.hrts = as.character(end.hrts))
+
+df.collect.all$timezone.hrts <- "CST6CDT"
 
 # Add type and status
 df.collect.all <- df.collect.all %>% 
@@ -347,8 +335,8 @@ tmp.item.names <- paste("item.",tmp.item.numbers,sep="")
 
 df.collect.all <- df.collect.all %>%
   select(user.id, random.ema.id, ema.type, status,
-         prompt.hrts, begin.hrts, end.hrts, mCerebrum.hrts, timezone.hrts,
-         prompt.ts, begin.ts, end.ts, mCerebrum.ts,
+         prompt.hrts, begin.hrts, end.hrts, timezone.hrts,
+         prompt.unixts, begin.unixts, end.unixts,
          with.any.response,
          tmp.item.names,
          everything())
