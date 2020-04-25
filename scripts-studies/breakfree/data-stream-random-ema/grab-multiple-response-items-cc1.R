@@ -1,18 +1,23 @@
 # List to collect item responses
-list.resp.cc2 <- list()
-N <- length(list.df.raw.random.DATA.cc2)
+list.resp.cc1 <- list()
+N <- length(list.df.raw.random.DATA.cc1)
+
+# List to collect item responses
+list.resp.cc1 <- list()
+N <- length(list.df.raw.random.DATA.cc1)
 
 for(i in 1:N){
-  df.raw <- list.df.raw.random.DATA.cc2[[i]]
+  df.raw <- list.df.raw.random.DATA.cc1[[i]]
   
   all.col.names <- colnames(df.raw)
-  check <- (("questions_0_response_0") %in% all.col.names)
+  check <- (("question_answers_0_response_0") %in% all.col.names)
   
   if(isTRUE(check)){
     list.items <- list()
-    # There are 64 items in a Random EMA for CC2 participants
+    # There are 54 items in a Random EMA for CC1 participants
     # The last item is a thank you message
-    # Thus, idx ranges from 1 to 63
+    # Item numbering begins at 0: 0, 1, ..., 53
+    # Thus, idx ranges from 0 to 52
     for(idx in collect.idx){  
       these.col.names <- grepl(paste("_",idx,"_",sep=""), all.col.names)
       these.col.names <- all.col.names[these.col.names]
@@ -20,10 +25,10 @@ for(i in 1:N){
       
       # This step allows us to determine the total number of options
       # available to the participant to select
-      idx.options <- grep(pattern = paste("questions_",idx,"_response_option_", sep=""), x = these.col.names)
+      idx.options <- grep(pattern = paste("question_answers_",idx,"_response_option_", sep=""), x = these.col.names)
       # number.options is a count of the total number of options available to the participant to select
       number.options <- length(these.col.names[idx.options])
-      all.possible.columns <- paste("questions_",idx,"_response_",0:(number.options-1), sep="")
+      all.possible.columns <- paste("question_answers_",idx,"_response_",0:(number.options-1), sep="")
       in.data <- all.possible.columns[all.possible.columns %in% these.col.names]
       
       if(length(in.data)>0){
@@ -73,7 +78,7 @@ for(i in 1:N){
     df.resp <- as.data.frame(df.resp)
     df <- df.raw %>% select(user.id, merge.id)
     df <- cbind(df, df.resp)
-    list.resp.cc2 <- append(list.resp.cc2, list(df))
+    list.resp.cc1 <- append(list.resp.cc1, list(df))
   }else{
     df.resp <- rep(NA, nrow(df.raw)*length(collect.idx))
     df.resp <- matrix(df.resp, ncol = length(collect.idx))
@@ -81,9 +86,9 @@ for(i in 1:N){
     colnames(df.resp) <- paste("item.",collect.idx, sep="")
     df <- df.raw %>% select(user.id, merge.id)
     df <- cbind(df, df.resp) 
-    list.resp.cc2 <- append(list.resp.cc2, list(df))
+    list.resp.cc1 <- append(list.resp.cc1, list(df))
   }
 }
 
-df.resp.cc2 <- do.call(rbind, list.resp.cc2)
+df.resp.cc1 <- do.call(rbind, list.resp.cc1)
 

@@ -3,6 +3,7 @@ library(magrittr)
 library(purrr)
 library(assertthat)
 
+path.breakfree.cc1.input_data <- Sys.getenv("path.breakfree.cc1.input_data")
 path.breakfree.cc2.input_data <- Sys.getenv("path.breakfree.cc2.input_data")
 path.breakfree.staged_data <- Sys.getenv("path.breakfree.staged_data")
 path.breakfree.output_data <- Sys.getenv("path.breakfree.output_data")
@@ -125,7 +126,7 @@ for(i in 1:N){
   # Bring time variables to the left of the data frame
   # prompt.unixts and begin.unixts are two time variables used to anchor analyses
   df.raw <- df.raw %>% 
-    select(user.id, status,start_time, end_time,everything()) %>%
+    select(user.id, status, start_time, end_time, everything()) %>%
     mutate(status = as.character(status)) %>%
     rename(prompt.unixts = start_time) %>%
     mutate(begin.unixts = NA,
@@ -295,8 +296,10 @@ remove(list.df.tmp)
 ###############################################################################
 df.collect.all <- rbind(df.collect.all, df.tmp)
 
-# Now convert timestamps from milliseconds to seconds
+###############################################################################
+# Convert timestamps from milliseconds to seconds
 # and add human-readable time
+###############################################################################
 df.collect.all <- df.collect.all %>% 
   arrange(user.id, prompt.unixts) %>%
   group_by(user.id) %>%
@@ -317,6 +320,10 @@ df.collect.all <- df.collect.all %>%
          end.hrts = as.character(end.hrts))
 
 df.collect.all$timezone.hrts <- "CST6CDT"
+
+###############################################################################
+# Other data preparation steps
+###############################################################################
 
 # Add type and status
 df.collect.all <- df.collect.all %>% 
