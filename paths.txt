@@ -15,6 +15,7 @@ path.pns.code = ".../MARS/scripts-studies/pns"
 # -----------------------------------------------------------------------------
 path.breakfree.cc1.input_data = "..."
 path.breakfree.cc2.input_data = "..."
+path.pns.other.input_data = ".../Raw Data/Break Free"
 path.breakfree.staged_data = ".../Staged Data/Break Free"
 path.breakfree.output_data = ".../Curated Data/Break Free"
 path.breakfree.code = ".../MARS/scripts-studies/breakfree"
