@@ -38,7 +38,7 @@ df.recorded.visit.dates <- read_excel(file.path(path.breakfree.other.input_data,
                                       col_names = TRUE,
                                       sheet = "V1- V4 Dates")
 
-colnames(df.recorded.visit.dates) <- c("id", "v1", "v2", "v3", "v4")
+colnames(df.recorded.visit.dates) <- c("user.id", "v1", "v2", "v3", "v4")
 
 ###############################################################################
 # Read in recorded quit dates for CC1 and CC2 participants
@@ -68,29 +68,29 @@ df.recorded.quit <- df.recorded.quit %>%
   mutate(time.hour =  as.numeric(format(`V2 Time`, "%H")),
          time.minute = as.numeric(format(`V2 Time`, "%M"))/60,
          time.second = as.numeric(format(`V2 Time`, "%S"))/3600) %>%
-  mutate(id = `PT ID`,
+  mutate(user.id = `PT ID`,
          quit.date = Date,
          quit.hour = time.hour + time.minute + time.second) %>%
   mutate(quit.hour = round(quit.hour, digits=2)) %>%
   mutate(quit.unixts = as.numeric(quit.date)+quit.hour) %>%
-  select(id,
+  select(user.id,
          noshow.visit02, dropped, withdrew,
          quit.date, quit.hour, quit.unixts)
 
 # Determine which participants did not atend visit 2
 ids.noshow.visit02 <- df.recorded.quit %>% 
   filter(noshow.visit02==1) %>%
-  select(id) %>% 
-  use_series(id)
+  select(user.id) %>% 
+  use_series(user.id)
 
 # Fill in Quit Dates for participants who did not attend visit 2
 df.dates.noshow <- df.recorded.visit.dates %>% 
-  filter(id %in% ids.noshow.visit02) %>%
+  filter(user.id %in% ids.noshow.visit02) %>%
   mutate(noshowQD = v1 + 4*24*60*60) %>%  # 4 days after date of first visit
-  select(id, noshowQD)
+  select(user.id, noshowQD)
   
 # Merge info from participants who did not attend visit 2 with info for other participants
-df.recorded.quit <- left_join(x = df.recorded.quit, y = df.dates.noshow, by = "id")
+df.recorded.quit <- left_join(x = df.recorded.quit, y = df.dates.noshow, by = "user.id")
 
 # Implement decision rules regarding quit dates of participants who did not attend visit 2
 df.recorded.quit <- df.recorded.quit %>%
@@ -104,21 +104,21 @@ df.recorded.quit <- df.recorded.quit %>%
 ###############################################################################
 
 df.recorded.quit <- df.recorded.quit %>%
-  mutate(tmp.id = paste("aa_", substring(id, first=2), sep="")) %>%
+  mutate(tmp.id = paste("aa_", substring(user.id, first=2), sep="")) %>%
   mutate(cc.version = case_when(
-    id %in% ids.cc1 ~ 1,
+    user.id %in% ids.cc1 ~ 1,
     tmp.id %in% ids.cc2 ~ 2,
     TRUE ~ NA_real_
   )) %>%
-  mutate(id = as.character(id)) %>%
-  mutate(id = case_when(
-    cc.version==1 ~ id,
+  mutate(user.id = as.character(user.id)) %>%
+  mutate(user.id = case_when(
+    cc.version==1 ~ user.id,
     cc.version==2 ~ tmp.id,
-    TRUE ~ id
+    TRUE ~ user.id
   )) %>%
   select(-tmp.id) %>%
-  select(id, cc.version, noshow.visit02, dropped, withdrew, everything()) %>%
-  arrange(desc(is.na(cc.version)), id)
+  select(user.id, cc.version, noshow.visit02, dropped, withdrew, everything()) %>%
+  arrange(desc(is.na(cc.version)), user.id)
 
 ###############################################################################
 # Remove participants who dropped or withdrew
@@ -127,7 +127,7 @@ df.recorded.quit <- df.recorded.quit %>%
 df.out <- df.recorded.quit %>% 
   filter(dropped==0 & withdrew==0) %>%
   select(-dropped, -withdrew) %>%
-  arrange(cc.version, desc(noshow.visit02), id)
+  arrange(cc.version, desc(noshow.visit02), user.id)
 
 ###############################################################################
 # Write info

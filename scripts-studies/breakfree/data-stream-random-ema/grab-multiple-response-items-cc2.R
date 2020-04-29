@@ -48,11 +48,10 @@ for(i in 1:N){
           }else if(length(picked)==1){
             combined <- paste("{",picked,"}",sep="")
           }else{
-            combined <- picked[1]
+            combined <- paste("{",picked[1],"}",sep="")
             for(k in 2:length(picked)){
-              combined <- paste(combined,picked[k], sep=",")
+              combined <- paste("{",picked[k],"}",sep="")
             }
-            combined <- paste("{",combined,"}",sep="")
           }
           
           return(combined)
