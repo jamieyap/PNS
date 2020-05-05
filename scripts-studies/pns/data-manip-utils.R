@@ -1,13 +1,19 @@
+###############################################################################
+# ABOUT:
+# * Set of functions specifically for working with PNS data
+###############################################################################
+
 library(dplyr)
 library(magrittr)
+library(purrr)
 library(assertthat)
 
-SetTimeFrame <- function(df.quit.dates, study.duration, addtime, remove.missing=TRUE){
+SetPostQuitTimeFrame <- function(df.quit.dates, postquit.duration, addtime, remove.missing=TRUE){
   # About: Calculate start of clock and end of clock in unix time
   #   from list of participant quit dates
   # Args:
-  #   df.quit.dates: list of participant quit dates in MM/DD/YYYY format
-  #   study.duration: the duration of the study in days
+  #   df.quit.dates: list of participant quit dates in YYYY-MM-DD format
+  #   postquit.duration: the duration of the study in days
   #   addtime: time difference in hours of unix timestamps created 
   #     on local machine and unix timestamps in raw data
   #   remove.missing: if TRUE, individuals with missing quit dates will be removed;
@@ -18,8 +24,8 @@ SetTimeFrame <- function(df.quit.dates, study.duration, addtime, remove.missing=
   
   # Check that inputs are what is expected ------------------------------------
   # (1) Check: column names are correct
-  check <- sum(!hasName(df.quit.dates, c("id","quit.date")))
-  assert_that(check==0, msg = "Column names must be: id, quit.date")
+  check <- sum(!hasName(df.quit.dates, c("id","callnumr","quit.date")))
+  assert_that(check==0, msg = "Column names must be: id, callnumr, quit.date")
   
   # (2) Check: whether there are individuals with missing quit dates
   tmp.date.df <- df.quit.dates
@@ -34,10 +40,10 @@ SetTimeFrame <- function(df.quit.dates, study.duration, addtime, remove.missing=
   
   # (3) Check: quit date is in the correct format (after removing individuals
   #     with missing quit dates in tmp.date.df)
-  tmp.date.df <- strptime(tmp.date.df[["quit.date"]], format = "%m/%d/%Y")
+  tmp.date.df <- strptime(tmp.date.df[["quit.date"]], format = "%Y-%m-%d")
   # Incorrectly formatted date will yield check=NA
   check <- sum(is.na(tmp.date.df))
-  assert_that(check==0, msg = "quit.date MUST BE IN mm/dd/yyyy FORMAT")
+  assert_that(check==0, msg = "quit.date MUST BE IN YYYY-MM-DD FORMAT")
   remove(tmp.date.df)
   
   # Begin ---------------------------------------------------------------------
@@ -51,45 +57,52 @@ SetTimeFrame <- function(df.quit.dates, study.duration, addtime, remove.missing=
   }
   
   # Calculate timestamps corresponding to start and end of clock
-  df.quit.dates[["quit.date"]] <- strptime(df.quit.dates[["quit.date"]], format = "%m/%d/%Y")
+  df.quit.dates[["quit.date"]] <- strptime(df.quit.dates[["quit.date"]], format = "%Y-%m-%d")
   df.quit.dates[["quit.date"]] <- as.POSIXct(df.quit.dates[["quit.date"]])
-  df.quit.dates$start.clock <- NA
-  df.quit.dates$end.clock <- NA
+  df.quit.dates$start.clock.unixts <- NA
+  df.quit.dates$end.clock.unixts <- NA
   
   # 4AM on Quit Day 
-  df.quit.dates[["start.clock"]] <- as.numeric(df.quit.dates[["quit.date"]]) + 4*60*60 
-  # 12AM on study.duration days after Quit Day
-  total.duration <- study.duration*24*60*60  - 4*60*60
-  df.quit.dates[["end.clock"]] <- df.quit.dates[["start.clock"]] + total.duration
+  df.quit.dates[["start.clock.unixts"]] <- as.numeric(df.quit.dates[["quit.date"]]) + 4*60*60 
+  # 12AM on postquit.duration days after Quit Day
+  total.duration <- postquit.duration*24*60*60  - 4*60*60
+  df.quit.dates[["end.clock.unixts"]] <- df.quit.dates[["start.clock.unixts"]] + total.duration
   
   # Adjust for time zone differences
-  df.quit.dates[["start.clock"]] <- df.quit.dates[["start.clock"]] + addtime*60*60 
-  df.quit.dates[["end.clock"]] <- df.quit.dates[["end.clock"]] + addtime*60*60
+  df.quit.dates[["start.clock.unixts"]] <- df.quit.dates[["start.clock.unixts"]] + addtime*60*60 
+  df.quit.dates[["end.clock.unixts"]] <- df.quit.dates[["end.clock.unixts"]] + addtime*60*60
+  
+  # Create interpretable timestamps
+  df.quit.dates[["start.clock.hrts"]] <- as.POSIXct(df.quit.dates[["start.clock.unixts"]], origin="1970-01-01")
+  df.quit.dates[["end.clock.hrts"]] <- as.POSIXct(df.quit.dates[["end.clock.unixts"]], origin="1970-01-01")
   
   # ---------------------------------------------------------------------------
   # Clean up output
   # ---------------------------------------------------------------------------
-  df.quit.dates[["quit.date"]] <- strftime(df.quit.dates[["quit.date"]], format = "%m/%d/%Y")
+  df.quit.dates[["quit.date"]] <- strftime(df.quit.dates[["quit.date"]], format = "%Y-%m-%d")
   df.quit.dates[["quit.date"]] <- as.character(df.quit.dates[["quit.date"]])
   row.names(df.quit.dates) <- 1:nrow(df.quit.dates)
-  df.time.frame <- df.quit.dates
+  df.time.frame <- df.quit.dates %>% 
+    select(id, callnumr, quit.date, 
+           start.clock.hrts, end.clock.hrts, 
+           start.clock.unixts, end.clock.unixts)
   
   return(df.time.frame)
 }
 
 
-SetUpPostQuit <- function(df.raw, df.time.frame){
+SetUpPostQuit <- function(df.raw){
   # About: Common data pre-processing tasks for PNS post quit raw data
   # Args: 
   #   df.raw : one of post quit random, post quit urge,
   #     post quit about to slip, post quit about to slip part 2,
   #     post quit already slipped raw data
-  #   df.time.frame: output of SetTimeFrame()
   # Output:
   #   dataset with rows that meet inclusion-exclusion criteria
   
   # --------------------------------------------------------------------------- 
-  # Rename variables in raw data and create new time variables
+  # Rename variables in the raw data that will be relevant to the tasks in the
+  # SetUpPostQuit function
   # ---------------------------------------------------------------------------
   df.out <- df.raw %>%
     rename(id = Part_ID, 
@@ -97,50 +110,61 @@ SetUpPostQuit <- function(df.raw, df.time.frame){
            record.status = Record_Status,
            assessment.type = Asse_Name, 
            delivered.hrts = Initiated,
-           assessment.hrts = AssessmentBegin) %>% 
-    mutate(record.id = as.character(record.id),
-           assessment.type = as.character(assessment.type), 
+           begin.hrts = AssessmentBegin,
+           completed.hrts = AssessmentCompleted,
+           notcompleted.hrts = AssessmentNOTCompleted,
+           responded = Responded,
+           completed = Completed) %>%
+    mutate(id = as.character(id),
+           record.id = as.character(record.id),
+           record.status = as.character(record.status),
+           assessment.type = as.character(assessment.type),
            delivered.hrts = as.character(delivered.hrts),
-           assessment.hrts = as.character(assessment.hrts)) %>%
-    mutate(delivered.unixts = as.POSIXct(strptime(delivered.hrts, 
-                                                  format = "%m/%d/%Y %I:%M:%S %p", 
-                                                  tz="EST5EDT")),
-           assessment.unixts = as.POSIXct(strptime(assessment.hrts, 
-                                                   format = "%m/%d/%Y %I:%M:%S %p", 
-                                                   tz="EST5EDT"))) %>%
-    mutate(delivered.unixts = as.numeric(delivered.unixts),
-           assessment.unixts = as.numeric(assessment.unixts)) %>%
-    mutate(delay = assessment.unixts - delivered.unixts)
+           begin.hrts = as.character(begin.hrts),
+           completed.hrts = as.character(completed.hrts),
+           notcompleted.hrts = as.character(notcompleted.hrts),
+           responded = as.character(responded),
+           completed = as.character(completed))
   
   # --------------------------------------------------------------------------- 
-  # Decision rule: exclude EMAs delivered before start of clock or
-  # after end of clock
+  # Format time variables
   # ---------------------------------------------------------------------------
   df.out <- df.out %>%
-    left_join(x = ., y = df.time.frame, by = "id") %>%
-    filter(delivered.unixts >= start.clock & delivered.unixts <= end.clock) %>%
-    arrange(id, delivered.unixts)
+    mutate(delivered.hrts = as.POSIXct(strptime(delivered.hrts, format = "%m/%d/%Y %I:%M:%S %p")),
+           begin.hrts = as.POSIXct(strptime(begin.hrts, format = "%m/%d/%Y %I:%M:%S %p")),
+           completed.hrts = as.POSIXct(strptime(completed.hrts, format = "%m/%d/%Y %I:%M:%S %p")),
+           notcompleted.hrts = as.POSIXct(strptime(notcompleted.hrts, format = "%m/%d/%Y %I:%M:%S %p"))) %>%
+    mutate(delivered.unixts = as.numeric(delivered.hrts),
+           begin.unixts = as.numeric(begin.hrts))
   
   # ---------------------------------------------------------------------------
   # Decision rule: exclude EMAs that are "not valid"
   # ---------------------------------------------------------------------------
+  df.out <- df.out %>%
+    mutate(responded = if_else(responded=="","Missing",responded),
+           completed = if_else(completed=="","Missing",completed)) %>%
+    filter((responded=="True" & completed=="True")|
+             (responded=="True" & completed=="False")|
+             (responded=="True" & completed=="Missing")|
+             (responded=="Missing" & completed=="False"))
+  
+  # ---------------------------------------------------------------------------
+  # Decision rule: create end.hrts and end.unixts
+  # ---------------------------------------------------------------------------
   df.out <- df.out %>% 
-    mutate(Responded = as.character(Responded),
-           Completed = as.character(Completed)) %>%
-    mutate(Responded = if_else(Responded=="","Missing",Responded),
-           Completed = if_else(Completed=="","Missing",Completed)) %>%
-    filter((Responded=="True" & Completed=="True")|
-             (Responded=="True" & Completed=="False")|
-             (Responded=="True" & Completed=="Missing")|
-             (Responded=="Missing" & Completed=="False")) %>%
-    rename(responded=Responded,
-           completed=Completed)
+    mutate(end.hrts = completed.hrts) %>%
+    mutate(end.hrts = if_else(is.na(completed.hrts), notcompleted.hrts, end.hrts)) %>%
+    mutate(end.unixts = as.numeric(end.hrts))
   
   # --------------------------------------------------------------------------- 
-  # Decision rule: exclude EMAs based on difference between
-  # assessment.unixts and delivered.unixts
+  # Reorder columns
   # ---------------------------------------------------------------------------
-  df.out <- df.out %>% filter(is.na(delay)|(delay >= 0))
+  df.out <- df.out %>%
+    select(id, record.id, assessment.type,
+           delivered.hrts, begin.hrts, end.hrts,
+           delivered.unixts, begin.unixts, end.unixts,
+           record.status, responded, completed,
+           everything())
   
   return(df.out)
 }
@@ -323,7 +347,7 @@ PNSCleanSmokingTime <- function(df){
   
   # Initialize max.time to be the beginning of the current interval
   df$max.time <- if_else(df$ema.id == 1,  
-                         df$UB.ts - df$start.clock, 
+                         df$UB.ts - df$start.clock.unixts, 
                          df$UB.ts - df$LB.ts)
   
   ########### Additional criterion using info num.cigs.smoked #################
@@ -344,7 +368,7 @@ PNSCleanSmokingTime <- function(df){
   # If num.cigs.smoked==1 then we can obtain narrower YES intervals
   df$max.time <- if_else(df$num.cigs.smoked==1 & df$smoking.timing<8, (df$smoking.timing+1)*15*60,  df$max.time)
   df$max.time <- if_else(df$num.cigs.smoked==1 & df$smoking.timing==8 & df$ema.id>1,  df$UB.ts - df$LB.ts, df$max.time)
-  df$max.time <- if_else(df$num.cigs.smoked==1 & df$smoking.timing==8 & df$ema.id==1,  df$UB.ts - df$start.clock, df$max.time)
+  df$max.time <- if_else(df$num.cigs.smoked==1 & df$smoking.timing==8 & df$ema.id==1,  df$UB.ts - df$start.clock.unixts, df$max.time)
   
   ############### What happens to max.time when with.timing.conflict == 1 #####
   df$max.time <- if_else(df$with.timing.conflict==1 & df$num.cigs.smoked>1,
@@ -382,12 +406,7 @@ PNSRefineSmokingTime <- function(df){
   
   if(isTRUE(no.refinement.all.assessments)){
     # No refinement of labels of time intervals
-    newdf <- df  %>% rename(interval.id = ema.id) %>%
-      # Just take a subset of columns
-      select(id, interval.id, 
-             start.clock, end.clock, 
-             LB.ts, UB.ts, 
-             smoking.label, num.cigs.smoked)
+    newdf <- df %>% rename(interval.id = ema.id)
   }else{
     # Refinement of intervals are possible
     n.assessments <- max(df$ema.id)
@@ -397,7 +416,7 @@ PNSRefineSmokingTime <- function(df){
       # Take subset of rows corresponding to assessment j
       newdf.this.assessment <- df %>% filter(ema.id == j) %>% 
         select(id, 
-               start.clock, end.clock, 
+               start.clock.unixts, end.clock.unixts, 
                min.time, max.time, 
                interval.duration.secs, 
                LB.ts, UB.ts, 
@@ -532,16 +551,19 @@ PNSRefineSmokingTime <- function(df){
     
     newdf <- bind_rows(newdf.list)
     num.intervals <- nrow(newdf)
-    newdf <- newdf %>% mutate(interval.id = 1:num.intervals) %>%
-      select(id, interval.id, 
-             start.clock, end.clock, 
-             LB.ts, UB.ts, 
-             smoking.label, num.cigs.smoked)
+    newdf <- newdf %>% mutate(interval.id = 1:num.intervals)
   } # End big IF-ELSE statement
+  
+  # Just take a subset of columns
+  #newdf <- newdf %>%
+  #  select(id, interval.id, 
+  #         start.clock.unixts, end.clock.unixts, 
+  #         LB.ts, UB.ts, 
+  #         smoking.label, num.cigs.smoked)
   
   return(newdf)
 }
-  
+
 SearchRecordID <- function(timestamp, df.covariate, past = TRUE){
   # About: Gets record.id of most proximal EMA in the prior to (if
   #        past==TRUE) timestamp or right after (if past==FALSE)

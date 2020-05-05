@@ -3,12 +3,12 @@ library(magrittr)
 library(purrr)
 library(assertthat)
 
-CheckAnyResponse <- function(df, drop.cols){
+CheckAnyResponse <- function(df, keep.cols){
   # About: Check whether there is a recorded response to each row of the 
   #   data frame df
   # Args:
   #   df: data frame containing raw data
-  #   drop.cols: names of columns to drop from df prior to checking 
+  #   keep.cols: names of columns to keep from df when checking 
   #     whether any response was recorded in each row
   # Output:
   #   df with a new columns with.any.response: this variable is equal to 1
@@ -18,12 +18,12 @@ CheckAnyResponse <- function(df, drop.cols){
   # ---------------------------------------------------------------------------
   # Check validity of inputs
   # ---------------------------------------------------------------------------
-  assert_that(is.character(drop.cols), msg = "drop.cols must be a character array")
+  assert_that(is.character(keep.cols), msg = "keep.cols must be a character array")
   
   # ---------------------------------------------------------------------------
   # Begin tasks
   # ---------------------------------------------------------------------------
-  df.items <- df %>% select(-drop.cols)
+  df.items <- df %>% select(keep.cols)
   
   if(ncol(df.items)>0){
     df.items <- apply(df.items, 2, function(x){
