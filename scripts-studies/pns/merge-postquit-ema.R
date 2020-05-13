@@ -1,11 +1,6 @@
 ###############################################################################
 # ABOUT:
-# * Aggregates output csv files of the following scripts into one file:
-#   postquit-ema-random.R
-#   postquit-ema-urge.R
-#   postquit-ema-about2slip1.R
-#   postquit-ema-about2slip2.R
-#   postquit-ema-alreadyslipped.R
+# * Aggregates output csv files of get-postquit-ema.R script into one file
 ###############################################################################
 
 #------------------------------------------------------------------------------
@@ -27,10 +22,8 @@ collect.all.names <- list()
 #------------------------------------------------------------------------------
 # Post Quit Random EMA
 #------------------------------------------------------------------------------
-df.processed <- read.csv(file.path(path.pns.output_data, "post_quit_random.csv"))
-ema.item.names <- read.csv(file.path(path.pns.output_data, "item_names_postquit_random.csv"), header = TRUE)
-ema.item.names$name.codebook <- as.character(ema.item.names$name.codebook)
-ema.item.names$name.new <- as.character(ema.item.names$name.new)
+df.processed <- read.csv(file.path(path.pns.output_data, "postquit_random.csv"), stringsAsFactors = FALSE)
+ema.item.names <- read.csv(file.path(path.pns.output_data, "item_names_postquit_random.csv"), header = TRUE, stringsAsFactors = FALSE)
 
 # Change column names in df.processed to column names in ema.item.names
 old.column.names <- colnames(df.processed)
@@ -54,10 +47,8 @@ remove(df.processed, ema.item.names, old.column.names, these.old, these.new)
 #------------------------------------------------------------------------------
 # Post Quit Urge EMA
 #------------------------------------------------------------------------------
-df.processed <- read.csv(file.path(path.pns.output_data, "post_quit_urge.csv"))
-ema.item.names <- read.csv(file.path(path.pns.output_data, "item_names_postquit_urge.csv"), header = TRUE)
-ema.item.names$name.codebook <- as.character(ema.item.names$name.codebook)
-ema.item.names$name.new <- as.character(ema.item.names$name.new)
+df.processed <- read.csv(file.path(path.pns.output_data, "postquit_urge.csv"), stringsAsFactors = FALSE)
+ema.item.names <- read.csv(file.path(path.pns.output_data, "item_names_postquit_urge.csv"), header = TRUE, stringsAsFactors = FALSE)
 
 # Change column names in df.processed to column names in ema.item.names
 old.column.names <- colnames(df.processed)
@@ -81,10 +72,8 @@ remove(df.processed, ema.item.names, old.column.names, these.old, these.new)
 #------------------------------------------------------------------------------
 # Post Quit About to Slip Part 1 EMA
 #------------------------------------------------------------------------------
-df.processed <- read.csv(file.path(path.pns.output_data, "post_quit_about2slip1.csv"))
-ema.item.names <- read.csv(file.path(path.pns.output_data, "item_names_postquit_about2slip1.csv"), header = TRUE)
-ema.item.names$name.codebook <- as.character(ema.item.names$name.codebook)
-ema.item.names$name.new <- as.character(ema.item.names$name.new)
+df.processed <- read.csv(file.path(path.pns.output_data, "postquit_about2slip1.csv"), stringsAsFactors = FALSE)
+ema.item.names <- read.csv(file.path(path.pns.output_data, "item_names_postquit_about2slip1.csv"), header = TRUE, stringsAsFactors = FALSE)
 
 # Change column names in df.processed to column names in ema.item.names
 old.column.names <- colnames(df.processed)
@@ -108,10 +97,8 @@ remove(df.processed, ema.item.names, old.column.names, these.old, these.new)
 #------------------------------------------------------------------------------
 # Post Quit About to Slip Part 2 EMA
 #------------------------------------------------------------------------------
-df.processed <- read.csv(file.path(path.pns.output_data, "post_quit_about2slip2.csv"))
-ema.item.names <- read.csv(file.path(path.pns.output_data, "item_names_postquit_about2slip2.csv"), header = TRUE)
-ema.item.names$name.codebook <- as.character(ema.item.names$name.codebook)
-ema.item.names$name.new <- as.character(ema.item.names$name.new)
+df.processed <- read.csv(file.path(path.pns.output_data, "postquit_about2slip2.csv"), stringsAsFactors = FALSE)
+ema.item.names <- read.csv(file.path(path.pns.output_data, "item_names_postquit_about2slip2.csv"), header = TRUE, stringsAsFactors = FALSE)
 
 # Change column names in df.processed to column names in ema.item.names
 old.column.names <- colnames(df.processed)
@@ -135,10 +122,8 @@ remove(df.processed, ema.item.names, old.column.names, these.old, these.new)
 #------------------------------------------------------------------------------
 # Post Quit Already Slipped EMA
 #------------------------------------------------------------------------------
-df.processed <- read.csv(file.path(path.pns.output_data, "post_quit_alreadyslipped.csv"))
-ema.item.names <- read.csv(file.path(path.pns.output_data, "item_names_postquit_alreadyslipped.csv"), header = TRUE)
-ema.item.names$name.codebook <- as.character(ema.item.names$name.codebook)
-ema.item.names$name.new <- as.character(ema.item.names$name.new)
+df.processed <- read.csv(file.path(path.pns.output_data, "postquit_alreadyslipped.csv"), stringsAsFactors = FALSE)
+ema.item.names <- read.csv(file.path(path.pns.output_data, "item_names_postquit_alreadyslipped.csv"), header = TRUE, stringsAsFactors = FALSE)
 
 # Change column names in df.processed to column names in ema.item.names
 old.column.names <- colnames(df.processed)
@@ -173,11 +158,7 @@ for(i in 1:length(collect.all.df)){
   
   # Reorder columns
   current.df <- current.df %>% 
-    select(id, callnumr, 
-           quit.date,
-           start.clock.hrts, end.clock.hrts, 
-           start.clock.unixts, end.clock.unixts,
-           record.id, assessment.type,
+    select(id, record.id, assessment.type,
            delivered.hrts, begin.hrts, end.hrts,
            delivered.unixts, begin.unixts, end.unixts,
            with.any.response,
@@ -195,5 +176,5 @@ reshaped.df <- do.call(rbind, collect.reshaped.df)
 #------------------------------------------------------------------------------
 # Save merged dataset to csv file
 #------------------------------------------------------------------------------
-write.csv(reshaped.df, file.path(path.pns.output_data, "merged.csv"), row.names = FALSE)
+write.csv(reshaped.df, file.path(path.pns.output_data, "merged_postquit_ema.csv"), row.names = FALSE, na="")
 

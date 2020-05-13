@@ -170,6 +170,84 @@ SetUpPostQuit <- function(df.raw){
 }
 
 
+SetUpPreQuit <- function(df.raw){
+  # About: Common data pre-processing tasks for PNS post quit raw data
+  # Args: 
+  #   df.raw : one of pre quit random, pre quit urge,
+  #     pre quit about to slip, pre quit about to slip part 2 raw data
+  # Output:
+  #   dataset with rows that meet inclusion-exclusion criteria
+  
+  # --------------------------------------------------------------------------- 
+  # Rename variables in the raw data that will be relevant to the tasks in the
+  # SetUpPreQuit function
+  # ---------------------------------------------------------------------------
+  df.out <- df.raw %>%
+    rename(id = Part_ID, 
+           record.id = Record_ID,
+           record.status = Record_Status,
+           assessment.type = Asse_Name, 
+           delivered.hrts = Initiated,
+           begin.hrts = AssessmentBegin,
+           completed.hrts = AssessmentCompleted,
+           notcompleted.hrts = AssessmentNOTCompleted,
+           responded = Responded,
+           completed = Completed) %>%
+    mutate(id = as.character(id),
+           record.id = as.character(record.id),
+           record.status = as.character(record.status),
+           assessment.type = as.character(assessment.type),
+           delivered.hrts = as.character(delivered.hrts),
+           begin.hrts = as.character(begin.hrts),
+           completed.hrts = as.character(completed.hrts),
+           notcompleted.hrts = as.character(notcompleted.hrts),
+           responded = as.character(responded),
+           completed = as.character(completed))
+  
+  # --------------------------------------------------------------------------- 
+  # Format time variables
+  # ---------------------------------------------------------------------------
+  df.out <- df.out %>%
+    mutate(delivered.hrts = as.POSIXct(strptime(delivered.hrts, format = "%m/%d/%Y %I:%M:%S %p")),
+           begin.hrts = as.POSIXct(strptime(begin.hrts, format = "%m/%d/%Y %I:%M:%S %p")),
+           completed.hrts = as.POSIXct(strptime(completed.hrts, format = "%m/%d/%Y %I:%M:%S %p")),
+           notcompleted.hrts = as.POSIXct(strptime(notcompleted.hrts, format = "%m/%d/%Y %I:%M:%S %p"))) %>%
+    mutate(delivered.unixts = as.numeric(delivered.hrts),
+           begin.unixts = as.numeric(begin.hrts))
+  
+  # ---------------------------------------------------------------------------
+  # Decision rule: exclude EMAs that are "not valid"
+  # ---------------------------------------------------------------------------
+  df.out <- df.out %>%
+    mutate(responded = if_else(responded=="","Missing",responded),
+           completed = if_else(completed=="","Missing",completed)) %>%
+    filter((responded=="True" & completed=="True")|
+             (responded=="True" & completed=="False")|
+             (responded=="True" & completed=="Missing")|
+             (responded=="Missing" & completed=="False"))
+  
+  # ---------------------------------------------------------------------------
+  # Decision rule: create end.hrts and end.unixts
+  # ---------------------------------------------------------------------------
+  df.out <- df.out %>% 
+    mutate(end.hrts = completed.hrts) %>%
+    mutate(end.hrts = if_else(is.na(completed.hrts), notcompleted.hrts, end.hrts)) %>%
+    mutate(end.unixts = as.numeric(end.hrts))
+  
+  # --------------------------------------------------------------------------- 
+  # Reorder columns
+  # ---------------------------------------------------------------------------
+  df.out <- df.out %>%
+    select(id, record.id, assessment.type,
+           delivered.hrts, begin.hrts, end.hrts,
+           delivered.unixts, begin.unixts, end.unixts,
+           record.status, responded, completed,
+           everything())
+  
+  return(df.out)
+}
+
+
 PNSCleanSmokingCount <- function(df){
   # About: Clean up raw responses to smoking quantity items in EMAs
   # Args: 
