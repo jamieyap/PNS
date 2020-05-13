@@ -284,11 +284,11 @@ GetFutureRecords <- function(df.this.group, cols.today, h, this.numeric){
     future.records <- tail(df.this.group[, cols.today[i]], n=-h[i])
     
     if(isTRUE(this.numeric[i])){
-      past.records <- as.numeric(unlist(past.records))
-      df.this.group[, new.col.name] <- c(rep(NA_real_,h[i]), past.records)
+      future.records <- as.numeric(unlist(future.records))
+      df.this.group[, new.col.name] <- c(future.records, rep(NA_real_,h[i]))
     }else{
-      past.records <- as.character(unlist(past.records))
-      df.this.group[, new.col.name] <- c(rep(NA_character_,h[i]), past.records)
+      future.records <- as.character(unlist(future.records))
+      df.this.group[, new.col.name] <- c(future.records, rep(NA_character_,h[i]))
     }
   }
   
