@@ -37,20 +37,20 @@ write.csv(df.processed, file.path(path.pns.output_data, "prequit_urge.csv"), row
 remove(df.processed, df.raw, ema.item.names)
 
 #------------------------------------------------------------------------------
-# Pre Quit About to Slip Part 1
+# Pre Quit Smoking Part One
 #------------------------------------------------------------------------------
 df.raw <- read.csv(file.path(path.pns.input_data, "Pre_Quit_Smoking.csv"), stringsAsFactors = FALSE)
-ema.item.names <- read.csv(file.path(path.pns.output_data, "item_names_prequit_about2slip1.csv"), header = TRUE, stringsAsFactors = FALSE)
+ema.item.names <- read.csv(file.path(path.pns.output_data, "item_names_prequit_smokingpartone.csv"), header = TRUE, stringsAsFactors = FALSE)
 source(file.path(path.pns.code, "prepare-prequit-ema.R"))
-write.csv(df.processed, file.path(path.pns.output_data, "prequit_about2slip1.csv"), row.names = FALSE, na = "")
+write.csv(df.processed, file.path(path.pns.output_data, "prequit_smokingpartone.csv"), row.names = FALSE, na = "")
 remove(df.processed, df.raw, ema.item.names)
 
 #------------------------------------------------------------------------------
-# Pre Quit About to Slip Part 2
+# Pre Quit Smoking Part Two
 #------------------------------------------------------------------------------
 df.raw <- read.csv(file.path(path.pns.input_data, "Pre_Quit_Smoking_Part2.csv"), stringsAsFactors = FALSE)
-ema.item.names <- read.csv(file.path(path.pns.output_data, "item_names_prequit_about2slip2.csv"), header = TRUE, stringsAsFactors = FALSE)
+ema.item.names <- read.csv(file.path(path.pns.output_data, "item_names_prequit_smokingparttwo.csv"), header = TRUE, stringsAsFactors = FALSE)
 source(file.path(path.pns.code, "prepare-prequit-ema.R"))
-write.csv(df.processed, file.path(path.pns.output_data, "prequit_about2slip2.csv"), row.names = FALSE, na = "")
+write.csv(df.processed, file.path(path.pns.output_data, "prequit_smokingparttwo.csv"), row.names = FALSE, na = "")
 remove(df.processed, df.raw, ema.item.names)
 

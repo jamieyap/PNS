@@ -37,21 +37,21 @@ write.csv(df.processed, file.path(path.pns.output_data, "postquit_urge.csv"), ro
 remove(df.processed, df.raw, ema.item.names)
 
 #------------------------------------------------------------------------------
-# Post Quit About to Slip Part 1 EMA
+# Post Quit About to Slip Part One EMA
 #------------------------------------------------------------------------------
 df.raw <- read.csv(file.path(path.pns.input_data, "Post_Quit_About_to_Slip.csv"), stringsAsFactors = FALSE)
-ema.item.names <- read.csv(file.path(path.pns.output_data, "item_names_postquit_about2slip1.csv"), header = TRUE, stringsAsFactors = FALSE)
+ema.item.names <- read.csv(file.path(path.pns.output_data, "item_names_postquit_abouttoslippartone.csv"), header = TRUE, stringsAsFactors = FALSE)
 source(file.path(path.pns.code, "prepare-postquit-ema.R"))
-write.csv(df.processed, file.path(path.pns.output_data, "postquit_about2slip1.csv"), row.names = FALSE, na = "")
+write.csv(df.processed, file.path(path.pns.output_data, "postquit_abouttoslippartone.csv"), row.names = FALSE, na = "")
 remove(df.processed, df.raw, ema.item.names)
 
 #------------------------------------------------------------------------------
-# Post Quit About to Slip Part 2 EMA
+# Post Quit About to Slip Part Two EMA
 #------------------------------------------------------------------------------
 df.raw <- read.csv(file.path(path.pns.input_data, "Post_Quit_About_to_Slip_Part2.csv"), stringsAsFactors = FALSE)
-ema.item.names <- read.csv(file.path(path.pns.output_data, "item_names_postquit_about2slip2.csv"), header = TRUE, stringsAsFactors = FALSE)
+ema.item.names <- read.csv(file.path(path.pns.output_data, "item_names_postquit_abouttoslipparttwo.csv"), header = TRUE, stringsAsFactors = FALSE)
 source(file.path(path.pns.code, "prepare-postquit-ema.R"))
-write.csv(df.processed, file.path(path.pns.output_data, "postquit_about2slip2.csv"), row.names = FALSE, na = "")
+write.csv(df.processed, file.path(path.pns.output_data, "postquit_abouttoslipparttwo.csv"), row.names = FALSE, na = "")
 remove(df.processed, df.raw, ema.item.names)
 
 #------------------------------------------------------------------------------
