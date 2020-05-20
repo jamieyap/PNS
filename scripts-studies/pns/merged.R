@@ -302,5 +302,7 @@ bigdf <- rbind(df.smoking, reshaped.df)
 #------------------------------------------------------------------------------
 # Save merged dataset to csv file
 #------------------------------------------------------------------------------
+write.csv(reshaped.df, file.path(path.pns.output_data, "allema.csv"), row.names = FALSE, na="")
 write.csv(bigdf, file.path(path.pns.output_data, "merged.csv"), row.names = FALSE, na="")
+
 

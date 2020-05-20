@@ -19,6 +19,11 @@ source(file.path(path.pns.code, "data-manip-utils.R"))
 source(file.path(path.shared.code, "shared-data-manip-utils.R"))
 
 #------------------------------------------------------------------------------
+# Dates
+#------------------------------------------------------------------------------
+df.dates <- read.csv(file.path(path.pns.output_data, "dates.csv"), header = TRUE, stringsAsFactors = FALSE)
+
+#------------------------------------------------------------------------------
 # Pre Quit Random EMA
 #------------------------------------------------------------------------------
 df.raw <- read.csv(file.path(path.pns.input_data, "Pre_Quit_Random.csv"), stringsAsFactors = FALSE)

@@ -151,18 +151,33 @@ df <- df %>%
   ))
 
 df <- df %>%
-  mutate(quit.time.value = case_when(
+  mutate(use.quit.time.value = case_when(
     is.equal==1 & is.na(prequit.latest.date) ~ "04:00:00",
-    is.equal==1 ~ strftime(df$prequit.latest.longformatdate, "%H:%M:%S"),
-    is.equal==0 & postquit.earliest.date==prequit.latest.date ~ strftime(df$prequit.latest.longformatdate, "%H:%M:%S"),
+    is.equal==1 ~ strftime(prequit.latest.longformatdate, "%H:%M:%S"),
+    is.equal==0 & postquit.earliest.date==prequit.latest.date ~ strftime(prequit.latest.longformatdate, "%H:%M:%S"),
     is.equal==0 & postquit.earliest.date!=prequit.latest.date ~ "04:00:00",
     is.na(is.equal) & !is.na(postquit.earliest.date) ~ "04:00:00",
     TRUE~NA_character_
   ))
 
+#------------------------------------------------------------------------------
+# Infer first day of pre-quit period and last day of post-quit period
+#------------------------------------------------------------------------------
 df <- df %>%
-  rename(prequit.latest.shortformatdate = prequit.latest.date,
-         postquit.earliest.shortformatdate = postquit.earliest.date)
+  mutate(use.begin.date.value = use.quit.date.value-7*24*60*60,
+         use.begin.time.value = if_else(!is.na(use.begin.date.value), "00:00:00", NA_character_),
+         use.end.date.value = use.quit.date.value+21*24*60*60,
+         use.end.time.value = if_else(!is.na(use.end.date.value), "00:00:00", NA_character_)) %>%
+  mutate(use.begin.date.value = as.POSIXct(strftime(use.begin.date.value, "%Y-%m-%d")),
+         use.end.date.value = as.POSIXct(strftime(use.end.date.value, "%Y-%m-%d")))
+
+#------------------------------------------------------------------------------
+# Save file
+#------------------------------------------------------------------------------
+df <- df %>% 
+  mutate(prequit.latest.date = prequit.latest.longformatdate, 
+         postquit.earliest.date = postquit.earliest.longformatdate) %>%
+  select(-prequit.latest.longformatdate, -postquit.earliest.longformatdate)
 
 write.csv(df, file.path(path.pns.output_data, "dates.csv"), row.names = FALSE, na="")
 

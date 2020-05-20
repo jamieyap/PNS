@@ -346,7 +346,7 @@ df <- df %>%
 # Check whether reported timing of smoking is not consistent with length of 
 # time interval between two consecutive EMAs used to construct smoking outcome
 #------------------------------------------------------------------------------
-df <- df %>% mutate(greaterthan.timebetween = if_else((smoking.delta.hours > time.between.hours), 1, 0))
+df <- df %>% mutate(is.greaterthan.timebetween = if_else((smoking.delta.hours > time.between.hours), 1, 0))
 
 #------------------------------------------------------------------------------
 # Calculate minimum possible time and maximum possible time
@@ -365,7 +365,7 @@ df <- df %>%
     (!is.na(smoking.qty)) & current.assessment.type=="Post-Quit Urge" ~ previous.time.unixts,
     (!is.na(smoking.qty)) & current.assessment.type=="Post-Quit About to Slip" ~ previous.time.unixts,
     (!is.na(smoking.qty)) & current.assessment.type=="Post-Quit About to Slip - Part2" ~ previous.time.unixts,
-    (!is.na(smoking.qty)) & current.assessment.type=="Post-Quit Already Slipped" ~ current.time.unixts-24*60*60,
+    (!is.na(smoking.qty)) & current.assessment.type=="Post-Quit Already Slipped" ~ min(previous.time.unixts,current.time.unixts-24*60*60),
     # Pre-Quit
     (!is.na(smoking.qty)) & current.assessment.type=="Pre-Quit Random" ~ previous.time.unixts,
     (!is.na(smoking.qty)) & current.assessment.type=="Pre-Quit Urge" ~ previous.time.unixts,
@@ -381,21 +381,21 @@ df <- df %>%
     (!is.na(smoking.qty)) & current.assessment.type=="Post-Quit About to Slip - Part2" ~ current.time.unixts,
     (!is.na(smoking.qty)) & current.assessment.type=="Post-Quit Already Slipped" ~ current.time.unixts,
     # Post-Quit
-    (!is.na(smoking.qty)) & !is.na(smoking.delta.minutes) & greaterthan.timebetween==0 & current.assessment.type=="Post-Quit Random" ~ current.time.unixts-60*smoking.delta.minutes,
-    (!is.na(smoking.qty)) & !is.na(smoking.delta.minutes) & greaterthan.timebetween==0 & current.assessment.type=="Post-Quit Urge" ~ current.time.unixts-60*smoking.delta.minutes,
-    (!is.na(smoking.qty)) & !is.na(smoking.delta.minutes) & greaterthan.timebetween==0 & current.assessment.type=="Post-Quit About to Slip" ~ current.time.unixts-60*smoking.delta.minutes,
-    (!is.na(smoking.qty)) & !is.na(smoking.delta.minutes) & greaterthan.timebetween==0 & current.assessment.type=="Post-Quit About to Slip - Part2" ~ current.time.unixts-60*smoking.delta.minutes,
-    (!is.na(smoking.qty)) & !is.na(smoking.delta.minutes) & current.assessment.type=="Post-Quit Already Slipped" ~ current.time.unixts-24*60*60,
+    (!is.na(smoking.qty)) & !is.na(smoking.delta.minutes) & is.greaterthan.timebetween==0 & current.assessment.type=="Post-Quit Random" ~ current.time.unixts-60*smoking.delta.minutes,
+    (!is.na(smoking.qty)) & !is.na(smoking.delta.minutes) & is.greaterthan.timebetween==0 & current.assessment.type=="Post-Quit Urge" ~ current.time.unixts-60*smoking.delta.minutes,
+    (!is.na(smoking.qty)) & !is.na(smoking.delta.minutes) & is.greaterthan.timebetween==0 & current.assessment.type=="Post-Quit About to Slip" ~ current.time.unixts-60*smoking.delta.minutes,
+    (!is.na(smoking.qty)) & !is.na(smoking.delta.minutes) & is.greaterthan.timebetween==0 & current.assessment.type=="Post-Quit About to Slip - Part2" ~ current.time.unixts-60*smoking.delta.minutes,
+    (!is.na(smoking.qty)) & !is.na(smoking.delta.minutes) & current.assessment.type=="Post-Quit Already Slipped" ~ current.time.unixts-60*smoking.delta.minutes,
     # Pre-Quit
     (!is.na(smoking.qty)) & current.assessment.type=="Pre-Quit Random" ~ current.time.unixts,
     (!is.na(smoking.qty)) & current.assessment.type=="Pre-Quit Urge" ~ current.time.unixts,
     (!is.na(smoking.qty)) & current.assessment.type=="Pre-Quit Smoking" ~ current.time.unixts,
     (!is.na(smoking.qty)) & current.assessment.type=="Pre-Quit Smoking - Part2" ~ current.time.unixts,
     # Pre-Quit
-    (!is.na(smoking.qty)) & !is.na(smoking.delta.minutes) & greaterthan.timebetween==0 & current.assessment.type=="Pre-Quit Random" ~ current.time.unixts-60*smoking.delta.minutes,
-    (!is.na(smoking.qty)) & !is.na(smoking.delta.minutes) & greaterthan.timebetween==0 & current.assessment.type=="Pre-Quit Urge" ~ current.time.unixts-60*smoking.delta.minutes,
-    (!is.na(smoking.qty)) & !is.na(smoking.delta.minutes) & greaterthan.timebetween==0 & current.assessment.type=="Pre-Quit Smoking" ~ current.time.unixts-60*smoking.delta.minutes,
-    (!is.na(smoking.qty)) & !is.na(smoking.delta.minutes) & greaterthan.timebetween==0 & current.assessment.type=="Pre-Quit Smoking - Part2" ~ current.time.unixts-60*smoking.delta.minutes,
+    (!is.na(smoking.qty)) & !is.na(smoking.delta.minutes) & is.greaterthan.timebetween==0 & current.assessment.type=="Pre-Quit Random" ~ current.time.unixts-60*smoking.delta.minutes,
+    (!is.na(smoking.qty)) & !is.na(smoking.delta.minutes) & is.greaterthan.timebetween==0 & current.assessment.type=="Pre-Quit Urge" ~ current.time.unixts-60*smoking.delta.minutes,
+    (!is.na(smoking.qty)) & !is.na(smoking.delta.minutes) & is.greaterthan.timebetween==0 & current.assessment.type=="Pre-Quit Smoking" ~ current.time.unixts-60*smoking.delta.minutes,
+    (!is.na(smoking.qty)) & !is.na(smoking.delta.minutes) & is.greaterthan.timebetween==0 & current.assessment.type=="Pre-Quit Smoking - Part2" ~ current.time.unixts-60*smoking.delta.minutes,
     TRUE ~ earliest.possible.time.unixts
   )) 
 
