@@ -121,19 +121,19 @@ df.recorded.quit <- df.recorded.quit %>%
   arrange(desc(is.na(cc.version)), user.id)
 
 ###############################################################################
-# Remove participants who dropped or withdrew
+# Format data
 ###############################################################################
 
-df.out <- df.recorded.quit %>% 
-  filter(dropped==0 & withdrew==0) %>%
-  select(-dropped, -withdrew) %>%
+df.out <- df.recorded.quit %>%
   arrange(cc.version, desc(noshow.visit02), user.id)
+
+colnames(df.out) <- gsub(".", "_", colnames(df.out), fixed = TRUE)
 
 ###############################################################################
 # Write info
 ###############################################################################
 
-write.csv(df.out, file.path(path.breakfree.output_data, "quit.dates.csv"), row.names = FALSE)
+write.csv(df.out, file.path(path.breakfree.output_data, "dates.csv"), row.names = FALSE, na = "")
 
 # Remove (almost) everything in the working environment
 remove(list = ls())
