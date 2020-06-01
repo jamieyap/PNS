@@ -101,83 +101,49 @@ remove(df.baseline)
 #------------------------------------------------------------------------------
 # Merge several streams of data into one data frame
 #------------------------------------------------------------------------------
-df <- left_join(x = staff.recorded.dates, y = df.baseline.dates, by = "callnumr")
-df <- left_join(x = df, y = collect.prequit, by = "id")
-df <- left_join(x = df, y = collect.postquit, by = "id")
-df$prequit.latest.longformatdate <- df$prequit.latest.date
-df$postquit.earliest.longformatdate <- df$postquit.earliest.date
-df$prequit.latest.date <- as.POSIXct(strftime(df$prequit.latest.date, "%Y-%m-%d"))
-df$postquit.earliest.date <- as.POSIXct(strftime(df$postquit.earliest.date, "%Y-%m-%d"))
+df.alldates <- left_join(x = staff.recorded.dates, y = df.baseline.dates, by = "callnumr")
+df.alldates <- left_join(x = df.alldates, y = collect.prequit, by = "id")
+df.alldates <- left_join(x = df.alldates, y = collect.postquit, by = "id")
 
+df.alldates <- df.alldates %>%
+  mutate(prequit.latest.longformatdate = prequit.latest.date,
+         postquit.earliest.longformatdate = postquit.earliest.date) %>%
+  rename(prequit.latest.shortformatdate = prequit.latest.date,
+         postquit.earliest.shortformatdate = postquit.earliest.date) %>%
+  mutate(prequit.latest.shortformatdate = as.POSIXct(strftime(prequit.latest.shortformatdate, "%Y-%m-%d")),
+         postquit.earliest.shortformatdate = as.POSIXct(strftime(postquit.earliest.shortformatdate, "%Y-%m-%d")))
+  
 #------------------------------------------------------------------------------
-# Do checks
+# Set Quit Date
 #------------------------------------------------------------------------------
-df <- df %>% 
+df.alldates <- df.alldates %>% 
   mutate(is.equal = case_when(
-    EMA_Qday==quitday & EMA_Qday==postquit.earliest.date ~ 1,
-    is.na(EMA_Qday) | is.na(quitday) | is.na(postquit.earliest.date) ~ NA_real_,
+    EMA_Qday==quitday & EMA_Qday==postquit.earliest.shortformatdate ~ 1,
+    is.na(EMA_Qday) | is.na(quitday) | is.na(postquit.earliest.shortformatdate) ~ NA_real_,
     TRUE ~ 0
   )) %>%
   arrange(is.equal)
 
-df <- df %>%
+df.alldates <- df.alldates %>%
   mutate(use.quit.date = case_when(
     is.equal==1 ~ "EMA_Qday",
-    is.equal==0 & postquit.earliest.date>=EMA_Qday & postquit.earliest.date>=quitday & postquit.earliest.date-EMA_Qday<=postquit.earliest.date-quitday & EMA_Qday>=prequit.latest.date ~ "EMA_Qday",
-    is.equal==0 & postquit.earliest.date>=EMA_Qday & postquit.earliest.date>=quitday & postquit.earliest.date-EMA_Qday>postquit.earliest.date-quitday & quitday>=prequit.latest.date ~ "quitday",
-    is.equal==0 & postquit.earliest.date<EMA_Qday & postquit.earliest.date<quitday ~ "postquit.earliest.date",
+    is.equal==0 & prequit.latest.shortformatdate==postquit.earliest.shortformatdate ~ "postquit.earliest.shortformatdate",
     TRUE ~ NA_character_
   )) %>%
   arrange(is.equal, use.quit.date)
 
-pns.key.id01 <- as.numeric(Sys.getenv("pns.key.id01"))
-pns.key.id02 <- as.numeric(Sys.getenv("pns.key.id02"))
-pns.key.id03 <- as.numeric(Sys.getenv("pns.key.id03"))
-pns.key.id04 <- as.numeric(Sys.getenv("pns.key.id04"))
-
-df <- df %>%
-  mutate(use.quit.date = replace(use.quit.date, id==pns.key.id01, "EMA_Qday")) %>%
-  mutate(use.quit.date = replace(use.quit.date, id==pns.key.id02, "postquit.earliest.date")) %>%
-  mutate(use.quit.date = replace(use.quit.date, id==pns.key.id03, "postquit.earliest.date")) %>%
-  mutate(use.quit.date = replace(use.quit.date, id==pns.key.id04, "EMA_Qday")) %>%
-  arrange(is.equal, use.quit.date)
-
-df <- df %>%
-  mutate(use.quit.date.value = case_when(
-    use.quit.date=="EMA_Qday" ~ EMA_Qday,
-    use.quit.date=="postquit.earliest.date" ~ postquit.earliest.date,
-    use.quit.date=="quitday" ~ quitday,
-    TRUE~as.POSIXct(NA)
-  ))
-
-df <- df %>%
-  mutate(use.quit.time.value = case_when(
-    is.equal==1 & is.na(prequit.latest.date) ~ "04:00:00",
-    is.equal==1 ~ strftime(prequit.latest.longformatdate, "%H:%M:%S"),
-    is.equal==0 & postquit.earliest.date==prequit.latest.date ~ strftime(prequit.latest.longformatdate, "%H:%M:%S"),
-    is.equal==0 & postquit.earliest.date!=prequit.latest.date ~ "04:00:00",
-    is.na(is.equal) & !is.na(postquit.earliest.date) ~ "04:00:00",
-    TRUE~NA_character_
-  ))
-
 #------------------------------------------------------------------------------
-# Infer first day of pre-quit period and last day of post-quit period
+# Set Quit Time
 #------------------------------------------------------------------------------
-df <- df %>%
-  mutate(use.begin.date.value = use.quit.date.value-7*24*60*60,
-         use.begin.time.value = if_else(!is.na(use.begin.date.value), "00:00:00", NA_character_),
-         use.end.date.value = use.quit.date.value+21*24*60*60,
-         use.end.time.value = if_else(!is.na(use.end.date.value), "00:00:00", NA_character_)) %>%
-  mutate(use.begin.date.value = as.POSIXct(strftime(use.begin.date.value, "%Y-%m-%d")),
-         use.end.date.value = as.POSIXct(strftime(use.end.date.value, "%Y-%m-%d")))
+df.alldates <- df.alldates %>%
+  mutate(quit.hour = case_when(
+    is.equal==1 & prequit.latest.shortformatdate==postquit.earliest.shortformatdate ~ 0.5*(postquit.earliest.longformatdate-prequit.latest.longformatdate)/60,
+    is.equal==0 & prequit.latest.shortformatdate==postquit.earliest.shortformatdate ~ 0.5*(postquit.earliest.longformatdate-prequit.latest.longformatdate)/60,
+    is.equal==1 & prequit.latest.shortformatdate<postquit.earliest.shortformatdate ~ 4,
+    is.equal==1 & is.na(prequit.latest.shortformatdate) ~ 4,
+    TRUE ~ NA_real_
+  )) %>% 
+  mutate(quit.hour = round(as.numeric(quit.hour), digits=1))
 
-#------------------------------------------------------------------------------
-# Save file
-#------------------------------------------------------------------------------
-df <- df %>% 
-  mutate(prequit.latest.date = prequit.latest.longformatdate, 
-         postquit.earliest.date = postquit.earliest.longformatdate) %>%
-  select(-prequit.latest.longformatdate, -postquit.earliest.longformatdate)
 
-write.csv(df, file.path(path.pns.output_data, "dates.csv"), row.names = FALSE, na="")
-
+write.csv(df.alldates, file.path(path.pns.output_data, "dates.csv"), row.names = FALSE, na="")
