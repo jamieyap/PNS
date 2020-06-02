@@ -1,9 +1,9 @@
 # List to collect item responses
 list.resp.cc1 <- list()
-N <- length(list.df.raw.random.DATA.cc1)
+N <- length(list.df.raw.stress.DATA.cc1)
 
 for(i in 1:N){
-  df.raw <- list.df.raw.random.DATA.cc1[[i]]
+  df.raw <- list.df.raw.stress.DATA.cc1[[i]]
   
   all.col.names <- colnames(df.raw)
   check <- (("question_answers_0_response_0") %in% all.col.names)

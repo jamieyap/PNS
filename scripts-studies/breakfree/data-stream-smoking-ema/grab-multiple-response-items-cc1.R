@@ -2,10 +2,6 @@
 list.resp.cc1 <- list()
 N <- length(list.df.raw.smoking.DATA.cc1)
 
-# List to collect item responses
-list.resp.cc1 <- list()
-N <- length(list.df.raw.smoking.DATA.cc1)
-
 for(i in 1:N){
   df.raw <- list.df.raw.smoking.DATA.cc1[[i]]
   
