@@ -124,10 +124,7 @@ df.recorded.quit <- df.recorded.quit %>%
 # Format data
 ###############################################################################
 
-df.out <- df.recorded.quit %>%
-  arrange(cc.version, desc(noshow.visit02), user.id)
-
-colnames(df.out) <- gsub(".", "_", colnames(df.out), fixed = TRUE)
+df.out <- df.recorded.quit %>% arrange(cc.version, desc(noshow.visit02), user.id)
 
 ###############################################################################
 # Write info

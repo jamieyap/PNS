@@ -11,12 +11,12 @@ path.breakfree.code <- Sys.getenv("path.breakfree.code")
 path.shared.code <- Sys.getenv("path.shared.code")
 
 source(file.path(path.shared.code, "shared-data-manip-utils.R"))
-load(file.path(path.breakfree.staged_data, "raw.randomEMA.cc2.RData"))
+load(file.path(path.breakfree.staged_data, "raw.smokingEMA.cc2.RData"))
 
 ###############################################################################
 # Create a question bank file containing info for each EMA item
 ###############################################################################
-df.raw <- list.df.raw.random.DATA.cc2[[23]]  # Pick one individual
+df.raw <- list.df.raw.smoking.DATA.cc2[[3]]  # Pick one individual
 
 list.items <- list()
 all.col.names <- colnames(df.raw)
@@ -69,14 +69,14 @@ write.out <- TRUE
 
 if(isTRUE(write.out)){
   write.csv(items.cc2, 
-            file.path(path.breakfree.output_data, "randomEMA_items_cc2.csv"), 
+            file.path(path.breakfree.output_data, "smokingEMA_items_cc2.csv"), 
             row.names=FALSE, na="") 
 }
 
 ###############################################################################
 # Obtain columns in each person's STATUS file corresponding to MISSED EMAs
 ###############################################################################
-list.df.raw.random.STATUS.cc2 <- lapply(list.df.raw.random.STATUS.cc2, function(x){
+list.df.raw.smoking.STATUS.cc2 <- lapply(list.df.raw.smoking.STATUS.cc2, function(x){
   
   df <- x %>% 
     select(user.id, V1, V3, V4) %>% 
@@ -98,16 +98,16 @@ list.df.raw.random.STATUS.cc2 <- lapply(list.df.raw.random.STATUS.cc2, function(
 })
 
 # Remove NULL elements of the list
-list.df.raw.random.STATUS.cc2 <- discard(list.df.raw.random.STATUS.cc2, is.null)
+list.df.raw.smoking.STATUS.cc2 <- discard(list.df.raw.smoking.STATUS.cc2, is.null)
 
 ###############################################################################
 # Data preprocessing steps
 ###############################################################################
-N <- length(list.df.raw.random.DATA.cc2)
+N <- length(list.df.raw.smoking.DATA.cc2)
 list.df.reference <- list()
 
 for(i in 1:N){
-  df.raw <- list.df.raw.random.DATA.cc2[[i]]
+  df.raw <- list.df.raw.smoking.DATA.cc2[[i]]
   
   # Create an id-variable for each ema in the raw data having
   # COMPLETED and ABANDONED_BY_TIMEOUT EMAs for merging responses
@@ -157,7 +157,7 @@ for(i in 1:N){
            with.any.response)
   
   # Save changes
-  list.df.raw.random.DATA.cc2[[i]] <- df.raw
+  list.df.raw.smoking.DATA.cc2[[i]] <- df.raw
   list.df.reference <- append(list.df.reference, list(df.ref))
 }
 
@@ -183,7 +183,7 @@ collect.idx <- items.cc2 %>%
 collect.idx <- c(as.matrix(collect.idx))
 
 # Grab items with responses find.this.string
-source(file.path(path.breakfree.code, "data-stream-random-ema/grab-single-response-items-cc2.R"))
+source(file.path(path.breakfree.code, "data-stream-smoking-ema/grab-single-response-items-cc2.R"))
 df.resp.cc2 <- df.resp.cc2 %>% mutate_at(vars(grep(pattern = "item.", x = .)), as.character)
 list.collect.all <- append(list.collect.all, list(df.resp.cc2))
 
@@ -205,7 +205,7 @@ collect.idx <- items.cc2 %>%
 collect.idx <- c(as.matrix(collect.idx))
 
 # Grab items with responses find.this.string
-source(file.path(path.breakfree.code, "data-stream-random-ema/grab-single-response-items-cc2.R"))
+source(file.path(path.breakfree.code, "data-stream-smoking-ema/grab-single-response-items-cc2.R"))
 df.resp.cc2 <- df.resp.cc2 %>% mutate_at(vars(grep(pattern = "item.", x = .)), as.numeric)
 
 list.collect.all <- append(list.collect.all, list(df.resp.cc2))
@@ -228,7 +228,7 @@ collect.idx <- items.cc2 %>%
 collect.idx <- c(as.matrix(collect.idx))
 
 # Grab items with responses find.this.string
-source(file.path(path.breakfree.code, "data-stream-random-ema/grab-single-response-items-cc2.R"))
+source(file.path(path.breakfree.code, "data-stream-smoking-ema/grab-single-response-items-cc2.R"))
 df.resp.cc2 <- df.resp.cc2 %>% mutate_at(vars(grep(pattern = "item.", x = .)), as.character)
 
 list.collect.all <- append(list.collect.all, list(df.resp.cc2))
@@ -251,7 +251,7 @@ collect.idx <- items.cc2 %>%
 collect.idx <- c(as.matrix(collect.idx))
 
 # Grab items with responses find.this.string
-source(file.path(path.breakfree.code, "data-stream-random-ema/grab-multiple-response-items-cc2.R"))
+source(file.path(path.breakfree.code, "data-stream-smoking-ema/grab-multiple-response-items-cc2.R"))
 df.resp.cc2 <- df.resp.cc2 %>% mutate_at(vars(grep(pattern = "item.", x = .)), as.character)
 
 list.collect.all <- append(list.collect.all, list(df.resp.cc2))
@@ -274,7 +274,7 @@ remove(list.collect.all)
 # for merging with COMPLETED and ABANDONED_BY_TIMEOUT Random EMAs from
 # DATA files
 ###############################################################################
-list.df.tmp <- lapply(list.df.raw.random.STATUS.cc2, function(x, use.col.names=colnames(df.collect.all)){
+list.df.tmp <- lapply(list.df.raw.smoking.STATUS.cc2, function(x, use.col.names=colnames(df.collect.all)){
   
   df.tmp <- matrix(NA, nrow(x), length(use.col.names))
   df.tmp <- as.data.frame(df.tmp)
@@ -327,10 +327,10 @@ df.collect.all$timezone.hrts <- "CST6CDT"
 
 # Add type and status
 df.collect.all <- df.collect.all %>% 
-  mutate(ema.type = "random") %>%
+  mutate(ema.type = "smoking") %>%
   group_by(user.id) %>%
   mutate(ones=1) %>%
-  mutate(random.ema.id = cumsum(ones)) %>%
+  mutate(smoking.ema.id = cumsum(ones)) %>%
   select(-ones)
 
 # Rearrange columns
@@ -341,7 +341,7 @@ tmp.item.numbers <- tmp.item.numbers[order(tmp.item.numbers)]
 tmp.item.names <- paste("item.",tmp.item.numbers,sep="")
 
 df.collect.all <- df.collect.all %>%
-  select(user.id, random.ema.id, ema.type, status,
+  select(user.id, smoking.ema.id, ema.type, status,
          prompt.hrts, begin.hrts, end.hrts, timezone.hrts,
          prompt.unixts, begin.unixts, end.unixts,
          with.any.response,
@@ -355,6 +355,6 @@ write.out <- TRUE
 
 if(isTRUE(write.out)){
   write.csv(df.collect.all, 
-            file.path(path.breakfree.output_data, "randomEMA_responses_cc2.csv"), 
+            file.path(path.breakfree.output_data, "smokingEMA_responses_cc2.csv"), 
             row.names=FALSE, na="")
 }

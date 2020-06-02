@@ -22,33 +22,33 @@ df.raw.sleep.cc1 <- bind_rows(list.df.raw.sleep.cc1)
 # (V3/1000)/(60*60)
 
 df.raw.sleep.cc1 <- df.raw.sleep.cc1 %>%
-  mutate(setwakeup.unixts = V1/1000,
+  mutate(setsleeptime.unixts = V1/1000,
          sleep.hour = (V3/1000)/(60*60)) %>%
   mutate(sleep.hour = round(sleep.hour, digits=2)) %>%
-  mutate(setwakeup.hrts = as.POSIXct(setwakeup.unixts, tz = "CST6CDT", origin="1970-01-01")) %>%
-  mutate(setwakeup.hrts = strftime(setwakeup.hrts, format="%Y-%m-%d %H:%M:%S %z", tz = "CST6CDT"))  %>% 
-  mutate(setwakeup.hrts = as.character(setwakeup.hrts)) %>%
+  mutate(setsleeptime.hrts = as.POSIXct(setsleeptime.unixts, tz = "CST6CDT", origin="1970-01-01")) %>%
+  mutate(setsleeptime.hrts = strftime(setsleeptime.hrts, format="%Y-%m-%d %H:%M:%S %z", tz = "CST6CDT"))  %>% 
+  mutate(setsleeptime.hrts = as.character(setsleeptime.hrts)) %>%
   mutate(timezone.hrts = "CST6CDT") %>%
-  select(user.id, setwakeup.hrts, timezone.hrts, setwakeup.unixts, sleep.hour)
+  select(user.id, setsleeptime.hrts, timezone.hrts, setsleeptime.unixts, sleep.hour)
 
 
 # It is possible for sleep time to be changed by study coordinators
 # during the course of the study. So, we index sleep time/s recorded for each
 # individual
 df.raw.sleep.cc1 <- df.raw.sleep.cc1 %>% 
-  arrange(user.id, setwakeup.unixts) %>%
+  arrange(user.id, setsleeptime.unixts) %>%
   mutate(ones=1) %>%
   group_by(user.id) %>%
-  mutate(setwakeup.id = cumsum(ones)) %>%
+  mutate(setsleeptime.id = cumsum(ones)) %>%
   select(-ones)
 
 # Select relevant columns
 df.raw.sleep.cc1 <- df.raw.sleep.cc1 %>%
-  select(user.id, setwakeup.id,
-         setwakeup.hrts, timezone.hrts, setwakeup.unixts, sleep.hour)
+  select(user.id, setsleeptime.id,
+         setsleeptime.hrts, timezone.hrts, setsleeptime.unixts, sleep.hour)
 
 # Save cleaned data
 write.csv(df.raw.sleep.cc1, 
-          file.path(path.breakfree.output_data, "sleep.cc1.csv"), 
-          row.names=FALSE)
+          file.path(path.breakfree.output_data, "sleep_cc1.csv"), 
+          row.names=FALSE, na="")
 

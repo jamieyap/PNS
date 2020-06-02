@@ -42,6 +42,6 @@ df.raw.pressdayend.cc2 <- df.raw.pressdayend.cc2 %>%
 
 # Save cleaned data
 write.csv(df.raw.pressdayend.cc2, 
-          file.path(path.breakfree.output_data, "pressdayend.cc2.csv"), 
-          row.names=FALSE)
+          file.path(path.breakfree.output_data, "pressdayend_cc2.csv"), 
+          row.names=FALSE, na="")
 

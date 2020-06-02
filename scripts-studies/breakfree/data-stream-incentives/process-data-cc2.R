@@ -40,6 +40,6 @@ df.raw.incentive.cc2 <- df.raw.incentive.cc2 %>%
 
 # Save cleaned data
 write.csv(df.raw.incentive.cc2, 
-          file.path(path.breakfree.output_data, "incentive.cc2.csv"), 
-          row.names=FALSE)
+          file.path(path.breakfree.output_data, "incentive_cc2.csv"), 
+          row.names=FALSE, na="")
 

@@ -68,8 +68,8 @@ write.out <- TRUE
 
 if(isTRUE(write.out)){
   write.csv(items.cc1, 
-            file.path(path.breakfree.output_data, "randomEMA.items.cc1.csv"), 
-            row.names=FALSE)
+            file.path(path.breakfree.output_data, "randomEMA_items_cc1.csv"), 
+            row.names=FALSE, na="")
 }
 
 ###############################################################################
@@ -89,10 +89,9 @@ for(i in 1:N){
   check1 <- grepl("_response_", colnames(df.raw))
   check2 <- (!(grepl("_response_option_", colnames(df.raw))))
   keep.these.cols <- check1 & check2
-  drop.these.cols <- !keep.these.cols
-  drop.these.cols <- colnames(df.raw)[drop.these.cols]
+  keep.these.cols <- colnames(df.raw)[keep.these.cols]
   # Calling the function CheckAnyResponse() creates with.any.response
-  df.raw <- CheckAnyResponse(df = df.raw, drop.cols = drop.these.cols)
+  df.raw <- CheckAnyResponse(df = df.raw, keep.cols = keep.these.cols)
   
   # Proceed with remaining steps 
   # Bring time variables to the left of the data frame
@@ -280,7 +279,7 @@ write.out <- TRUE
 
 if(isTRUE(write.out)){
   write.csv(df.collect.all, 
-            file.path(path.breakfree.output_data, "randomEMA.responses.cc1.csv"), 
-            row.names=FALSE)
+            file.path(path.breakfree.output_data, "randomEMA_responses_cc1.csv"), 
+            row.names=FALSE, na="")
 }
 
