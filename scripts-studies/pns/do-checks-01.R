@@ -59,9 +59,9 @@ for(i in 1:length(prequit.files)){
   df.raw <- read.csv(file.path(path.pns.input_data, prequit.files[i]), header = TRUE, stringsAsFactors = FALSE)
   df.raw <- CheckAnyResponse(df = df.raw, keep.cols = ema.item.names[["name.codebook"]])
   df.out <- SetUpPreQuit(df.raw = df.raw)
-  df.tabulate.raw <- df.raw %>% group_by(with.any.response) %>% summarise(attempted = n(), cancelled = sum(Record_Status=="CANCELLED"))
-  df.tabulate.out <- df.out %>% group_by(with.any.response) %>% summarise(success = n(), cancelled = sum(record.status=="CANCELLED"))
-  df.tabulate <- cbind(df.tabulate.raw, df.tabulate.out[,2])
+  df.tabulate.raw <- df.raw %>% group_by(with.any.response) %>% summarise(attempted = n(), cancelled.raw = sum(Record_Status=="CANCELLED"))
+  df.tabulate.out <- df.out %>% group_by(with.any.response) %>% summarise(success = n(), cancelled.out = sum(record.status=="CANCELLED"))
+  df.tabulate <- cbind(df.tabulate.raw, df.tabulate.out[,2:3])
   df.tabulate[["percent.success"]] <- df.tabulate[["success"]]/df.tabulate[["attempted"]]
   df.tabulate[["percent.success"]] <- round(100*df.tabulate[["percent.success"]], digits=1)
   df.tabulate[["assessment.type"]] <- prequit.colnames[i]

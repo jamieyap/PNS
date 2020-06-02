@@ -166,36 +166,20 @@ df <- rbind(df.postquit.random,
             df.prequit.smokingpartone,
             df.prequit.smokingparttwo)
 
-df <- df %>%   
-  arrange(id, time.unixts) %>%
-  group_by(id) %>%
-  do(GetPastRecords(df.this.group = ., 
-                    cols.today = c("record.id","assessment.type","time.unixts","time.hrts"), 
-                    h = c(1,1,1,1), 
-                    this.numeric = c(FALSE,FALSE,TRUE,FALSE)))
-
 df <- df %>% 
   arrange(id, time.unixts) %>%
-  group_by(id) %>%
   mutate(ones=1) %>%
+  group_by(id) %>%
   mutate(current.order.in.sequence = cumsum(ones)) %>%
-  select(-ones) %>%
-  mutate(time.between.hours = (time.unixts - time.unixts_shift.minus.1)/(60*60)) %>%
   rename(current.record.id = record.id,
          current.assessment.type = assessment.type,
          current.time.hrts = time.hrts,
-         current.time.unixts = time.unixts,
-         previous.record.id = record.id_shift.minus.1,
-         previous.assessment.type = assessment.type_shift.minus.1,
-         previous.time.hrts = time.hrts_shift.minus.1,
-         previous.time.unixts = time.unixts_shift.minus.1) %>%
-  select(id, 
-         previous.record.id, previous.assessment.type, 
-         previous.time.hrts, previous.time.unixts,
-         current.record.id, current.assessment.type, 
-         current.order.in.sequence,
+         current.time.unixts = time.unixts) %>%
+  select(id,
+         current.record.id, current.assessment.type,
          current.time.hrts, current.time.unixts,
-         time.between.hours, everything())
+         current.order.in.sequence,
+         rawdata.indicator, rawdata.qty, rawdata.timing)
 
 #------------------------------------------------------------------------------
 # Reduce reported ranges of smoking quantities into single numeric values
@@ -236,7 +220,7 @@ df <- df %>%
     current.assessment.type=="Post-Quit About to Slip - Part2" & rawdata.qty==8 ~ 7,
     TRUE ~ as.numeric(rawdata.qty))) %>% 
   mutate(smoking.qty = case_when(
-    # Fill in num.cigs.smoked
+    # Fill in smoking.qty
     current.assessment.type=="Post-Quit About to Slip - Part2" & rawdata.qty==0 ~ 0,
     current.assessment.type=="Post-Quit About to Slip - Part2" & rawdata.qty==1 ~ 1,
     current.assessment.type=="Post-Quit About to Slip - Part2" & rawdata.qty==2 ~ 2,
@@ -257,7 +241,6 @@ df <- df %>% mutate(smoking.qty = case_when(
   current.assessment.type=="Post-Quit Already Slipped" & rawdata.qty==6 ~ 10,
   current.assessment.type=="Post-Quit Already Slipped" & rawdata.qty==7 ~ 11,
   TRUE ~ smoking.qty))
-
 
 # Pre Quit EMA
 df <- df %>% mutate(smoking.qty = case_when(
@@ -293,7 +276,7 @@ df <- df %>%
     current.assessment.type=="Pre-Quit Smoking - Part2" & rawdata.qty==8 ~ 7,
     TRUE ~ as.numeric(rawdata.qty))) %>% 
   mutate(smoking.qty = case_when(
-    # Fill in num.cigs.smoked
+    # Fill in smoking.qty
     current.assessment.type=="Pre-Quit Smoking - Part2" & rawdata.qty==0 ~ 0,
     current.assessment.type=="Pre-Quit Smoking - Part2" & rawdata.qty==1 ~ 1,
     current.assessment.type=="Pre-Quit Smoking - Part2" & rawdata.qty==2 ~ 2,
@@ -303,6 +286,11 @@ df <- df %>%
     current.assessment.type=="Pre-Quit Smoking - Part2" & rawdata.qty==6 ~ 10,
     current.assessment.type=="Pre-Quit Smoking - Part2" & rawdata.qty==7 ~ 11,
     TRUE ~ smoking.qty))
+
+# Finally, use info from rawdata.indicator
+df <- df %>% 
+  mutate(smoking.qty = if_else(is.na(smoking.qty) & (rawdata.indicator==0), 0, smoking.qty)) %>%
+  select(-rawdata.indicator, -rawdata.qty)
 
 #------------------------------------------------------------------------------
 # Reduce reported ranges of most recent time when an individual smoked into 
@@ -331,78 +319,40 @@ df <- df %>%
   mutate(smoking.delta.hours = smoking.delta.minutes/60)
 
 #------------------------------------------------------------------------------
-# When two consecutive EMAs used to construct the smoking outcome are more than
-# CUTOFF time apart, then consider smoking information reported in the latter 
-# EMA as missing information
+# Get previous assessment type
 #------------------------------------------------------------------------------
-CUTOFF <- 48
+df <- df %>%   
+  arrange(id, current.time.unixts) %>%
+  group_by(id) %>%
+  do(GetPastRecords(df.this.group = ., 
+                    cols.today = c("current.record.id","current.assessment.type","current.time.unixts","current.time.hrts"), 
+                    h = c(1,1,1,1), 
+                    this.numeric = c(FALSE,FALSE,TRUE,FALSE)))
 
 df <- df %>% 
-  mutate(smoking.qty = if_else(time.between.hours>CUTOFF & current.assessment.type!="Post-Quit Already Slipped", NA_real_, smoking.qty)) %>%
-  mutate(smoking.delta.minutes = if_else(time.between.hours>CUTOFF & current.assessment.type!="Post-Quit Already Slipped", NA_real_, smoking.delta.minutes)) %>%
-  mutate(smoking.delta.hours = if_else(time.between.hours>CUTOFF & current.assessment.type!="Post-Quit Already Slipped", NA_real_, smoking.delta.hours))
+  arrange(id, current.time.unixts) %>%
+  group_by(id) %>%
+  mutate(ones=1) %>%
+  mutate(current.order.in.sequence = cumsum(ones)) %>%
+  select(-ones) %>%
+  select(-rawdata.timing, -smoking.delta.minutes) %>%
+  mutate(time.between.hours = (current.time.unixts - current.time.unixts_shift.minus.1)/(60*60)) %>%
+  rename(previous.record.id = current.record.id_shift.minus.1,
+         previous.assessment.type = current.assessment.type_shift.minus.1,
+         previous.time.hrts = current.time.hrts_shift.minus.1,
+         previous.time.unixts = current.time.unixts_shift.minus.1)
 
 #------------------------------------------------------------------------------
-# Check whether reported timing of smoking is not consistent with length of 
-# time interval between two consecutive EMAs used to construct smoking outcome
+# Get previous assessment type
 #------------------------------------------------------------------------------
-df <- df %>% mutate(is.greaterthan.timebetween = if_else((smoking.delta.hours > time.between.hours), 1, 0))
-
-#------------------------------------------------------------------------------
-# Calculate minimum possible time and maximum possible time
-#------------------------------------------------------------------------------
-df$earliest.possible.time.hrts <- as.POSIXct(NA_character_)
-df$latest.possible.time.hrts <- as.POSIXct(NA_character_)
-
-df <- df %>% mutate(previous.time.unixts = as.numeric(previous.time.unixts), current.time.unixts = as.numeric(current.time.unixts)) 
-df$earliest.possible.time.unixts <- NA_real_
-df$latest.possible.time.unixts <- NA_real_
-
-df <- df %>% 
-  mutate(earliest.possible.time.unixts = case_when(
-    # Post-Quit
-    (!is.na(smoking.qty)) & current.assessment.type=="Post-Quit Random" ~ previous.time.unixts,
-    (!is.na(smoking.qty)) & current.assessment.type=="Post-Quit Urge" ~ previous.time.unixts,
-    (!is.na(smoking.qty)) & current.assessment.type=="Post-Quit About to Slip" ~ previous.time.unixts,
-    (!is.na(smoking.qty)) & current.assessment.type=="Post-Quit About to Slip - Part2" ~ previous.time.unixts,
-    (!is.na(smoking.qty)) & current.assessment.type=="Post-Quit Already Slipped" ~ min(previous.time.unixts,current.time.unixts-24*60*60),
-    # Pre-Quit
-    (!is.na(smoking.qty)) & current.assessment.type=="Pre-Quit Random" ~ previous.time.unixts,
-    (!is.na(smoking.qty)) & current.assessment.type=="Pre-Quit Urge" ~ previous.time.unixts,
-    (!is.na(smoking.qty)) & current.assessment.type=="Pre-Quit Smoking" ~ previous.time.unixts,
-    (!is.na(smoking.qty)) & current.assessment.type=="Pre-Quit Smoking - Part2" ~ previous.time.unixts,
-    TRUE ~ earliest.possible.time.unixts
-  )) %>% 
-  mutate(latest.possible.time.unixts = case_when(
-    # Post-Quit
-    (!is.na(smoking.qty)) & current.assessment.type=="Post-Quit Random" ~ current.time.unixts,
-    (!is.na(smoking.qty)) & current.assessment.type=="Post-Quit Urge" ~ current.time.unixts,
-    (!is.na(smoking.qty)) & current.assessment.type=="Post-Quit About to Slip" ~ current.time.unixts,
-    (!is.na(smoking.qty)) & current.assessment.type=="Post-Quit About to Slip - Part2" ~ current.time.unixts,
-    (!is.na(smoking.qty)) & current.assessment.type=="Post-Quit Already Slipped" ~ current.time.unixts,
-    # Post-Quit
-    (!is.na(smoking.qty)) & !is.na(smoking.delta.minutes) & is.greaterthan.timebetween==0 & current.assessment.type=="Post-Quit Random" ~ current.time.unixts-60*smoking.delta.minutes,
-    (!is.na(smoking.qty)) & !is.na(smoking.delta.minutes) & is.greaterthan.timebetween==0 & current.assessment.type=="Post-Quit Urge" ~ current.time.unixts-60*smoking.delta.minutes,
-    (!is.na(smoking.qty)) & !is.na(smoking.delta.minutes) & is.greaterthan.timebetween==0 & current.assessment.type=="Post-Quit About to Slip" ~ current.time.unixts-60*smoking.delta.minutes,
-    (!is.na(smoking.qty)) & !is.na(smoking.delta.minutes) & is.greaterthan.timebetween==0 & current.assessment.type=="Post-Quit About to Slip - Part2" ~ current.time.unixts-60*smoking.delta.minutes,
-    (!is.na(smoking.qty)) & !is.na(smoking.delta.minutes) & current.assessment.type=="Post-Quit Already Slipped" ~ current.time.unixts-60*smoking.delta.minutes,
-    # Pre-Quit
-    (!is.na(smoking.qty)) & current.assessment.type=="Pre-Quit Random" ~ current.time.unixts,
-    (!is.na(smoking.qty)) & current.assessment.type=="Pre-Quit Urge" ~ current.time.unixts,
-    (!is.na(smoking.qty)) & current.assessment.type=="Pre-Quit Smoking" ~ current.time.unixts,
-    (!is.na(smoking.qty)) & current.assessment.type=="Pre-Quit Smoking - Part2" ~ current.time.unixts,
-    # Pre-Quit
-    (!is.na(smoking.qty)) & !is.na(smoking.delta.minutes) & is.greaterthan.timebetween==0 & current.assessment.type=="Pre-Quit Random" ~ current.time.unixts-60*smoking.delta.minutes,
-    (!is.na(smoking.qty)) & !is.na(smoking.delta.minutes) & is.greaterthan.timebetween==0 & current.assessment.type=="Pre-Quit Urge" ~ current.time.unixts-60*smoking.delta.minutes,
-    (!is.na(smoking.qty)) & !is.na(smoking.delta.minutes) & is.greaterthan.timebetween==0 & current.assessment.type=="Pre-Quit Smoking" ~ current.time.unixts-60*smoking.delta.minutes,
-    (!is.na(smoking.qty)) & !is.na(smoking.delta.minutes) & is.greaterthan.timebetween==0 & current.assessment.type=="Pre-Quit Smoking - Part2" ~ current.time.unixts-60*smoking.delta.minutes,
-    TRUE ~ earliest.possible.time.unixts
-  )) 
-
-
-# Create human-readable timestamps
-df[["earliest.possible.time.hrts"]] <- as.POSIXct(df[["earliest.possible.time.unixts"]], origin="1970-01-01")
-df[["latest.possible.time.hrts"]] <- as.POSIXct(df[["latest.possible.time.unixts"]], origin="1970-01-01")
+df <- df %>%
+  select(id, 
+         previous.record.id, previous.assessment.type, 
+         previous.time.hrts, previous.time.unixts,
+         current.record.id, current.assessment.type, 
+         current.order.in.sequence,
+         current.time.hrts, current.time.unixts,
+         time.between.hours, everything())
 
 #------------------------------------------------------------------------------
 # Save data
