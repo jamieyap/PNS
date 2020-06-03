@@ -29,14 +29,31 @@ df.alldates$diffdays.quitday <- as.numeric(df.alldates$diffdays.quitday)/(24*60*
 #------------------------------------------------------------------------------
 # Determine participants for whom quit date must be inferred
 #------------------------------------------------------------------------------
+
+# Participants with missing values for is.equal will be dropped from the
+# analytic dataset
 df.alldates <- df.alldates %>% filter(!is.na(is.equal))
 
 # Participants for whom Quit Dates must be inferred
-df.infer.quitdate <- df.alldates %>% filter(is.na(quit.hour))
+df.infer.quitdate <- df.alldates %>% filter(infer.QD==1 & prepost.is.lessthan==1)
 inspect.these.participants <- unique(df.infer.quitdate$id)
 
+# Participants for whom Quit Dates must be inferred
+df.infer.quitdate2 <- df.alldates %>% filter(infer.QD==1 &  prepost.is.equal==1)
+inspect.these.participants2 <- unique(df.infer.quitdate2$id)
+
+# Participants for whom Quit Dates must be inferred
+df.infer.quitdate3 <- df.alldates %>% filter(infer.QD==1 &  prepost.is.greaterthan==1)
+inspect.these.participants3 <- unique(df.infer.quitdate3$id)
+
 # Participants for whom Quit Date is known
-these.other.participants <- df.alldates %>% filter(!(id %in% inspect.these.participants)) %>% select(id) %>% unique(.)
+these.other.participants <- df.alldates %>% 
+  filter(!(id %in% inspect.these.participants)) %>% 
+  filter(!(id %in% inspect.these.participants2)) %>%
+  filter(!(id %in% inspect.these.participants3)) %>%
+  select(id) %>% 
+  unique(.)
+
 these.other.participants <- these.other.participants[["id"]]
 df.other.participants.dates <- df.alldates %>% filter(id %in% these.other.participants)
 
@@ -314,7 +331,7 @@ df <- df %>%
   select(-rawdata.indicator, -rawdata.qty)
 
 #------------------------------------------------------------------------------
-# Select participant data to keep
+# Select participant data to keep - part 1
 #------------------------------------------------------------------------------
 df.smoking.plotdat <- df %>% filter(id %in% inspect.these.participants)
 df.smoking.plotdat <- left_join(x = df.infer.quitdate, y = df.smoking.plotdat, by = "id")
@@ -328,13 +345,53 @@ use.dates <- df.infer.quitdate
 for(j in 1:length(inspect.these.participants)){
   use.id <- inspect.these.participants[j]
   df.this.participant <- df.smoking.plotdat %>% filter(id==use.id)
-  jpeg(filename=file.path(path.pns.output_data, "plots_inferred_QD", paste("Participant# ", use.id-3000,".jpg",sep="")), width=600, height=600, units="px")
+  jpeg(filename=file.path(path.pns.output_data, "plots_inferred_QD_part1", paste("Participant_", use.id-3000,".jpg",sep="")), width=600, height=600, units="px")
   source(file.path(path.pns.code, "smoking-plots.R"))
   dev.off()
 }
 
 #------------------------------------------------------------------------------
-# Select participant data to keep
+# Select participant data to keep - part 2
+#------------------------------------------------------------------------------
+df.smoking.plotdat <- df %>% filter(id %in% inspect.these.participants2)
+df.smoking.plotdat <- left_join(x = df.infer.quitdate2, y = df.smoking.plotdat, by = "id")
+
+df.smoking.plotdat <- df.smoking.plotdat %>%
+  mutate(diffdays.postquit.earliest = (current.time.unixts - as.numeric(postquit.earliest.longformatdate))/(3600*24)) %>%
+  mutate(diffdays.postquit.earliest = round(diffdays.postquit.earliest, digits=6))
+
+use.dates <- df.infer.quitdate2
+
+for(j in 1:length(inspect.these.participants2)){
+  use.id <- inspect.these.participants2[j]
+  df.this.participant <- df.smoking.plotdat %>% filter(id==use.id)
+  jpeg(filename=file.path(path.pns.output_data, "plots_inferred_QD_part2", paste("Participant_", use.id-3000,".jpg",sep="")), width=600, height=600, units="px")
+  source(file.path(path.pns.code, "smoking-plots.R"))
+  dev.off()
+}
+
+#------------------------------------------------------------------------------
+# Select participant data to keep - part 3
+#------------------------------------------------------------------------------
+df.smoking.plotdat <- df %>% filter(id %in% inspect.these.participants3)
+df.smoking.plotdat <- left_join(x = df.infer.quitdate3, y = df.smoking.plotdat, by = "id")
+
+df.smoking.plotdat <- df.smoking.plotdat %>%
+  mutate(diffdays.postquit.earliest = (current.time.unixts - as.numeric(postquit.earliest.longformatdate))/(3600*24)) %>%
+  mutate(diffdays.postquit.earliest = round(diffdays.postquit.earliest, digits=6))
+
+use.dates <- df.infer.quitdate3
+
+for(j in 1:length(inspect.these.participants3)){
+  use.id <- inspect.these.participants3[j]
+  df.this.participant <- df.smoking.plotdat %>% filter(id==use.id)
+  jpeg(filename=file.path(path.pns.output_data, "plots_inferred_QD_part3", paste("Participant_", use.id-3000,".jpg",sep="")), width=600, height=600, units="px")
+  source(file.path(path.pns.code, "smoking-plots.R"))
+  dev.off()
+}
+
+#------------------------------------------------------------------------------
+# Select participant data to keep - part 4
 #------------------------------------------------------------------------------
 df.smoking.plotdat <- df %>% filter(id %in% these.other.participants)
 df.smoking.plotdat <- left_join(x = df.other.participants.dates, y = df.smoking.plotdat, by = "id")

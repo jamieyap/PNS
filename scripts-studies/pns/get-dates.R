@@ -118,32 +118,46 @@ df.alldates <- df.alldates %>%
 #------------------------------------------------------------------------------
 df.alldates <- df.alldates %>% 
   mutate(is.equal = case_when(
+    is.na(postquit.earliest.shortformatdate) ~ NA_real_,
     EMA_Qday==quitday & EMA_Qday==postquit.earliest.shortformatdate ~ 1,
-    is.na(EMA_Qday) | is.na(quitday) | is.na(postquit.earliest.shortformatdate) ~ NA_real_,
     TRUE ~ 0
   )) %>%
   arrange(is.equal)
 
+# Among those for whom is.equal==0: 
 df.alldates <- df.alldates %>%
-  mutate(use.quit.date = case_when(
-    is.equal==1 ~ "EMA_Qday",
-    is.equal==0 & prequit.latest.shortformatdate==postquit.earliest.shortformatdate ~ "postquit.earliest.shortformatdate",
-    TRUE ~ NA_character_
-  )) %>%
-  arrange(is.equal, use.quit.date)
+  mutate(prepost.is.equal = if_else(is.equal==0 & !is.na(is.equal), 0, NA_real_)) %>%
+  mutate(prepost.is.equal = replace(prepost.is.equal, (!is.na(prepost.is.equal)) & (prequit.latest.shortformatdate==postquit.earliest.shortformatdate), 1))
+
+df.alldates <- df.alldates %>%
+  mutate(prepost.is.lessthan = if_else(is.equal==0 & !is.na(is.equal), 0, NA_real_)) %>%
+  mutate(prepost.is.lessthan = replace(prepost.is.lessthan, (!is.na(prepost.is.lessthan)) & (prequit.latest.shortformatdate < postquit.earliest.shortformatdate), 1))
+
+df.alldates <- df.alldates %>%
+  mutate(prepost.is.greaterthan = if_else(is.equal==0 & !is.na(is.equal), 0, NA_real_)) %>%
+  mutate(prepost.is.greaterthan = replace(prepost.is.greaterthan, (!is.na(prepost.is.greaterthan)) & (prequit.latest.shortformatdate > postquit.earliest.shortformatdate), 1))
+
+#df.alldates <- df.alldates %>%
+#  mutate(use.quit.date = case_when(
+#    is.equal==1 ~ "EMA_Qday",
+#    is.equal==0 & prequit.latest.shortformatdate==postquit.earliest.shortformatdate ~ "postquit.earliest.shortformatdate",
+#    TRUE ~ NA_character_
+#  )) %>%
+#  arrange(is.equal, use.quit.date)
 
 #------------------------------------------------------------------------------
-# Set Quit Time
+# Tag participants for whom Quit Date must be inferred
 #------------------------------------------------------------------------------
-df.alldates <- df.alldates %>%
-  mutate(quit.hour = case_when(
-    is.equal==1 & prequit.latest.shortformatdate==postquit.earliest.shortformatdate ~ 0.5*(postquit.earliest.longformatdate-prequit.latest.longformatdate)/60,
-    is.equal==0 & prequit.latest.shortformatdate==postquit.earliest.shortformatdate ~ 0.5*(postquit.earliest.longformatdate-prequit.latest.longformatdate)/60,
-    is.equal==1 & prequit.latest.shortformatdate<postquit.earliest.shortformatdate ~ 4,
-    is.equal==1 & is.na(prequit.latest.shortformatdate) ~ 4,
+df.alldates <- df.alldates %>% 
+  mutate(infer.QD = case_when(
+    is.equal==1 ~ 0,
+    is.equal==0 ~ 1,
     TRUE ~ NA_real_
-  )) %>% 
-  mutate(quit.hour = round(as.numeric(quit.hour), digits=1))
+  ))
 
+#------------------------------------------------------------------------------
+# Set Quit Date and Quit Time for participants with infer.QD==1
+#------------------------------------------------------------------------------
+# ADD LATER
 
 write.csv(df.alldates, file.path(path.pns.output_data, "dates.csv"), row.names = FALSE, na="")
