@@ -22,6 +22,8 @@ if(min(df.this.participant$diffdays.postquit.earliest, na.rm=TRUE) >= -7){
   axis(2, at = seq(0, max(df.this.participant$smoking.qty, na.rm=TRUE)))
 }
 
+abline(v=0, lwd=5, col=alpha(rgb(0,0,0), 0.2))
+
 subset.df.this.participant <- df.this.participant %>% filter(!is.na(smoking.qty))
 if(nrow(subset.df.this.participant)>0){
   for(i in 1:nrow(subset.df.this.participant)){
@@ -41,10 +43,14 @@ if(nrow(subset.df.this.participant)>0){
 subset.df.this.participant <- df.this.participant %>% filter(is.na(smoking.qty))
 if(nrow(subset.df.this.participant)>0){
   for(i in 1:nrow(subset.df.this.participant)){
-    if(subset.df.this.participant[i, "current.assessment.type"]=="Pre-Quit Random"){
-      next
-    }else if(subset.df.this.participant[i, "current.assessment.type"]=="Post-Quit Random"){
-      next
+    if(subset.df.this.participant[i, "assessment.type"]=="Pre-Quit Random"){
+      #next
+      points(subset.df.this.participant[i,"diffdays.postquit.earliest"], -0.30, col="grey", pch=19)
+      points(subset.df.this.participant[i,"diffdays.postquit.earliest"], -0.30, col="black")
+    }else if(subset.df.this.participant[i, "assessment.type"]=="Post-Quit Random"){
+      #next
+      points(subset.df.this.participant[i,"diffdays.postquit.earliest"], -0.30, col="grey", pch=19)
+      points(subset.df.this.participant[i,"diffdays.postquit.earliest"], -0.30, col="black")
     }else{
       points(subset.df.this.participant[i,"diffdays.postquit.earliest"], -0.30, col="darkgoldenrod1", pch=19)
       points(subset.df.this.participant[i,"diffdays.postquit.earliest"], -0.30, col="darkgoldenrod4")
@@ -87,10 +93,13 @@ if(!is.na(quitday)){
 }
 
 legend("bottomleft", 
-       c("with reported #cigarettes smoked (=0)",
-         "with reported #cigarettes smoked (>0)",
-         "missing #cigarettes smoked (self-initiated EMA)"),
-       cex=1,
-       pch = c(19, 19, 19),
-       col =c("cornflowerblue","coral1","darkgoldenrod1"))
+       c("any EMA type: with reported #cigarettes smoked (=0)",
+         "any EMA type: with reported #cigarettes smoked (>0)",
+         "self-initiated EMA: missing reported #cigarettes smoked",
+         "random EMA: missing reported #cigarettes smoked"),
+       cex=0.80,
+       pch = c(19, 19, 19, 19),
+       col =c("cornflowerblue","coral1","darkgoldenrod1", "grey"))
+
+
 

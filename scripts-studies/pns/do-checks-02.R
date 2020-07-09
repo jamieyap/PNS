@@ -9,150 +9,148 @@ library(ggplot2)
 
 path.pns.input_data <- Sys.getenv("path.pns.input_data")
 path.pns.output_data <- Sys.getenv("path.pns.output_data")
+path.pns.staged_data <- Sys.getenv("path.pns.staged_data")
 path.pns.code <- Sys.getenv("path.pns.code")
 path.shared.code <- Sys.getenv("path.shared.code")
 source(file.path(path.shared.code, "shared-data-manip-utils.R"))
 source(file.path(path.pns.code, "data-manip-utils.R"))
 
-###############################################################################
-# Checks on dates and reported smoking
-###############################################################################
+load(file = file.path(path.pns.staged_data, "alldates.RData"))
+
+df.alldates$diffdays.EMA_Qday <- df.alldates$EMA_Qday - df.alldates$postquit.earliest.shortformatdate  # this will be in seconds
+df.alldates$diffdays.quitday <- df.alldates$quitday - df.alldates$postquit.earliest.shortformatdate  # this will be in seconds
+df.alldates$diffdays.EMA_Qday <- as.numeric(df.alldates$diffdays.EMA_Qday)/(24*60*60)  # convert to days
+df.alldates$diffdays.quitday <- as.numeric(df.alldates$diffdays.quitday)/(24*60*60)  # convert to days
 
 #------------------------------------------------------------------------------
-# Get dates from Post Quit
+# Determine participants for whom quit date must be inferred
 #------------------------------------------------------------------------------
-postquit.files <- c("Post_Quit_Random.csv",
-                    "Post_Quit_Urge.csv",
-                    "Post_Quit_About_to_Slip.csv",
-                    "Post_Quit_About_to_Slip_Part2.csv",
-                    "Post_Quit_Already_Slipped.csv")
+# Participants with missing values for is.equal will be dropped from the
+# analytic dataset
+df.alldates <- df.alldates %>% filter(!is.na(is.equal))
 
-list.collect.postquit <- list()
+# Participants for whom Quit Dates must be inferred
+df.infer.quitdate <- df.alldates %>% filter(is.equal==0 & prepost.is.lessthan==1)
+inspect.these.participants <- unique(df.infer.quitdate$id)
 
-for(i in 1:length(postquit.files)){
-  this.file <- postquit.files[i]
+# Participants for whom Quit Dates must be inferred
+df.infer.quitdate2 <- df.alldates %>% filter(is.equal==0 &  prepost.is.equal==1)
+inspect.these.participants2 <- unique(df.infer.quitdate2$id)
+
+# Participants for whom Quit Dates must be inferred
+df.infer.quitdate3 <- df.alldates %>% filter(is.equal==0 &  prepost.is.greaterthan==1)
+inspect.these.participants3 <- unique(df.infer.quitdate3$id)
+
+# Participants for whom Quit Date is known
+these.other.participants <- df.alldates %>% 
+  filter(!(id %in% inspect.these.participants)) %>% 
+  filter(!(id %in% inspect.these.participants2)) %>%
+  filter(!(id %in% inspect.these.participants3)) %>%
+  select(id) %>% 
+  unique(.)
+
+these.other.participants <- these.other.participants[["id"]]
+df.other.participants.dates <- df.alldates %>% filter(id %in% these.other.participants)
+
+#------------------------------------------------------------------------------
+# Read in EMA data
+#------------------------------------------------------------------------------
+
+load(file = file.path(path.pns.staged_data, "all_ema_processed.RData"))
+
+# Obtain rows & columns to be used in constructing the smoking outcome
+list.all <- lapply(list.all, function(dat){
+  # Select first few columns
+  dat <- dat %>% select(id, record.id, assessment.type, with.any.response,
+                        delivered.hrts, begin.hrts, end.hrts, time.hrts,
+                        delivered.unixts, begin.unixts, end.unixts, time.unixts,
+                        rawdata.indicator, rawdata.qty, rawdata.timing,
+                        smoking.qty)
   
-  df.raw <- read.csv(file.path(path.pns.input_data, this.file), stringsAsFactors = FALSE)
-  df.raw.quit.dates <- df.raw %>% 
-    select(id = Part_ID, initiated=Initiated, assessment.type=Asse_Name) %>%
-    # Note: Need as.POSIXct() as mutate does not support POSIXlt objects
-    mutate(initiated = as.POSIXct(strptime(initiated, "%m/%d/%Y %I:%M:%S %p"))) %>%
-    arrange(id, initiated) %>%
-    group_by(id, assessment.type) %>%
-    # earliest.date is of class POSIXct
-    summarise(earliest.date = min(initiated))
-  
-  list.collect.postquit <- append(list.collect.postquit, list(df.raw.quit.dates))
-  
-  # Remove used variables from environment
-  remove(df.raw, df.raw.quit.dates, this.file)
+  return(dat)
+})
+
+df.all <- bind_rows(list.all)
+df.all <- df.all %>% arrange(id, time.unixts)
+
+#------------------------------------------------------------------------------
+# Select participant data to keep - part 1
+#------------------------------------------------------------------------------
+df.smoking.plotdat <- df.all %>% filter(id %in% inspect.these.participants)
+df.smoking.plotdat <- left_join(x = df.infer.quitdate, y = df.smoking.plotdat, by = "id")
+
+df.smoking.plotdat <- df.smoking.plotdat %>%
+  mutate(diffdays.postquit.earliest = (time.unixts - as.numeric(postquit.earliest.longformatdate))/(3600*24)) %>%
+  mutate(diffdays.postquit.earliest = round(diffdays.postquit.earliest, digits=6))
+
+use.dates <- df.infer.quitdate
+
+for(j in 1:length(inspect.these.participants)){
+  use.id <- inspect.these.participants[j]
+  df.this.participant <- df.smoking.plotdat %>% filter(id==use.id)
+  jpeg(filename=file.path(path.pns.output_data, "plots_inferred_QD_part1", paste("Participant_", use.id-3000,".jpg",sep="")), width=600, height=600, units="px")
+  source(file.path(path.pns.code, "smoking-plots.R"))
+  dev.off()
 }
 
-collect.postquit <- bind_rows(list.collect.postquit)
-collect.postquit <- collect.postquit %>% group_by(id) %>% summarise(postquit.earliest.date=min(earliest.date))
-
 #------------------------------------------------------------------------------
-# Get dates from Pre Quit
+# Select participant data to keep - part 2
 #------------------------------------------------------------------------------
-prequit.files <- c("Pre_Quit_Random.csv",
-                   "Pre_Quit_Urge.csv",
-                   "Pre_Quit_Smoking.csv",
-                   "Pre_Quit_Smoking_Part2.csv")
+df.smoking.plotdat <- df.all %>% filter(id %in% inspect.these.participants2)
+df.smoking.plotdat <- left_join(x = df.infer.quitdate2, y = df.smoking.plotdat, by = "id")
 
-list.collect.prequit <- list()
+df.smoking.plotdat <- df.smoking.plotdat %>%
+  mutate(diffdays.postquit.earliest = (time.unixts - as.numeric(postquit.earliest.longformatdate))/(3600*24)) %>%
+  mutate(diffdays.postquit.earliest = round(diffdays.postquit.earliest, digits=6))
 
-for(i in 1:length(prequit.files)){
-  this.file <- prequit.files[i]
-  
-  df.raw <- read.csv(file.path(path.pns.input_data, this.file), stringsAsFactors = FALSE)
-  df.raw.quit.dates <- df.raw %>% 
-    select(id = Part_ID, initiated=Initiated, assessment.type=Asse_Name) %>%
-    # Note: Need as.POSIXct() as mutate does not support POSIXlt objects
-    mutate(initiated = as.POSIXct(strptime(initiated, "%m/%d/%Y %I:%M:%S %p"))) %>%
-    arrange(id, initiated) %>%
-    group_by(id, assessment.type) %>%
-    # latest.date is of class POSIXct
-    summarise(latest.date = max(initiated))
-  
-  list.collect.prequit <- append(list.collect.prequit, list(df.raw.quit.dates))
-  
-  # Remove used variables from environment
-  remove(df.raw, df.raw.quit.dates, this.file)
+use.dates <- df.infer.quitdate2
+
+for(j in 1:length(inspect.these.participants2)){
+  use.id <- inspect.these.participants2[j]
+  df.this.participant <- df.smoking.plotdat %>% filter(id==use.id)
+  jpeg(filename=file.path(path.pns.output_data, "plots_inferred_QD_part2", paste("Participant_", use.id-3000,".jpg",sep="")), width=600, height=600, units="px")
+  source(file.path(path.pns.code, "smoking-plots.R"))
+  dev.off()
 }
 
-collect.prequit <- bind_rows(list.collect.prequit)
-collect.prequit <- collect.prequit %>% group_by(id) %>% summarise(prequit.latest.date=max(latest.date))
-
 #------------------------------------------------------------------------------
-# Dates in records from study staff
+# Select participant data to keep - part 3
 #------------------------------------------------------------------------------
-staff.recorded.dates <- read.csv(file.path(path.pns.input_data, "staff_recorded_dates.csv"), stringsAsFactors = FALSE)
-staff.recorded.dates <- staff.recorded.dates %>% mutate(EMA_Qday = as.POSIXct(strptime(EMA_Qday, "%m/%d/%Y")))
+df.smoking.plotdat <- df.all %>% filter(id %in% inspect.these.participants3)
+df.smoking.plotdat <- left_join(x = df.infer.quitdate3, y = df.smoking.plotdat, by = "id")
 
-#------------------------------------------------------------------------------
-# Dates in baseline raw data file
-#------------------------------------------------------------------------------
-df.baseline <- read.csv(file.path(path.pns.input_data, "PNSBaseline.csv"), stringsAsFactors = FALSE)
-df.baseline.dates <- df.baseline %>% 
-  select(callnumr, quitday) %>%
-  mutate(quitday = as.POSIXct(strptime(quitday, "%m/%d/%Y")))
+df.smoking.plotdat <- df.smoking.plotdat %>%
+  mutate(diffdays.postquit.earliest = (time.unixts - as.numeric(postquit.earliest.longformatdate))/(3600*24)) %>%
+  mutate(diffdays.postquit.earliest = round(diffdays.postquit.earliest, digits=6))
 
-# Remove from environment
-remove(df.baseline)
+use.dates <- df.infer.quitdate3
 
-#------------------------------------------------------------------------------
-# Merge several streams of data into one data frame
-#------------------------------------------------------------------------------
-df.alldates <- left_join(x = staff.recorded.dates, y = df.baseline.dates, by = "callnumr")
-df.alldates <- left_join(x = df.alldates, y = collect.prequit, by = "id")
-df.alldates <- left_join(x = df.alldates, y = collect.postquit, by = "id")
-
-df.alldates <- df.alldates %>%
-  mutate(prequit.latest.longformatdate = prequit.latest.date,
-         postquit.earliest.longformatdate = postquit.earliest.date) %>%
-  rename(prequit.latest.shortformatdate = prequit.latest.date,
-         postquit.earliest.shortformatdate = postquit.earliest.date) %>%
-  mutate(prequit.latest.shortformatdate = as.POSIXct(strftime(prequit.latest.shortformatdate, "%Y-%m-%d")),
-         postquit.earliest.shortformatdate = as.POSIXct(strftime(postquit.earliest.shortformatdate, "%Y-%m-%d")))
-
-df.alldates <- df.alldates %>% filter(!is.na(postquit.earliest.longformatdate))
-
-remove(staff.recorded.dates, df.baseline.dates)
-
-#------------------------------------------------------------------------------
-# Plot dates
-#------------------------------------------------------------------------------
-
-df.plot.quithour <- df.alldates %>% 
-  filter(prequit.latest.shortformatdate == postquit.earliest.shortformatdate) %>%
-  mutate(prequit.hour = as.numeric(strftime(prequit.latest.longformatdate, "%H")) + (1/60)*as.numeric(strftime(prequit.latest.longformatdate, "%M")),
-         postquit.hour = as.numeric(strftime(postquit.earliest.longformatdate, "%H")) + (1/60)*as.numeric(strftime(postquit.earliest.longformatdate, "%M"))) %>%
-  mutate(plotid = 1:nrow(.))
-
-df.plot.quithour %>%
-  summarise(after.4am = sum(prequit.hour>4),
-            time.between.mean = mean(postquit.hour - prequit.hour),
-            time.between.min = min(postquit.hour - prequit.hour),
-            time.between.max = max(postquit.hour - prequit.hour),
-            prequit.hour.mean = mean(prequit.hour),
-            prequit.hour.min = min(prequit.hour),
-            prequit.hour.max = max(prequit.hour),
-            postquit.hour.mean = mean(postquit.hour),
-            postquit.hour.min = min(postquit.hour),
-            postquit.hour.max = max(postquit.hour))
-
-jpeg(filename=file.path(path.pns.output_data, "plots_known_QD", "inspect_for_quit_hour.jpg"), width=700, height=700, units="px")
-plot(-1, type='n', 
-     xlim = c(0,25), ylim = c(1,50), xaxt="n", yaxt="n",
-     xlab = "Hour (24-hour clock)", ylab="Participant #")
-axis(1, at = seq(0,24,4))
-axis(2, at = seq(1,50))
-
-for(i in 1:nrow(df.plot.quithour)){
-  segments(x0 = df.plot.quithour[i,"prequit.hour"], y0 = df.plot.quithour[i, "plotid"],
-           x1 = df.plot.quithour[i,"postquit.hour"], y1 = df.plot.quithour[i, "plotid"])
+for(j in 1:length(inspect.these.participants3)){
+  use.id <- inspect.these.participants3[j]
+  df.this.participant <- df.smoking.plotdat %>% filter(id==use.id)
+  jpeg(filename=file.path(path.pns.output_data, "plots_inferred_QD_part3", paste("Participant_", use.id-3000,".jpg",sep="")), width=600, height=600, units="px")
+  source(file.path(path.pns.code, "smoking-plots.R"))
+  dev.off()
 }
-abline(v = 4, col="blue", lty=2)
-text(3,50, "4am", col="blue", cex=0.70)
-dev.off()
+
+source(file.path(path.pns.code, "zoomed-smoking-plots.R"))
+
+#------------------------------------------------------------------------------
+# Select participant data to keep - part 4
+#------------------------------------------------------------------------------
+df.smoking.plotdat <- df.all %>% filter(id %in% these.other.participants)
+df.smoking.plotdat <- left_join(x = df.other.participants.dates, y = df.smoking.plotdat, by = "id")
+df.smoking.plotdat <- df.smoking.plotdat %>%
+  mutate(diffdays.postquit.earliest = (time.unixts - as.numeric(postquit.earliest.longformatdate))/(3600*24)) %>%
+  mutate(diffdays.postquit.earliest = round(diffdays.postquit.earliest, digits=6))
+
+use.dates <- df.other.participants.dates
+
+for(j in 1:length(these.other.participants)){
+  use.id <- these.other.participants[j]
+  df.this.participant <- df.smoking.plotdat %>% filter(id==use.id)
+  jpeg(filename=file.path(path.pns.output_data, "plots_known_QD", paste("Participant_", use.id-3000,".jpg",sep="")), width=600, height=600, units="px")
+  source(file.path(path.pns.code, "smoking-plots.R"))
+  dev.off()
+}
 

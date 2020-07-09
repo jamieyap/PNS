@@ -1,23 +1,25 @@
 ###############################################################################
 # ABOUT:
-# * Several candidate dates in the raw data from which to determine Quit Date
-# * Calculate the earliest recorded date among timestamps recorded in 
-#   Post Quit raw data (all types of EMA)
-# * Calculate the latest recorded date among timestamps recorded in 
-#   Pre Quit raw data (all types of EMA)
+# * Get start of study, end of study, and quit dates per individual
+# * Prior to running this script, run get-ema-item-responses.R
 ###############################################################################
 
-#------------------------------------------------------------------------------
-# Read in libraries, file paths, and functions
-#------------------------------------------------------------------------------
 library(dplyr)
+library(magrittr)
+library(purrr)
+library(assertthat)
 
 path.pns.input_data <- Sys.getenv("path.pns.input_data")
-path.pns.staged_data <- Sys.getenv("path.pns.staged_data")
 path.pns.output_data <- Sys.getenv("path.pns.output_data")
+path.pns.staged_data <- Sys.getenv("path.pns.staged_data")
+path.pns.code <- Sys.getenv("path.pns.code")
+path.shared.code <- Sys.getenv("path.shared.code")
+
+source(file.path(path.shared.code, "shared-data-manip-utils.R"))
+source(file.path(path.pns.code, "data-manip-utils.R"))
 
 #------------------------------------------------------------------------------
-# Get dates from Post Quit
+# Get dates from Post-Quit raw data files
 #------------------------------------------------------------------------------
 postquit.files <- c("Post_Quit_Random.csv",
                     "Post_Quit_Urge.csv",
@@ -50,7 +52,7 @@ collect.postquit <- bind_rows(list.collect.postquit)
 collect.postquit <- collect.postquit %>% group_by(id) %>% summarise(postquit.earliest.date=min(earliest.date))
 
 #------------------------------------------------------------------------------
-# Get dates from Pre Quit
+# Get dates from Pre-Quit raw data files
 #------------------------------------------------------------------------------
 prequit.files <- c("Pre_Quit_Random.csv",
                    "Pre_Quit_Urge.csv",
@@ -112,9 +114,9 @@ df.alldates <- df.alldates %>%
          postquit.earliest.shortformatdate = postquit.earliest.date) %>%
   mutate(prequit.latest.shortformatdate = as.POSIXct(strftime(prequit.latest.shortformatdate, "%Y-%m-%d")),
          postquit.earliest.shortformatdate = as.POSIXct(strftime(postquit.earliest.shortformatdate, "%Y-%m-%d")))
-  
+
 #------------------------------------------------------------------------------
-# Set Quit Date
+# Create indicator variables based on date columns created thus far
 #------------------------------------------------------------------------------
 df.alldates <- df.alldates %>% 
   mutate(is.equal = case_when(
@@ -137,27 +139,10 @@ df.alldates <- df.alldates %>%
   mutate(prepost.is.greaterthan = if_else(is.equal==0 & !is.na(is.equal), 0, NA_real_)) %>%
   mutate(prepost.is.greaterthan = replace(prepost.is.greaterthan, (!is.na(prepost.is.greaterthan)) & (prequit.latest.shortformatdate > postquit.earliest.shortformatdate), 1))
 
-#df.alldates <- df.alldates %>%
-#  mutate(use.quit.date = case_when(
-#    is.equal==1 ~ "EMA_Qday",
-#    is.equal==0 & prequit.latest.shortformatdate==postquit.earliest.shortformatdate ~ "postquit.earliest.shortformatdate",
-#    TRUE ~ NA_character_
-#  )) %>%
-#  arrange(is.equal, use.quit.date)
+#------------------------------------------------------------------------------
+# Write out to file
+#------------------------------------------------------------------------------
 
-#------------------------------------------------------------------------------
-# Tag participants for whom Quit Date must be inferred
-#------------------------------------------------------------------------------
-df.alldates <- df.alldates %>% 
-  mutate(infer.QD = case_when(
-    is.equal==1 ~ 0,
-    is.equal==0 ~ 1,
-    TRUE ~ NA_real_
-  ))
+save(df.alldates, file = file.path(path.pns.staged_data, "alldates.RData"))
+write.csv(df.alldates, file.path(path.pns.output_data, "alldates.csv"), row.names=FALSE, na = "")
 
-#------------------------------------------------------------------------------
-# Set Quit Date and Quit Time for participants with infer.QD==1
-#------------------------------------------------------------------------------
-# ADD LATER
-
-write.csv(df.alldates, file.path(path.pns.output_data, "dates.csv"), row.names = FALSE, na="")

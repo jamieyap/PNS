@@ -8,18 +8,16 @@ library(magrittr)
 library(purrr)
 library(assertthat)
 
-SetUpPostQuit <- function(df.raw){
-  # About: Common data pre-processing tasks for PNS post quit raw data
+CreateEMATimeVars <- function(df.raw){
+  # About: Common data pre-processing tasks for PNS EMA data
   # Args: 
-  #   df.raw : one of post quit random, post quit urge,
-  #     post quit about to slip, post quit about to slip part 2,
-  #     post quit already slipped raw data
+  #   df.raw : raw data from one type of EMA only
   # Output:
-  #   dataset with rows that meet inclusion-exclusion criteria
+  #   dataset with EMA time variables
   
   # --------------------------------------------------------------------------- 
-  # Rename variables in the raw data that will be relevant to the tasks in the
-  # SetUpPostQuit function
+  # Rename variables in the raw data that will be relevant to the tasks
+  # within this function
   # ---------------------------------------------------------------------------
   df.out <- df.raw %>%
     rename(id = Part_ID, 
@@ -45,23 +43,21 @@ SetUpPostQuit <- function(df.raw){
            begin.unixts = as.numeric(begin.hrts))
   
   # ---------------------------------------------------------------------------
-  # Decision rule: exclude EMAs that are "not valid"
-  # ---------------------------------------------------------------------------
-  df.out <- df.out %>%
-    mutate(responded = if_else(responded=="","Missing",responded),
-           completed = if_else(completed=="","Missing",completed)) %>%
-    filter((responded=="True" & completed=="True")|
-             (responded=="True" & completed=="False")|
-             (responded=="True" & completed=="Missing")|
-             (responded=="Missing" & completed=="False"))
-  
-  # ---------------------------------------------------------------------------
   # Decision rule: create end.hrts and end.unixts
   # ---------------------------------------------------------------------------
   df.out <- df.out %>% 
     mutate(end.hrts = completed.hrts) %>%
     mutate(end.hrts = if_else(is.na(completed.hrts), notcompleted.hrts, end.hrts)) %>%
     mutate(end.unixts = as.numeric(end.hrts))
+  
+  # ---------------------------------------------------------------------------
+  # Decision rule: exclude EMAs that have some indication of unsuccessful 
+  # delivery. For now, simply create an indicator function is.delivered and
+  # perform the exclusion step outside of this function
+  # ---------------------------------------------------------------------------
+  df.out <- df.out %>%
+    mutate(responded = if_else(responded=="","Missing",responded), completed = if_else(completed=="","Missing",completed)) %>%
+    mutate(is.delivered = if_else((responded=="True" & completed=="True")|(responded=="True" & completed=="False")|(responded=="True" & completed=="Missing")|(responded=="Missing" & completed=="False"), 1, 0))
   
   # --------------------------------------------------------------------------- 
   # Reorder columns
@@ -70,75 +66,7 @@ SetUpPostQuit <- function(df.raw){
     select(id, record.id, assessment.type,
            delivered.hrts, begin.hrts, end.hrts,
            delivered.unixts, begin.unixts, end.unixts,
-           record.status, responded, completed,
-           everything())
-  
-  return(df.out)
-}
-
-
-SetUpPreQuit <- function(df.raw){
-  # About: Common data pre-processing tasks for PNS post quit raw data
-  # Args: 
-  #   df.raw : one of pre quit random, pre quit urge,
-  #     pre quit about to slip, pre quit about to slip part 2 raw data
-  # Output:
-  #   dataset with rows that meet inclusion-exclusion criteria
-  
-  # --------------------------------------------------------------------------- 
-  # Rename variables in the raw data that will be relevant to the tasks in the
-  # SetUpPreQuit function
-  # ---------------------------------------------------------------------------
-  df.out <- df.raw %>%
-    rename(id = Part_ID, 
-           record.id = Record_ID,
-           record.status = Record_Status,
-           assessment.type = Asse_Name, 
-           delivered.hrts = Initiated,
-           begin.hrts = AssessmentBegin,
-           completed.hrts = AssessmentCompleted,
-           notcompleted.hrts = AssessmentNOTCompleted,
-           responded = Responded,
-           completed = Completed)
-  
-  # --------------------------------------------------------------------------- 
-  # Format time variables
-  # ---------------------------------------------------------------------------
-  df.out <- df.out %>%
-    mutate(delivered.hrts = as.POSIXct(strptime(delivered.hrts, format = "%m/%d/%Y %I:%M:%S %p")),
-           begin.hrts = as.POSIXct(strptime(begin.hrts, format = "%m/%d/%Y %I:%M:%S %p")),
-           completed.hrts = as.POSIXct(strptime(completed.hrts, format = "%m/%d/%Y %I:%M:%S %p")),
-           notcompleted.hrts = as.POSIXct(strptime(notcompleted.hrts, format = "%m/%d/%Y %I:%M:%S %p"))) %>%
-    mutate(delivered.unixts = as.numeric(delivered.hrts),
-           begin.unixts = as.numeric(begin.hrts))
-  
-  # ---------------------------------------------------------------------------
-  # Decision rule: exclude EMAs that are "not valid"
-  # ---------------------------------------------------------------------------
-  df.out <- df.out %>%
-    mutate(responded = if_else(responded=="","Missing",responded),
-           completed = if_else(completed=="","Missing",completed)) %>%
-    filter((responded=="True" & completed=="True")|
-             (responded=="True" & completed=="False")|
-             (responded=="True" & completed=="Missing")|
-             (responded=="Missing" & completed=="False"))
-  
-  # ---------------------------------------------------------------------------
-  # Decision rule: create end.hrts and end.unixts
-  # ---------------------------------------------------------------------------
-  df.out <- df.out %>% 
-    mutate(end.hrts = completed.hrts) %>%
-    mutate(end.hrts = if_else(is.na(completed.hrts), notcompleted.hrts, end.hrts)) %>%
-    mutate(end.unixts = as.numeric(end.hrts))
-  
-  # --------------------------------------------------------------------------- 
-  # Reorder columns
-  # ---------------------------------------------------------------------------
-  df.out <- df.out %>%
-    select(id, record.id, assessment.type,
-           delivered.hrts, begin.hrts, end.hrts,
-           delivered.unixts, begin.unixts, end.unixts,
-           record.status, responded, completed,
+           record.status, responded, completed, is.delivered,
            everything())
   
   return(df.out)

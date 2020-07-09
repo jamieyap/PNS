@@ -1,89 +1,111 @@
-###############################################################################
 # ABOUT:
 # * Creates a file with a list of item names in each EMA raw data file;
 #   these item names correspond to that recorded in the codebooks
-###############################################################################
 
 path.pns.input_data <- Sys.getenv("path.pns.input_data")
 path.pns.output_data <- Sys.getenv("path.pns.output_data")
 
-###############################################################################
-# Post Quit EMAs
-###############################################################################
+# Collect item names for all types of pre-quit and post-quit EMA into one list
+list.collect <- list()
 
-# Post Quit Random
+# name.codebook refers to item names in the raw data files & codebook
+# new.item.names refers to new names that will be assigned to each item
+# the new names were created so that items belonging to specific EMA types
+# could be easily referenced when working from within a file merging data
+# from across all EMA types
+
+# Post-Quit Random EMA --------------------------------------------------------
 df.raw <- read.csv(file.path(path.pns.input_data, "Post_Quit_Random.csv"))
 ema.item.names <- colnames(df.raw[,32:98])
 new.item.names <- paste("postquit.random.item.", 1:length(ema.item.names), sep="")
-df <- data.frame(name.codebook = ema.item.names, name.new = new.item.names)
+df.item.names <- data.frame(is.postquit.assessment.type = 1, 
+                            assessment.type = "Post-Quit Random", 
+                            name.codebook = ema.item.names, 
+                            name.new = new.item.names)
+list.collect <- append(list.collect, list(df.item.names))
 
-write.csv(df, file.path(path.pns.output_data, "item_names_postquit_random.csv"), row.names = FALSE)
-
-# Post Quit Urge
+# Post-Quit Urge EMA ----------------------------------------------------------
 df.raw <- read.csv(file.path(path.pns.input_data, "Post_Quit_Urge.csv"))
 ema.item.names <- colnames(df.raw[,32:98])
 new.item.names <- paste("postquit.urge.item.", 1:length(ema.item.names), sep="")
-df <- data.frame(name.codebook = ema.item.names, name.new = new.item.names)
+df.item.names <- data.frame(is.postquit.assessment.type = 1,
+                            assessment.type = "Post-Quit Urge",
+                            name.codebook = ema.item.names, 
+                            name.new = new.item.names)
+list.collect <- append(list.collect, list(df.item.names))
 
-write.csv(df, file.path(path.pns.output_data, "item_names_postquit_urge.csv"), row.names = FALSE)
-
-# Post Quit About to Slip Part 1
+# Post-Quit About to Slip Part 1 EMA ------------------------------------------
 df.raw <- read.csv(file.path(path.pns.input_data, "Post_Quit_About_to_Slip.csv"))
 ema.item.names <- colnames(df.raw[,32:95])
 new.item.names <- paste("postquit.abouttoslippartone.item.", 1:length(ema.item.names), sep="")
-df <- data.frame(name.codebook = ema.item.names, name.new = new.item.names)
+df.item.names <- data.frame(is.postquit.assessment.type = 1,
+                            assessment.type = "Post-Quit About to Slip Part One",
+                            name.codebook = ema.item.names, 
+                            name.new = new.item.names)
+list.collect <- append(list.collect, list(df.item.names))
 
-write.csv(df, file.path(path.pns.output_data, "item_names_postquit_abouttoslippartone.csv"), row.names = FALSE)
-
-# Post Quit About to Slip Part 2
+# Post-Quit About to Slip Part 2 EMA ------------------------------------------
 df.raw <- read.csv(file.path(path.pns.input_data, "Post_Quit_About_to_Slip_Part2.csv"))
 ema.item.names <- colnames(df.raw[,32:105])
 new.item.names <- paste("postquit.abouttoslipparttwo.item.", 1:length(ema.item.names), sep="")
-df <- data.frame(name.codebook = ema.item.names, name.new = new.item.names)
+df.item.names <- data.frame(is.postquit.assessment.type = 1,
+                            assessment.type = "Post-Quit About to Slip Part Two",
+                            name.codebook = ema.item.names, 
+                            name.new = new.item.names)
+list.collect <- append(list.collect, list(df.item.names))
 
-write.csv(df, file.path(path.pns.output_data, "item_names_postquit_abouttoslipparttwo.csv"), row.names = FALSE)
-
-# Post Quit Already Slipped
+# Post-Quit Already Slipped EMA -----------------------------------------------
 df.raw <- read.csv(file.path(path.pns.input_data, "Post_Quit_Already_Slipped.csv"))
 ema.item.names <- colnames(df.raw[,32:101])
 new.item.names <- paste("postquit.alreadyslipped.item.", 1:length(ema.item.names), sep="")
-df <- data.frame(name.codebook = ema.item.names, name.new = new.item.names)
+df.item.names <- data.frame(is.postquit.assessment.type = 1,
+                            assessment.type = "Post-Quit Already Slipped",
+                            name.codebook = ema.item.names, 
+                            name.new = new.item.names)
+list.collect <- append(list.collect, list(df.item.names))
 
-write.csv(df, file.path(path.pns.output_data, "item_names_postquit_alreadyslipped.csv"), row.names = FALSE)
-
-###############################################################################
-# Pre Quit EMAs
-###############################################################################
-
-# Pre Quit Random
+# Pre-Quit Random EMA ---------------------------------------------------------
 df.raw <- read.csv(file.path(path.pns.input_data, "Pre_Quit_Random.csv"))
 ema.item.names <- colnames(df.raw[,32:98])
 new.item.names <- paste("prequit.random.item.", 1:length(ema.item.names), sep="")
-df <- data.frame(name.codebook = ema.item.names, name.new = new.item.names)
+df.item.names <- data.frame(is.postquit.assessment.type = 0,
+                            assessment.type = "Pre-Quit Random",
+                            name.codebook = ema.item.names, 
+                            name.new = new.item.names)
+list.collect <- append(list.collect, list(df.item.names))
 
-write.csv(df, file.path(path.pns.output_data, "item_names_prequit_random.csv"), row.names = FALSE)
-
-# Pre Quit Urge
+# Pre-Quit Urge EMA -----------------------------------------------------------
 df.raw <- read.csv(file.path(path.pns.input_data, "Pre_Quit_Urge.csv"))
 ema.item.names <- colnames(df.raw[,32:98])
 new.item.names <- paste("prequit.urge.item.", 1:length(ema.item.names), sep="")
-df <- data.frame(name.codebook = ema.item.names, name.new = new.item.names)
+df.item.names <- data.frame(is.postquit.assessment.type = 0,
+                            assessment.type = "Pre-Quit Urge",
+                            name.codebook = ema.item.names, 
+                            name.new = new.item.names)
+list.collect <- append(list.collect, list(df.item.names))
 
-write.csv(df, file.path(path.pns.output_data, "item_names_prequit_urge.csv"), row.names = FALSE)
-
-# Pre Quit About to Slip Part 1
+# Pre-Quit Smoking Part 1 EMA -------------------------------------------
 df.raw <- read.csv(file.path(path.pns.input_data, "Pre_Quit_Smoking.csv"))
 ema.item.names <- colnames(df.raw[,32:95])
 new.item.names <- paste("prequit.smokingpartone.item.", 1:length(ema.item.names), sep="")
-df <- data.frame(name.codebook = ema.item.names, name.new = new.item.names)
+df.item.names <- data.frame(is.postquit.assessment.type = 0,
+                            assessment.type = "Pre-Quit Smoking Part One",
+                            name.codebook = ema.item.names, 
+                            name.new = new.item.names)
+list.collect <- append(list.collect, list(df.item.names))
 
-write.csv(df, file.path(path.pns.output_data, "item_names_prequit_smokingpartone.csv"), row.names = FALSE)
-
-# Pre Quit About to Slip Part 2
+# Pre-Quit Smoking Part 2 EMA -------------------------------------------------
 df.raw <- read.csv(file.path(path.pns.input_data, "Pre_Quit_Smoking_Part2.csv"))
 ema.item.names <- colnames(df.raw[,32:100])
 new.item.names <- paste("prequit.smokingparttwo.item.", 1:length(ema.item.names), sep="")
-df <- data.frame(name.codebook = ema.item.names, name.new = new.item.names)
+df.item.names <- data.frame(is.postquit.assessment.type = 0,
+                            assessment.type = "Pre-Quit Smoking Part Two",
+                            name.codebook = ema.item.names, 
+                            name.new = new.item.names)
+list.collect <- append(list.collect, list(df.item.names))
 
-write.csv(df, file.path(path.pns.output_data, "item_names_prequit_smokingparttwo.csv"), row.names = FALSE)
+# Prepare output --------------------------------------------------------------
+df.collect <- do.call(rbind, list.collect)
+
+write.csv(df.collect, file.path(path.pns.output_data, "ema_item_names.csv"), row.names = FALSE)
 
