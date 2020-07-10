@@ -133,6 +133,9 @@ for(j in 1:length(inspect.these.participants3)){
   dev.off()
 }
 
+# Zoom view
+zoom.part3 <- TRUE
+zoom.part4 <- FALSE
 source(file.path(path.pns.code, "zoomed-smoking-plots.R"))
 
 #------------------------------------------------------------------------------
@@ -153,4 +156,9 @@ for(j in 1:length(these.other.participants)){
   source(file.path(path.pns.code, "smoking-plots.R"))
   dev.off()
 }
+
+# Zoom view
+zoom.part3 <- FALSE
+zoom.part4 <- TRUE
+source(file.path(path.pns.code, "zoomed-smoking-plots.R"))
 
