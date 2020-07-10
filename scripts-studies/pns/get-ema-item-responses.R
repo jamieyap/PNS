@@ -2,7 +2,7 @@
 # ABOUT:
 # * Cleans up EMA raw data files:
 #   - exclude EMAs with some indication of unsuccessful delivery
-#   - constuct variables for time when EMA was delivered, degun, completed
+#   - constuct variables for time when EMA was delivered, begun, completed
 #   - construct variable indicating whether a response to any item was recorded
 #   - clean up smoking counts variable
 # * Apply new column names for EMA item (in ema_item_names.csv)
