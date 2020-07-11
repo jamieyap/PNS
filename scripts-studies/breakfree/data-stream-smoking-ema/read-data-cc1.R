@@ -19,6 +19,8 @@ ids.cc1 <- list.files(path = path.breakfree.cc1.input_data)
 # Read CC1 smoking EMA raw data: DATA file
 # -----------------------------------------------------------------------------
 list.df.raw <- list()
+list.ids.backup <- list()
+list.ids.none <- list()
 
 for(i in 1:length(ids.cc1)){
   this.id <- ids.cc1[i]
@@ -33,6 +35,14 @@ for(i in 1:length(ids.cc1)){
   this.file <- all.files[idx]
   len <- length(this.file)
   
+  # Check other file name
+  idx2 <- grepl(pattern = "EMA+SMOKING_EMA+PHONE.csv.zip", 
+                x = all.files, 
+                fixed = TRUE)
+  # Pick out corresponding files
+  this.file2 <- all.files[idx2]
+  len2 <- length(this.file2)
+  
   # Check whether file exists for this given participant
   if(len>0){
     df.raw <- read.csv(file.path(path.breakfree.cc1.input_data, 
@@ -43,18 +53,23 @@ for(i in 1:length(ids.cc1)){
     df.raw <- df.raw %>% mutate(user.id = this.id) %>% select(user.id, everything())
     # Add df.raw to collection
     list.df.raw <- append(list.df.raw, list(df.raw))
+  }else if(len==0 & len2>0){
+    list.ids.backup <- append(list.ids.backup, list(this.id))
   }else{
-    next
+    list.ids.none <- append(list.ids.none, list(this.id))
   }
 }
 
 list.df.raw.smoking.DATA.cc1 <- list.df.raw
 remove(list.df.raw)
 
+ids.backup.smoking.cc1 <- unlist(list.ids.backup)
+ids.none.smoking.cc1 <- unlist(list.ids.none)
+
 # -----------------------------------------------------------------------------
 # Save objects into an RData file
 # -----------------------------------------------------------------------------
-save(list.df.raw.smoking.DATA.cc1, 
+save(list.df.raw.smoking.DATA.cc1, ids.backup.smoking.cc1, ids.none.smoking.cc1,
      file = file.path(path.breakfree.staged_data, 
                       "raw.smokingEMA.cc1.RData"))
 
