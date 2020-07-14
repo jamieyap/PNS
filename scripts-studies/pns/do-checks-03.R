@@ -38,27 +38,14 @@ for(i in 1:length(postquit.files)){
   df.raw <- read.csv(file.path(path.pns.input_data, postquit.files[i]), header = TRUE, stringsAsFactors = FALSE)
   df.raw <- CheckAnyResponse(df = df.raw, keep.cols = (ema.item.names %>% filter(assessment.type==postquit.colnames[i]) %>% extract2("name.codebook")))
   df.out <- CreateEMATimeVars(df.raw = df.raw) %>% filter(is.delivered==1)
-  df.tabulate.raw <- df.raw %>% 
-    group_by(with.any.response) %>% 
-    summarise(attempted = n(), 
-              cancelled.raw = sum(Record_Status=="CANCELLED"), 
-              timedout.raw = sum(Record_Status=="Incomplete/Timed Out"), 
-              fragment.raw = sum(Record_Status=="FRAGMENT RECORD"))
-  df.tabulate.out <- df.out %>% 
-    group_by(with.any.response) %>% 
-    summarise(success = n(),
-              cancelled.out = sum(record.status=="CANCELLED"), 
-              timedout.out = sum(record.status=="Incomplete/Timed Out"), 
-              fragment.out = sum(record.status=="FRAGMENT RECORD"))
-  df.tabulate <- cbind(df.tabulate.raw, df.tabulate.out[,2:5])
-  df.tabulate[["percent.success"]] <- df.tabulate[["success"]]/df.tabulate[["attempted"]]
-  df.tabulate[["percent.success"]] <- round(100*df.tabulate[["percent.success"]], digits=1)
-  df.tabulate[["assessment.type"]] <- postquit.colnames[i]
-  df.tabulate <- df.tabulate %>% select(assessment.type, everything())
+  df.tabulate <- quantile((df.out$begin.unixts - df.out$delivered.unixts), c(.50, .75, .95), na.rm=TRUE)
+  df.tabulate <- as.data.frame(df.tabulate)
+  df.tabulate <- t(as.matrix(df.tabulate))
+  df.tabulate <- cbind(postquit.colnames[i], df.tabulate)
   list.summarise.postquit <- append(list.summarise.postquit, list(df.tabulate))
 }
 
-df.summarise.postquit <- bind_rows(list.summarise.postquit)
+df.summarise.postquit <- do.call(rbind,list.summarise.postquit)
 
 prequit.files <- c("Pre_Quit_Random.csv",
                    "Pre_Quit_Urge.csv",
@@ -76,28 +63,14 @@ for(i in 1:length(prequit.files)){
   df.raw <- read.csv(file.path(path.pns.input_data, prequit.files[i]), header = TRUE, stringsAsFactors = FALSE)
   df.raw <- CheckAnyResponse(df = df.raw, keep.cols = (ema.item.names %>% filter(assessment.type==prequit.colnames[i]) %>% extract2("name.codebook")))
   df.out <- CreateEMATimeVars(df.raw = df.raw) %>% filter(is.delivered==1)
-  df.tabulate.raw <- df.raw %>% 
-    group_by(with.any.response) %>% 
-    summarise(attempted = n(), 
-              cancelled.raw = sum(Record_Status=="CANCELLED"), 
-              timedout.raw = sum(Record_Status=="Incomplete/Timed Out"), 
-              fragment.raw = sum(Record_Status=="FRAGMENT RECORD"))
-  df.tabulate.out <- df.out %>% 
-    group_by(with.any.response) %>% 
-    summarise(success = n(),
-              cancelled.out = sum(record.status=="CANCELLED"), 
-              timedout.out = sum(record.status=="Incomplete/Timed Out"), 
-              fragment.out = sum(record.status=="FRAGMENT RECORD"))
-  df.tabulate <- cbind(df.tabulate.raw, df.tabulate.out[,2:5])
-  df.tabulate[["percent.success"]] <- df.tabulate[["success"]]/df.tabulate[["attempted"]]
-  df.tabulate[["percent.success"]] <- round(100*df.tabulate[["percent.success"]], digits=1)
-  df.tabulate[["assessment.type"]] <- prequit.colnames[i]
-  df.tabulate <- df.tabulate %>% select(assessment.type, everything())
+  df.tabulate <- quantile((df.out$begin.unixts - df.out$delivered.unixts), c(.50, .75, .95), na.rm=TRUE)
+  df.tabulate <- t(as.matrix(df.tabulate))
+  df.tabulate <- cbind(prequit.colnames[i], df.tabulate)
   list.summarise.prequit <- append(list.summarise.prequit, list(df.tabulate))
 }
 
-df.summarise.prequit <- bind_rows(list.summarise.prequit)
+df.summarise.prequit <- do.call(rbind,list.summarise.prequit)
 
-write.csv(df.summarise.postquit, file.path(path.pns.output_data, "summarise_postquit_1.csv"), row.names = FALSE)
-write.csv(df.summarise.prequit, file.path(path.pns.output_data, "summarise_prequit_1.csv"), row.names = FALSE)
+write.csv(df.summarise.postquit, file.path(path.pns.output_data, "summarise_postquit_3.csv"), row.names = FALSE)
+write.csv(df.summarise.prequit, file.path(path.pns.output_data, "summarise_prequit_3.csv"), row.names = FALSE)
 
