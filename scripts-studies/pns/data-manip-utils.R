@@ -28,6 +28,7 @@ CreateEMATimeVars <- function(df.raw){
            begin.hrts = AssessmentBegin,
            completed.hrts = AssessmentCompleted,
            notcompleted.hrts = AssessmentNOTCompleted,
+           cancelled.hrts = AssessmentCancelled,
            responded = Responded,
            completed = Completed)
   
@@ -35,10 +36,11 @@ CreateEMATimeVars <- function(df.raw){
   # Format time variables
   # ---------------------------------------------------------------------------
   df.out <- df.out %>%
-    mutate(delivered.hrts = as.POSIXct(strptime(delivered.hrts, format = "%m/%d/%Y %I:%M:%S %p")),
-           begin.hrts = as.POSIXct(strptime(begin.hrts, format = "%m/%d/%Y %I:%M:%S %p")),
-           completed.hrts = as.POSIXct(strptime(completed.hrts, format = "%m/%d/%Y %I:%M:%S %p")),
-           notcompleted.hrts = as.POSIXct(strptime(notcompleted.hrts, format = "%m/%d/%Y %I:%M:%S %p"))) %>%
+    mutate(delivered.hrts = as.POSIXct(strptime(delivered.hrts, format = "%m/%d/%Y %I:%M:%S %p", tz = "UTC")),
+           begin.hrts = as.POSIXct(strptime(begin.hrts, format = "%m/%d/%Y %I:%M:%S %p", tz = "UTC")),
+           completed.hrts = as.POSIXct(strptime(completed.hrts, format = "%m/%d/%Y %I:%M:%S %p", tz = "UTC")),
+           notcompleted.hrts = as.POSIXct(strptime(notcompleted.hrts, format = "%m/%d/%Y %I:%M:%S %p", tz = "UTC")),
+           cancelled.hrts = as.POSIXct(strptime(cancelled.hrts, format = "%m/%d/%Y %I:%M:%S %p", tz = "UTC"))) %>%
     mutate(delivered.unixts = as.numeric(delivered.hrts),
            begin.unixts = as.numeric(begin.hrts))
   
@@ -48,6 +50,7 @@ CreateEMATimeVars <- function(df.raw){
   df.out <- df.out %>% 
     mutate(end.hrts = completed.hrts) %>%
     mutate(end.hrts = if_else(is.na(completed.hrts), notcompleted.hrts, end.hrts)) %>%
+    mutate(end.hrts = if_else(is.na(end.hrts) & !is.na(cancelled.hrts), cancelled.hrts, end.hrts)) %>%
     mutate(end.unixts = as.numeric(end.hrts))
   
   # ---------------------------------------------------------------------------

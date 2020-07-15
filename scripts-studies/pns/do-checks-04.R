@@ -15,7 +15,26 @@ path.shared.code <- Sys.getenv("path.shared.code")
 source(file.path(path.shared.code, "shared-data-manip-utils.R"))
 source(file.path(path.pns.code, "data-manip-utils.R"))
 
-load(file = file.path(path.pns.staged_data, "alldates.RData"))
+#------------------------------------------------------------------------------
+# Get time variables
+#------------------------------------------------------------------------------
+
+# Read in candidate dates
+df.alldates <- read.csv(file.path(path.pns.output_data, "alldates.csv"), header = TRUE, stringsAsFactors = FALSE)
+
+# Format dates
+df.alldates[["EMA_Qday"]] <- as.POSIXct(strptime(df.alldates[["EMA_Qday"]], format = "%Y-%m-%d", tz = "UTC"))
+df.alldates[["quitday"]] <- as.POSIXct(strptime(df.alldates[["quitday"]], format = "%Y-%m-%d", tz = "UTC"))
+
+df.alldates[["prequit.latest.shortformatdate"]] <- as.POSIXct(strptime(df.alldates[["prequit.latest.shortformatdate"]], format = "%Y-%m-%d", tz = "UTC"))
+df.alldates[["postquit.earliest.shortformatdate"]] <- as.POSIXct(strptime(df.alldates[["postquit.earliest.shortformatdate"]], format = "%Y-%m-%d", tz = "UTC"))
+
+df.alldates[["prequit.latest.longformatdate"]] <- as.POSIXct(strptime(df.alldates[["prequit.latest.longformatdate"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC"))
+df.alldates[["postquit.earliest.longformatdate"]] <- as.POSIXct(strptime(df.alldates[["postquit.earliest.longformatdate"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC"))
+
+#------------------------------------------------------------------------------
+# Calculate more time variables
+#------------------------------------------------------------------------------
 
 df.alldates$diffdays.EMA_Qday <- df.alldates$EMA_Qday - df.alldates$postquit.earliest.shortformatdate  # this will be in seconds
 df.alldates$diffdays.quitday <- df.alldates$quitday - df.alldates$postquit.earliest.shortformatdate  # this will be in seconds

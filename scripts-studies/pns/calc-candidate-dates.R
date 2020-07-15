@@ -36,7 +36,7 @@ for(i in 1:length(postquit.files)){
   df.raw.quit.dates <- df.raw %>% 
     select(id = Part_ID, initiated=Initiated, assessment.type=Asse_Name) %>%
     # Note: Need as.POSIXct() as mutate does not support POSIXlt objects
-    mutate(initiated = as.POSIXct(strptime(initiated, "%m/%d/%Y %I:%M:%S %p"))) %>%
+    mutate(initiated = as.POSIXct(strptime(initiated, "%m/%d/%Y %I:%M:%S %p", tz = "UTC"))) %>%
     arrange(id, initiated) %>%
     group_by(id, assessment.type) %>%
     # earliest.date is of class POSIXct
@@ -68,7 +68,7 @@ for(i in 1:length(prequit.files)){
   df.raw.quit.dates <- df.raw %>% 
     select(id = Part_ID, initiated=Initiated, assessment.type=Asse_Name) %>%
     # Note: Need as.POSIXct() as mutate does not support POSIXlt objects
-    mutate(initiated = as.POSIXct(strptime(initiated, "%m/%d/%Y %I:%M:%S %p"))) %>%
+    mutate(initiated = as.POSIXct(strptime(initiated, "%m/%d/%Y %I:%M:%S %p", tz = "UTC"))) %>%
     arrange(id, initiated) %>%
     group_by(id, assessment.type) %>%
     # latest.date is of class POSIXct
@@ -87,7 +87,7 @@ collect.prequit <- collect.prequit %>% group_by(id) %>% summarise(prequit.latest
 # Dates in records from study staff
 #------------------------------------------------------------------------------
 staff.recorded.dates <- read.csv(file.path(path.pns.input_data, "staff_recorded_dates.csv"), stringsAsFactors = FALSE)
-staff.recorded.dates <- staff.recorded.dates %>% mutate(EMA_Qday = as.POSIXct(strptime(EMA_Qday, "%m/%d/%Y")))
+staff.recorded.dates <- staff.recorded.dates %>% mutate(EMA_Qday = as.POSIXct(strptime(EMA_Qday, "%m/%d/%Y", tz = "UTC")))
 
 #------------------------------------------------------------------------------
 # Dates in baseline raw data file
@@ -95,7 +95,7 @@ staff.recorded.dates <- staff.recorded.dates %>% mutate(EMA_Qday = as.POSIXct(st
 df.baseline <- read.csv(file.path(path.pns.input_data, "PNSBaseline.csv"), stringsAsFactors = FALSE)
 df.baseline.dates <- df.baseline %>% 
   select(callnumr, quitday) %>%
-  mutate(quitday = as.POSIXct(strptime(quitday, "%m/%d/%Y")))
+  mutate(quitday = as.POSIXct(strptime(quitday, "%m/%d/%Y", tz = "UTC")))
 
 # Remove from environment
 remove(df.baseline)
@@ -122,8 +122,7 @@ df.alldates <- df.alldates %>%
   mutate(is.equal = case_when(
     is.na(postquit.earliest.shortformatdate) ~ NA_real_,
     EMA_Qday==quitday & EMA_Qday==postquit.earliest.shortformatdate ~ 1,
-    TRUE ~ 0
-  )) %>%
+    TRUE ~ 0)) %>%
   arrange(is.equal)
 
 # Among those for whom is.equal==0: 
@@ -142,7 +141,5 @@ df.alldates <- df.alldates %>%
 #------------------------------------------------------------------------------
 # Write out to file
 #------------------------------------------------------------------------------
-
-save(df.alldates, file = file.path(path.pns.staged_data, "alldates.RData"))
 write.csv(df.alldates, file.path(path.pns.output_data, "alldates.csv"), row.names=FALSE, na = "")
 

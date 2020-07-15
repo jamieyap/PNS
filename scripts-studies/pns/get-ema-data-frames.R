@@ -17,24 +17,31 @@ path.shared.code <- Sys.getenv("path.shared.code")
 
 source(file.path(path.shared.code, "shared-data-manip-utils.R"))
 source(file.path(path.pns.code, "data-manip-utils.R"))
+
+#------------------------------------------------------------------------------
+# Get time variables
+#------------------------------------------------------------------------------
+
 df.quit.dates <- read.csv(file.path(path.pns.output_data, "quit_dates_final.csv"), stringsAsFactors = FALSE)
-load(file = file.path(path.pns.staged_data, "all_ema_processed.RData"))
+df.quit.dates <- df.quit.dates %>% rename(start.study.hrts = start.study.date, end.study.hrts = end.study.date, quit.hrts = quit.date) 
+df.quit.dates[["start.study.hrts"]] <- as.POSIXct(strptime(df.quit.dates[["start.study.hrts"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC"))
+df.quit.dates[["end.study.hrts"]] <- as.POSIXct(strptime(df.quit.dates[["end.study.hrts"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC"))
+df.quit.dates[["quit.hrts"]] <- as.POSIXct(strptime(df.quit.dates[["quit.hrts"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC"))
 
-#------------------------------------------------------------------------------
-# Implement inclusion/exclusion criteria
-#------------------------------------------------------------------------------
-
+# Convert human-readable timestamps to UNIX timestamps
 df.quit.dates <- df.quit.dates %>%
-  rename(start.study.hrts = start.study.date, end.study.hrts = end.study.date, quit.hrts = quit.date) %>%
-  mutate(start.study.hrts = as.POSIXct(strptime(start.study.hrts, format = "%Y-%m-%d %H:%M:%S")),
-         end.study.hrts = as.POSIXct(strptime(end.study.hrts, format = "%Y-%m-%d %H:%M:%S")),
-         quit.hrts = as.POSIXct(strptime(quit.hrts, format = "%Y-%m-%d %H:%M:%S"))) %>%
   mutate(start.study.unixts = as.numeric(start.study.hrts),
          end.study.unixts = as.numeric(end.study.hrts),
          quit.unixts = as.numeric(quit.hrts)) %>%
   select(id, callnumr, 
          start.study.hrts, quit.hrts, end.study.hrts,
          start.study.unixts, quit.unixts, end.study.unixts, everything())
+
+#------------------------------------------------------------------------------
+# Implement inclusion/exclusion criteria
+#------------------------------------------------------------------------------
+
+load(file = file.path(path.pns.staged_data, "all_ema_processed.RData"))
 
 list.all <- lapply(list.all, function(this.df, use.quit.dates = df.quit.dates){
   this.df <- left_join(x = use.quit.dates, y = this.df, by = "id")
@@ -48,6 +55,22 @@ list.all <- lapply(list.all, function(this.df, use.quit.dates = df.quit.dates){
 #------------------------------------------------------------------------------
 # Save individual files to output
 #------------------------------------------------------------------------------
+
+for(i in 1:length(list.all)){
+  
+  this.df <- list.all[[i]]
+  
+  # Format dates prior to writing to csv file
+  # Use argument tz="UTC" or else %H:%M:%S will not be displayed as 00:00:00 for start.study.hrts
+  # and end.study.hrts, and 04:00:00 will not be displayed for quit.hrts
+  # This trick prevents R from performing an automatic adjustment of these time variables
+  # to local time of machine in the output file
+  this.df[["start.study.hrts"]] <- strftime(this.df[["start.study.hrts"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC", usetz = FALSE)
+  this.df[["end.study.hrts"]] <- strftime(this.df[["end.study.hrts"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC", usetz = FALSE)
+  this.df[["quit.hrts"]] <- strftime(this.df[["quit.hrts"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC", usetz = FALSE)
+  
+  list.all[[i]] <- this.df
+}
 
 write.csv(list.all[["Pre-Quit Random"]], file.path(path.pns.output_data, "pre_quit_random_ema.csv"), na="", row.names = FALSE)
 write.csv(list.all[["Pre-Quit Urge"]], file.path(path.pns.output_data, "pre_quit_urge_ema.csv"), na="", row.names = FALSE)
@@ -80,7 +103,8 @@ for(i in 1:length(list.all)){
     select(id, callnumr, 
            start.study.hrts, quit.hrts, end.study.hrts, 
            start.study.unixts, quit.unixts, end.study.unixts,
-           sensitivity, record.id, assessment.type, with.any.response,
+           sensitivity1, sensitivity2,
+           record.id, assessment.type, with.any.response,
            delivered.hrts, begin.hrts, end.hrts, time.hrts,
            delivered.unixts, begin.unixts, end.unixts, time.unixts,
            all.names)
