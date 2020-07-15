@@ -17,8 +17,7 @@ source(file.path(path.pns.code, "data-manip-utils.R"))
 ema.item.names <- read.csv(file.path(path.pns.output_data, "ema_item_names.csv"), header = TRUE, stringsAsFactors = FALSE)
 
 ###############################################################################
-# Checks on number of rows excluded using the SetUpPostQuit and 
-# SetUpPreQuit functions
+# Checks on Post-Quit EMAs
 ###############################################################################
 postquit.files <- c("Post_Quit_Random.csv",
                     "Post_Quit_Urge.csv",
@@ -37,15 +36,24 @@ list.summarise.postquit <- list()
 for(i in 1:length(postquit.files)){
   df.raw <- read.csv(file.path(path.pns.input_data, postquit.files[i]), header = TRUE, stringsAsFactors = FALSE)
   df.raw <- CheckAnyResponse(df = df.raw, keep.cols = (ema.item.names %>% filter(assessment.type==postquit.colnames[i]) %>% extract2("name.codebook")))
-  df.out <- CreateEMATimeVars(df.raw = df.raw) %>% filter(is.delivered==1)
+  df.out <- CreateEMATimeVars(df.raw = df.raw) #%>% filter(is.delivered==1)
   df.tabulate <- quantile((df.out$begin.unixts - df.out$delivered.unixts), c(.50, .75, .95), na.rm=TRUE)
   df.tabulate <- as.data.frame(df.tabulate)
   df.tabulate <- t(as.matrix(df.tabulate))
-  df.tabulate <- cbind(postquit.colnames[i], df.tabulate)
+  count.positive <- df.out %>% mutate(delay = begin.unixts - delivered.unixts) %>% summarise(count.positive = sum(1*(delay > 60*60), na.rm=TRUE))
+  count.positive <- as.matrix(count.positive)
+  count.negative <- df.out %>% mutate(delay = begin.unixts - delivered.unixts) %>% summarise(count.negative = sum(1*(delay < 0), na.rm=TRUE))
+  count.negative <- as.matrix(count.negative)
+  tot.ema <- nrow(df.out)
+  df.tabulate <- cbind(postquit.colnames[i], tot.ema, df.tabulate, count.positive, count.negative)
   list.summarise.postquit <- append(list.summarise.postquit, list(df.tabulate))
 }
 
-df.summarise.postquit <- do.call(rbind,list.summarise.postquit)
+df.summarise.postquit <- do.call(rbind, list.summarise.postquit)
+
+###############################################################################
+# Checks on Pre-Quit EMAs
+###############################################################################
 
 prequit.files <- c("Pre_Quit_Random.csv",
                    "Pre_Quit_Urge.csv",
@@ -62,10 +70,15 @@ list.summarise.prequit <- list()
 for(i in 1:length(prequit.files)){
   df.raw <- read.csv(file.path(path.pns.input_data, prequit.files[i]), header = TRUE, stringsAsFactors = FALSE)
   df.raw <- CheckAnyResponse(df = df.raw, keep.cols = (ema.item.names %>% filter(assessment.type==prequit.colnames[i]) %>% extract2("name.codebook")))
-  df.out <- CreateEMATimeVars(df.raw = df.raw) %>% filter(is.delivered==1)
+  df.out <- CreateEMATimeVars(df.raw = df.raw) #%>% filter(is.delivered==1)
   df.tabulate <- quantile((df.out$begin.unixts - df.out$delivered.unixts), c(.50, .75, .95), na.rm=TRUE)
   df.tabulate <- t(as.matrix(df.tabulate))
-  df.tabulate <- cbind(prequit.colnames[i], df.tabulate)
+  count.positive <- df.out %>% mutate(delay = begin.unixts - delivered.unixts) %>% summarise(count.positive = sum(1*(delay > 60*60), na.rm=TRUE))
+  count.positive <- as.matrix(count.positive)
+  count.negative <- df.out %>% mutate(delay = begin.unixts - delivered.unixts) %>% summarise(count.negative = sum(1*(delay < 0), na.rm=TRUE))
+  count.negative <- as.matrix(count.negative)
+  tot.ema <- nrow(df.out)
+  df.tabulate <- cbind(prequit.colnames[i], tot.ema, df.tabulate, count.positive, count.negative)
   list.summarise.prequit <- append(list.summarise.prequit, list(df.tabulate))
 }
 

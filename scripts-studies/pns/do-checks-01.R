@@ -17,8 +17,7 @@ source(file.path(path.pns.code, "data-manip-utils.R"))
 ema.item.names <- read.csv(file.path(path.pns.output_data, "ema_item_names.csv"), header = TRUE, stringsAsFactors = FALSE)
 
 ###############################################################################
-# Checks on number of rows excluded using the SetUpPostQuit and 
-# SetUpPreQuit functions
+# Checks on Post-Quit EMAs
 ###############################################################################
 postquit.files <- c("Post_Quit_Random.csv",
                     "Post_Quit_Urge.csv",
@@ -59,6 +58,10 @@ for(i in 1:length(postquit.files)){
 }
 
 df.summarise.postquit <- bind_rows(list.summarise.postquit)
+
+###############################################################################
+# Checks on Pre-Quit EMAs
+###############################################################################
 
 prequit.files <- c("Pre_Quit_Random.csv",
                    "Pre_Quit_Urge.csv",

@@ -53,7 +53,7 @@ df.quit.dates <- df.quit.dates %>%
          start.study.unixts, quit.unixts, end.study.unixts, everything())
 
 df.all <- left_join(x = df.quit.dates, y = df.all, by = "id")
-df.all <- df.all %>% filter((time.unixts>=start.study.unixts) & (time.unixts<=end.study.unixts))
+df.all <- df.all %>% filter((delivered.unixts>=start.study.unixts) & (delivered.unixts<=end.study.unixts))
 
 # Determine time between two consecutive EMAs
 df.all <- df.all %>%   

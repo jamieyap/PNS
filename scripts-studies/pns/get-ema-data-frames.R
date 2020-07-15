@@ -38,7 +38,7 @@ df.quit.dates <- df.quit.dates %>%
 
 list.all <- lapply(list.all, function(this.df, use.quit.dates = df.quit.dates){
   this.df <- left_join(x = use.quit.dates, y = this.df, by = "id")
-  this.df <- this.df %>% filter((begin.unixts>=start.study.unixts) & (begin.unixts<=end.study.unixts))
+  this.df <- this.df %>% filter((delivered.unixts>=start.study.unixts) & (delivered.unixts<=end.study.unixts))
   this.df <- this.df %>% 
     select(-rawdata.indicator, -rawdata.qty, -rawdata.timing,
            -smoking.qty, -smoking.delta.minutes)
