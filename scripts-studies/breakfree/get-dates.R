@@ -59,51 +59,21 @@ noshow.condition01 <- grepl(pattern = "V2 no show", df.recorded.quit$...5)
 noshow.condition02 <- grepl(pattern = "PT was hospitalized between V2 and V4", df.recorded.quit$...5)
 noshow.condition03 <- grepl(pattern = "V2, V3 no show", df.recorded.quit$...5)
 
-df.recorded.quit$noshow.visit02 <- ifelse(noshow.condition01 | noshow.condition02 | noshow.condition03, 1, 0)
+df.recorded.quit$noshow.visit2 <- ifelse(noshow.condition01 | noshow.condition02 | noshow.condition03, 1, 0)
 df.recorded.quit$dropped <-  ifelse(df.recorded.quit$`# Smoked`=="dropped", 1, 0)
 df.recorded.quit$withdrew <-  ifelse(df.recorded.quit$`# Smoked`=="withdrew", 1, 0)
 
-# Prepare columns: human-readable quit dates and times
 df.recorded.quit <- df.recorded.quit %>%
-  mutate(time.hour =  as.numeric(format(`V2 Time`, "%H")),
-         time.minute = as.numeric(format(`V2 Time`, "%M"))/60,
-         time.second = as.numeric(format(`V2 Time`, "%S"))/3600) %>%
-  mutate(user.id = `PT ID`,
-         quit.date = Date,
-         quit.hour = time.hour + time.minute + time.second) %>%
-  mutate(quit.hour = round(quit.hour, digits=2)) %>%
-  mutate(quit.unixts = as.numeric(quit.date)+quit.hour) %>%
-  select(user.id,
-         noshow.visit02, dropped, withdrew,
-         quit.date, quit.hour, quit.unixts)
+  mutate(user.id = `PT ID`) %>%
+  select(user.id, noshow.visit2, dropped, withdrew)
 
-# Determine which participants did not atend visit 2
-ids.noshow.visit02 <- df.recorded.quit %>% 
-  filter(noshow.visit02==1) %>%
-  select(user.id) %>% 
-  use_series(user.id)
-
-# Fill in Quit Dates for participants who did not attend visit 2
-df.dates.noshow <- df.recorded.visit.dates %>% 
-  filter(user.id %in% ids.noshow.visit02) %>%
-  mutate(noshowQD = v1 + 4*24*60*60) %>%  # 4 days after date of first visit
-  select(user.id, noshowQD)
-  
-# Merge info from participants who did not attend visit 2 with info for other participants
-df.recorded.quit <- left_join(x = df.recorded.quit, y = df.dates.noshow, by = "user.id")
-
-# Implement decision rules regarding quit dates of participants who did not attend visit 2
-df.recorded.quit <- df.recorded.quit %>%
-  mutate(quit.date = if_else(noshow.visit02==1, noshowQD, quit.date)) %>%
-  mutate(quit.hour = if_else(noshow.visit02==1, 4, quit.hour)) %>%
-  mutate(quit.unixts = as.numeric(quit.date)+quit.hour) %>%
-  select(-noshowQD)
+df.dates <- left_join(x = df.recorded.quit, df.recorded.visit.dates, by = "user.id")
 
 ###############################################################################
 # Add info on whether individual is a CC1 participant or a CC2 participant
 ###############################################################################
 
-df.recorded.quit <- df.recorded.quit %>%
+df.dates <- df.dates %>%
   mutate(tmp.id = paste("aa_", substring(user.id, first=2), sep="")) %>%
   mutate(cc.version = case_when(
     user.id %in% ids.cc1 ~ 1,
@@ -117,21 +87,37 @@ df.recorded.quit <- df.recorded.quit %>%
     TRUE ~ user.id
   )) %>%
   select(-tmp.id) %>%
-  select(user.id, cc.version, noshow.visit02, dropped, withdrew, everything()) %>%
+  select(user.id, cc.version, noshow.visit2, dropped, withdrew, everything()) %>%
   arrange(desc(is.na(cc.version)), user.id)
 
 ###############################################################################
-# Format data
+# Calculate Quit Date
 ###############################################################################
 
-df.out <- df.recorded.quit %>% arrange(cc.version, desc(noshow.visit02), user.id)
+df.dates <- df.dates %>% 
+  arrange(cc.version, desc(noshow.visit2), user.id) %>%
+  mutate(v1 = as.POSIXct(strptime(v1, format = "%Y-%m-%d", tz = "UTC")),
+         v2 = as.POSIXct(strptime(v2, format = "%Y-%m-%d", tz = "UTC")),
+         v3 = as.POSIXct(strptime(v3, format = "%Y-%m-%d", tz = "UTC")),
+         v4 = as.POSIXct(strptime(v4, format = "%Y-%m-%d", tz = "UTC"))) %>%
+  mutate(quit.hrts = v1 + 4*24*60*60) %>%
+  mutate(start.study.hrts = v1,
+         end.study.hrts = quit.hrts + 10*24*60*60) %>%
+  mutate(quit.hrts = quit.hrts + 4*60*60) %>%
+  mutate(quit.unixts = as.numeric(quit.hrts),
+         start.study.unixts = as.numeric(start.study.hrts),
+         end.study.unixts = as.numeric(end.study.hrts)) %>%
+  select(user.id, cc.version, noshow.visit2, dropped, withdrew, 
+         v1, v2, v3, v4,
+         start.study.hrts, quit.hrts, end.study.hrts,
+         start.study.unixts, quit.unixts, end.study.unixts) %>%
+  mutate(start.study.hrts = strftime(start.study.hrts, format = "%Y-%m-%d %H:%M:%S", tz = "UTC", usetz = FALSE),
+         quit.hrts = strftime(quit.hrts, format = "%Y-%m-%d %H:%M:%S", tz = "UTC", usetz = FALSE),
+         end.study.hrts = strftime(end.study.hrts, format = "%Y-%m-%d %H:%M:%S", tz = "UTC", usetz = FALSE))
 
 ###############################################################################
 # Write info
 ###############################################################################
 
-write.csv(df.out, file.path(path.breakfree.output_data, "dates.csv"), row.names = FALSE, na = "")
-
-# Remove (almost) everything in the working environment
-remove(list = ls())
+write.csv(df.dates, file.path(path.breakfree.output_data, "dates.csv"), row.names = FALSE, na = "")
 

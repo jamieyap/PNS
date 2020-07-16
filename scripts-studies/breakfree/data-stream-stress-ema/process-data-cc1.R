@@ -249,6 +249,9 @@ df.collect.all$timezone.hrts <- "CST6CDT"
 # Other data preparation steps
 ###############################################################################
 
+# Remove duplicates if duplicates exist
+df.collect.all <- df.collect.all[!duplicated(df.collect.all),]
+
 # Add type and status
 df.collect.all <- df.collect.all %>% 
   mutate(ema.type = "stress") %>%
