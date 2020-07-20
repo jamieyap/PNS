@@ -79,16 +79,17 @@ if(isTRUE(write.out)){
 list.df.raw.smoking.STATUS.cc2 <- lapply(list.df.raw.smoking.STATUS.cc2, function(x){
   
   df <- x %>% 
-    select(user.id, V1, V3, V4) %>% 
+    select(user.id, V1, V2, V3, V4) %>% 
     mutate(notification = as.character(V3),
            status = as.character(V4),
+           offset.secs = V2/1000,
            prompt.unixts = as.character(V1)) %>%
     filter((notification=="NOTIFICATION_AFTER_DELAY" & status=="MISSED") | 
              (notification=="NOTIFICATION_AFTER_DELAY" & status=="Cancel") | 
              (notification=="NOTIFICATION_WITH_DELAY" & status=="MISSED") | 
              (notification=="NOTIFICATION_WITH_DELAY" & status=="Cancel")) %>%
     mutate(prompt.unixts = as.numeric(prompt.unixts)) %>%
-    select(user.id, prompt.unixts, status)
+    select(user.id, prompt.unixts, offset.secs, status)
   
   if(nrow(df)==0){
     df <- NULL
@@ -152,8 +153,9 @@ for(i in 1:N){
            prompt.unixts, begin.unixts, end.unixts, everything())
   
   df.ref <- df.raw %>%
+    mutate(offset.secs = mCerebrum_offset/1000) %>%
     select(user.id, merge.id, status, 
-           prompt.unixts, begin.unixts, end.unixts,
+           prompt.unixts, begin.unixts, end.unixts, offset.secs,
            with.any.response)
   
   # Save changes
@@ -280,6 +282,7 @@ list.df.tmp <- lapply(list.df.raw.smoking.STATUS.cc2, function(x, use.col.names=
   df.tmp <- as.data.frame(df.tmp)
   colnames(df.tmp) <- use.col.names
   df.tmp$user.id <- x$user.id
+  df.tmp$offset.secs <- x$offset.secs
   df.tmp$status <- x$status
   df.tmp$prompt.unixts <- x$prompt.unixts
   # with.any.response=0 for all MISSED EMAs
@@ -302,24 +305,26 @@ df.collect.all <- rbind(df.collect.all, df.tmp)
 ###############################################################################
 df.collect.all <- df.collect.all %>% 
   arrange(user.id, prompt.unixts) %>%
-  group_by(user.id) %>%
   mutate(prompt.unixts = prompt.unixts/1000,
          begin.unixts = begin.unixts/1000,
          end.unixts = end.unixts/1000)
 
 # Add human-readable timestamps
 df.collect.all <- df.collect.all %>%
-  mutate(prompt.hrts = as.POSIXct(prompt.unixts, tz = "CST6CDT", origin="1970-01-01"),
-         begin.hrts = as.POSIXct(begin.unixts, tz = "CST6CDT", origin="1970-01-01"),
-         end.hrts = as.POSIXct(end.unixts, tz = "CST6CDT", origin="1970-01-01")) %>%
-  mutate(prompt.hrts = strftime(prompt.hrts, format="%Y-%m-%d %H:%M:%S %z", tz = "CST6CDT"),
-         begin.hrts = strftime(begin.hrts, format="%Y-%m-%d %H:%M:%S %z", tz = "CST6CDT"),
-         end.hrts = strftime(end.hrts, format="%Y-%m-%d %H:%M:%S %z", tz = "CST6CDT"))%>%
+  mutate(prompt.unixts = prompt.unixts + offset.secs,
+         begin.unixts = begin.unixts + offset.secs,
+         end.unixts = end.unixts + offset.secs) %>%
+  mutate(prompt.hrts = as.POSIXct(prompt.unixts, tz = "UTC", origin="1970-01-01"),
+         begin.hrts = as.POSIXct(begin.unixts, tz = "UTC", origin="1970-01-01"),
+         end.hrts = as.POSIXct(end.unixts, tz = "UTC", origin="1970-01-01")) %>%
+  mutate(prompt.hrts = strftime(prompt.hrts, format="%Y-%m-%d %H:%M:%S", tz = "UTC", usetz = FALSE),
+         begin.hrts = strftime(begin.hrts, format="%Y-%m-%d %H:%M:%S", tz = "UTC", usetz = FALSE),
+         end.hrts = strftime(end.hrts, format="%Y-%m-%d %H:%M:%S", tz = "UTC", usetz = FALSE))%>%
   mutate(prompt.hrts = as.character(prompt.hrts),
          begin.hrts = as.character(begin.hrts),
-         end.hrts = as.character(end.hrts))
-
-df.collect.all$timezone.hrts <- "CST6CDT"
+         end.hrts = as.character(end.hrts)) %>%
+  mutate(offset.hours = offset.secs/(60*60)) %>%
+  select(-offset.secs)
 
 ###############################################################################
 # Other data preparation steps
@@ -345,11 +350,33 @@ tmp.item.names <- paste("item.",tmp.item.numbers,sep="")
 
 df.collect.all <- df.collect.all %>%
   select(user.id, smoking.ema.id, ema.type, status,
-         prompt.hrts, begin.hrts, end.hrts, timezone.hrts,
+         prompt.hrts, begin.hrts, end.hrts, offset.hours,
          prompt.unixts, begin.unixts, end.unixts,
          with.any.response,
          tmp.item.names,
          everything())
+
+###############################################################################
+# Apply data exclusion criteria
+###############################################################################
+
+df.dates <- read.csv(file.path(path.breakfree.output_data, "dates.csv"), header = TRUE, stringsAsFactors = FALSE)
+df.dates <- df.dates %>% 
+  filter(dropped==0 & withdrew==0) %>% 
+  select(user.id, cc.version, 
+         start.study.hrts, quit.hrts, end.study.hrts,
+         start.study.unixts, quit.unixts, end.study.unixts)
+
+df.collect.all <- left_join(x = df.collect.all, y = df.dates, by = "user.id")
+df.collect.all <- df.collect.all %>% 
+  filter(prompt.unixts >= start.study.unixts) %>%
+  filter(prompt.unixts <= end.study.unixts)
+
+# Rearrange columns
+df.collect.all <- df.collect.all %>% 
+  select(user.id, cc.version, 
+         start.study.hrts, quit.hrts, end.study.hrts,
+         start.study.unixts, quit.unixts, end.study.unixts, everything())
 
 ###############################################################################
 # Write out df.collect.all to a csv file
@@ -361,3 +388,4 @@ if(isTRUE(write.out)){
             file.path(path.breakfree.output_data, "smokingEMA_responses_cc2.csv"), 
             row.names=FALSE, na="")
 }
+

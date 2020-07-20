@@ -33,7 +33,7 @@ ids.cc2 <- ids.cc2[!grepl("test", ids.cc2)]
 ###############################################################################
 
 df.recorded.visit.dates <- read_excel(file.path(path.breakfree.other.input_data, 
-                                                "Rice V2 Quit Day Data and Visit Dates.xlsx"), 
+                                                "Rice V2 Quit Day Data and Visit Dates - Corrected.xlsx"), 
                                       col_types = c("numeric", "date", "date", "date","date"),
                                       col_names = TRUE,
                                       sheet = "V1- V4 Dates")
@@ -45,7 +45,7 @@ colnames(df.recorded.visit.dates) <- c("user.id", "v1", "v2", "v3", "v4")
 ###############################################################################
 
 df.recorded.quit <- read_excel(file.path(path.breakfree.other.input_data, 
-                                         "Rice V2 Quit Day Data and Visit Dates.xlsx"), 
+                                         "Rice V2 Quit Day Data and Visit Dates - Corrected.xlsx"), 
                                col_types = c("numeric", "text", "date", "date","text"),
                                col_names = TRUE,
                                sheet = "V2 Quit Day")
@@ -103,7 +103,7 @@ df.dates <- df.dates %>%
   mutate(quit.hrts = v1 + 4*24*60*60) %>%
   mutate(start.study.hrts = v1,
          end.study.hrts = quit.hrts + 10*24*60*60) %>%
-  mutate(quit.hrts = quit.hrts + 4*60*60) %>%
+  mutate(quit.hrts = quit.hrts + 4*60*60) %>%  # Quit Hour is 4am on Quit Date
   mutate(quit.unixts = as.numeric(quit.hrts),
          start.study.unixts = as.numeric(start.study.hrts),
          end.study.unixts = as.numeric(end.study.hrts)) %>%
@@ -120,4 +120,5 @@ df.dates <- df.dates %>%
 ###############################################################################
 
 write.csv(df.dates, file.path(path.breakfree.output_data, "dates.csv"), row.names = FALSE, na = "")
+
 
