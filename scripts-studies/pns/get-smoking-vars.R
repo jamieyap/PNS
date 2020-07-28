@@ -174,7 +174,7 @@ df.all <- df.all %>%
   select(id, callnumr, 
          start.study.hrts, quit.hrts, end.study.hrts,
          start.study.unixts, quit.unixts, end.study.unixts, 
-         sensitivity1, sensitivity2,
+         sensitivity,
          record.id, ema.order, 
          assessment.type, 
          with.any.response,

@@ -103,7 +103,7 @@ for(i in 1:length(list.all)){
     select(id, callnumr, 
            start.study.hrts, quit.hrts, end.study.hrts, 
            start.study.unixts, quit.unixts, end.study.unixts,
-           sensitivity1, sensitivity2,
+           sensitivity,
            record.id, assessment.type, with.any.response,
            delivered.hrts, begin.hrts, end.hrts, time.hrts,
            delivered.unixts, begin.unixts, end.unixts, time.unixts,

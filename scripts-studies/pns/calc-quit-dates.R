@@ -10,8 +10,7 @@ df.quit.dates <- data.frame(id = df.alldates$id,
                             start.study.date = as.POSIXct(NA), 
                             quit.date = df.alldates$final.quit.date, 
                             end.study.date = as.POSIXct(NA),
-                            sensitivity1 = df.alldates$sensitivity1,
-                            sensitivity2 = df.alldates$sensitivity2)
+                            sensitivity = df.alldates$sensitivity)
 
 # Time of day in start.study.date and end.study.date are set to 12AM
 df.quit.dates[["start.study.date"]] <- df.quit.dates[["quit.date"]] - 7*24*60*60
