@@ -45,11 +45,13 @@ load(file = file.path(path.pns.staged_data, "all_ema_processed.RData"))
 
 list.all <- lapply(list.all, function(dat){
   # Select first few columns
-  dat <- dat %>% select(id, record.id, assessment.type, with.any.response,
-                        delivered.hrts, begin.hrts, end.hrts, time.hrts,
-                        delivered.unixts, begin.unixts, end.unixts, time.unixts,
-                        rawdata.indicator, rawdata.qty, rawdata.timing,
-                        smoking.qty, smoking.delta.minutes)
+  dat <- dat %>% 
+    select(id, record.id, assessment.type, with.any.response,
+           delivered.hrts, begin.hrts, end.hrts, time.hrts,
+           delivered.unixts, begin.unixts, end.unixts, time.unixts,
+           rawdata.indicator, rawdata.qty, rawdata.timing,
+           smoking.qty) %>%
+    mutate(smoking.indicator = NA_real_, smoking.delta.minutes = NA_real_)
   
   # Exclude assessments that meet the criteria below from creating the smoking outcome
   dat <- dat %>% 

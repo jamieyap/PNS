@@ -83,7 +83,6 @@ list.all <- lapply(list.all, function(dat){
   dat <- dat %>% select(id, record.id, assessment.type, with.any.response,
                         delivered.hrts, begin.hrts, end.hrts, time.hrts,
                         delivered.unixts, begin.unixts, end.unixts, time.unixts,
-                        rawdata.indicator, rawdata.qty, rawdata.timing,
                         smoking.qty)
   
   return(dat)

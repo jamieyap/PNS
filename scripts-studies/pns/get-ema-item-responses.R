@@ -68,7 +68,7 @@ df.processed <- df.processed %>%
 
 # Create placeholder variables for smoking items
 df.processed <- df.processed %>% 
-  mutate(rawdata.indicator = NA_real_, rawdata.qty = NA_real_, rawdata.timing = NA_real_, smoking.qty = NA_real_, smoking.delta.minutes = NA_real_)
+  mutate(rawdata.indicator = NA_real_, rawdata.qty = NA_real_, rawdata.timing = NA_real_, smoking.qty = NA_real_)
 
 # Reorder columns
 df.processed <- df.processed %>%
@@ -76,7 +76,7 @@ df.processed <- df.processed %>%
          with.any.response,
          delivered.hrts, begin.hrts, end.hrts, time.hrts,
          delivered.unixts, begin.unixts, end.unixts, time.unixts,
-         rawdata.indicator, rawdata.qty, rawdata.timing, smoking.qty, smoking.delta.minutes,
+         rawdata.indicator, rawdata.qty, rawdata.timing, smoking.qty, 
          these.ema.colnames)
 
 # Append data frame corresponding to this specific EMA type to list
@@ -118,7 +118,7 @@ df.processed <- df.processed %>%
 
 # Create placeholder variables for smoking items
 df.processed <- df.processed %>% 
-  mutate(rawdata.indicator = NA_real_, rawdata.qty = NA_real_, rawdata.timing = NA_real_, smoking.qty = NA_real_, smoking.delta.minutes = NA_real_)
+  mutate(rawdata.indicator = NA_real_, rawdata.qty = NA_real_, rawdata.timing = NA_real_, smoking.qty = NA_real_)
 
 # Reorder columns
 df.processed <- df.processed %>%
@@ -126,7 +126,7 @@ df.processed <- df.processed %>%
          with.any.response,
          delivered.hrts, begin.hrts, end.hrts, time.hrts,
          delivered.unixts, begin.unixts, end.unixts, time.unixts,
-         rawdata.indicator, rawdata.qty, rawdata.timing, smoking.qty, smoking.delta.minutes,
+         rawdata.indicator, rawdata.qty, rawdata.timing, smoking.qty, 
          these.ema.colnames)
 
 # Append data frame corresponding to this specific EMA type to list
@@ -168,7 +168,7 @@ df.processed <- df.processed %>%
 
 # Create placeholder variables for smoking items
 df.processed <- df.processed %>% 
-  mutate(rawdata.indicator = NA_real_, rawdata.qty = NA_real_, rawdata.timing = NA_real_, smoking.qty = NA_real_, smoking.delta.minutes = NA_real_)
+  mutate(rawdata.indicator = NA_real_, rawdata.qty = NA_real_, rawdata.timing = NA_real_, smoking.qty = NA_real_)
 
 # Reorder columns
 df.processed <- df.processed %>%
@@ -176,7 +176,7 @@ df.processed <- df.processed %>%
          with.any.response,
          delivered.hrts, begin.hrts, end.hrts, time.hrts,
          delivered.unixts, begin.unixts, end.unixts, time.unixts,
-         rawdata.indicator, rawdata.qty, rawdata.timing, smoking.qty, smoking.delta.minutes,
+         rawdata.indicator, rawdata.qty, rawdata.timing, smoking.qty, 
          these.ema.colnames)
 
 df.processed <- df.processed %>% mutate(assessment.type = replace(assessment.type, assessment.type=="Pre-Quit Smoking", "Pre-Quit Smoking Part One"))
@@ -220,7 +220,7 @@ df.processed <- df.processed %>%
 
 # Create placeholder variables for smoking items
 df.processed <- df.processed %>% 
-  mutate(rawdata.indicator = NA_real_, rawdata.qty = NA_real_, rawdata.timing = NA_real_, smoking.qty = NA_real_, smoking.delta.minutes = NA_real_)
+  mutate(rawdata.indicator = NA_real_, rawdata.qty = NA_real_, rawdata.timing = NA_real_, smoking.qty = NA_real_)
 
 # Reorder columns
 df.processed <- df.processed %>%
@@ -228,7 +228,7 @@ df.processed <- df.processed %>%
          with.any.response,
          delivered.hrts, begin.hrts, end.hrts, time.hrts,
          delivered.unixts, begin.unixts, end.unixts, time.unixts,
-         rawdata.indicator, rawdata.qty, rawdata.timing, smoking.qty, smoking.delta.minutes,
+         rawdata.indicator, rawdata.qty, rawdata.timing, smoking.qty, 
          these.ema.colnames)
 
 df.processed <- df.processed %>% mutate(assessment.type = replace(assessment.type, assessment.type=="Pre-Quit Smoking - Part2", "Pre-Quit Smoking Part Two"))
@@ -272,7 +272,7 @@ df.processed <- df.processed %>%
 
 # Create placeholder variables for smoking items
 df.processed <- df.processed %>% 
-  mutate(rawdata.indicator = NA_real_, rawdata.qty = NA_real_, rawdata.timing = NA_real_, smoking.qty = NA_real_, smoking.delta.minutes = NA_real_)
+  mutate(rawdata.indicator = NA_real_, rawdata.qty = NA_real_, rawdata.timing = NA_real_, smoking.qty = NA_real_)
 
 # Reorder columns
 df.processed <- df.processed %>%
@@ -280,7 +280,7 @@ df.processed <- df.processed %>%
          with.any.response,
          delivered.hrts, begin.hrts, end.hrts, time.hrts,
          delivered.unixts, begin.unixts, end.unixts, time.unixts,
-         rawdata.indicator, rawdata.qty, rawdata.timing, smoking.qty, smoking.delta.minutes,
+         rawdata.indicator, rawdata.qty, rawdata.timing, smoking.qty, 
          these.ema.colnames)
 
 # Append data frame corresponding to this specific EMA type to list
@@ -322,7 +322,7 @@ df.processed <- df.processed %>%
 
 # Create placeholder variables for smoking items
 df.processed <- df.processed %>% 
-  mutate(rawdata.indicator = NA_real_, rawdata.qty = NA_real_, rawdata.timing = NA_real_, smoking.qty = NA_real_, smoking.delta.minutes = NA_real_)
+  mutate(rawdata.indicator = NA_real_, rawdata.qty = NA_real_, rawdata.timing = NA_real_, smoking.qty = NA_real_)
 
 # Reorder columns
 df.processed <- df.processed %>%
@@ -330,7 +330,7 @@ df.processed <- df.processed %>%
          with.any.response,
          delivered.hrts, begin.hrts, end.hrts, time.hrts,
          delivered.unixts, begin.unixts, end.unixts, time.unixts,
-         rawdata.indicator, rawdata.qty, rawdata.timing, smoking.qty, smoking.delta.minutes,
+         rawdata.indicator, rawdata.qty, rawdata.timing, smoking.qty, 
          these.ema.colnames)
 
 # Append data frame corresponding to this specific EMA type to list
@@ -372,7 +372,7 @@ df.processed <- df.processed %>%
 
 # Create placeholder variables for smoking items
 df.processed <- df.processed %>% 
-  mutate(rawdata.indicator = NA_real_, rawdata.qty = NA_real_, rawdata.timing = NA_real_, smoking.qty = NA_real_, smoking.delta.minutes = NA_real_)
+  mutate(rawdata.indicator = NA_real_, rawdata.qty = NA_real_, rawdata.timing = NA_real_, smoking.qty = NA_real_)
 
 # Reorder columns
 df.processed <- df.processed %>%
@@ -380,7 +380,7 @@ df.processed <- df.processed %>%
          with.any.response,
          delivered.hrts, begin.hrts, end.hrts, time.hrts,
          delivered.unixts, begin.unixts, end.unixts, time.unixts,
-         rawdata.indicator, rawdata.qty, rawdata.timing, smoking.qty, smoking.delta.minutes,
+         rawdata.indicator, rawdata.qty, rawdata.timing, smoking.qty, 
          these.ema.colnames)
 
 df.processed <- df.processed %>% mutate(assessment.type = replace(assessment.type, assessment.type=="Post-Quit About to Slip", "Post-Quit About to Slip Part One"))
@@ -424,7 +424,7 @@ df.processed <- df.processed %>%
 
 # Create placeholder variables for smoking items
 df.processed <- df.processed %>% 
-  mutate(rawdata.indicator = NA_real_, rawdata.qty = NA_real_, rawdata.timing = NA_real_, smoking.qty = NA_real_, smoking.delta.minutes = NA_real_)
+  mutate(rawdata.indicator = NA_real_, rawdata.qty = NA_real_, rawdata.timing = NA_real_, smoking.qty = NA_real_)
 
 # Reorder columns
 df.processed <- df.processed %>%
@@ -432,7 +432,7 @@ df.processed <- df.processed %>%
          with.any.response,
          delivered.hrts, begin.hrts, end.hrts, time.hrts,
          delivered.unixts, begin.unixts, end.unixts, time.unixts,
-         rawdata.indicator, rawdata.qty, rawdata.timing, smoking.qty, smoking.delta.minutes,
+         rawdata.indicator, rawdata.qty, rawdata.timing, smoking.qty, 
          these.ema.colnames)
 
 df.processed <- df.processed %>% mutate(assessment.type = replace(assessment.type, assessment.type=="Post-Quit About to Slip - Part2", "Post-Quit About to Slip Part Two"))
@@ -476,7 +476,7 @@ df.processed <- df.processed %>%
 
 # Create placeholder variables for smoking items
 df.processed <- df.processed %>% 
-  mutate(rawdata.indicator = NA_real_, rawdata.qty = NA_real_, rawdata.timing = NA_real_, smoking.qty = NA_real_, smoking.delta.minutes = NA_real_)
+  mutate(rawdata.indicator = NA_real_, rawdata.qty = NA_real_, rawdata.timing = NA_real_, smoking.qty = NA_real_)
 
 # Reorder columns
 df.processed <- df.processed %>%
@@ -484,7 +484,7 @@ df.processed <- df.processed %>%
          with.any.response,
          delivered.hrts, begin.hrts, end.hrts, time.hrts,
          delivered.unixts, begin.unixts, end.unixts, time.unixts,
-         rawdata.indicator, rawdata.qty, rawdata.timing, smoking.qty, smoking.delta.minutes,
+         rawdata.indicator, rawdata.qty, rawdata.timing, smoking.qty, 
          these.ema.colnames)
 
 # Append data frame corresponding to this specific EMA type to list
@@ -560,6 +560,7 @@ list.all[["Pre-Quit Random"]] <- list.all[["Pre-Quit Random"]] %>%
     assessment.type=="Pre-Quit Random" & rawdata.qty==7 ~ 11,
     TRUE ~ smoking.qty)) %>% 
   # Finally, use info from rawdata.indicator
+  # smoking.qty is missing if participant reported "No" smoking
   mutate(smoking.qty = if_else(is.na(smoking.qty) & (rawdata.indicator==0), 0, smoking.qty))
 
 list.all[["Pre-Quit Urge"]] <- list.all[["Pre-Quit Urge"]] %>% 
@@ -574,6 +575,7 @@ list.all[["Pre-Quit Urge"]] <- list.all[["Pre-Quit Urge"]] %>%
     assessment.type=="Pre-Quit Urge" & rawdata.qty==7 ~ 11,
     TRUE ~ smoking.qty)) %>% 
   # Finally, use info from rawdata.indicator
+  # smoking.qty is missing if participant reported "No" smoking
   mutate(smoking.qty = if_else(is.na(smoking.qty) & (rawdata.indicator==0), 0, smoking.qty))
 
 list.all[["Pre-Quit Smoking Part Two"]] <- list.all[["Pre-Quit Smoking Part Two"]] %>% 
@@ -611,6 +613,7 @@ list.all[["Post-Quit Random"]] <- list.all[["Post-Quit Random"]] %>%
     assessment.type=="Post-Quit Random" & rawdata.qty==7 ~ 11,
     TRUE ~ smoking.qty)) %>% 
   # Finally, use info from rawdata.indicator
+  # smoking.qty is missing if participant reported "No" smoking
   mutate(smoking.qty = if_else(is.na(smoking.qty) & (rawdata.indicator==0), 0, smoking.qty))
 
 list.all[["Post-Quit Urge"]] <- list.all[["Post-Quit Urge"]] %>% 
@@ -625,6 +628,7 @@ list.all[["Post-Quit Urge"]] <- list.all[["Post-Quit Urge"]] %>%
   assessment.type=="Post-Quit Urge" & rawdata.qty==7 ~ 11,
   TRUE ~ smoking.qty)) %>% 
   # Finally, use info from rawdata.indicator
+  # smoking.qty is missing if participant reported "No" smoking
   mutate(smoking.qty = if_else(is.na(smoking.qty) & (rawdata.indicator==0), 0, smoking.qty))
 
 list.all[["Post-Quit About to Slip Part Two"]] <- list.all[["Post-Quit About to Slip Part Two"]] %>% 
@@ -661,31 +665,8 @@ list.all[["Post-Quit Already Slipped"]] <- list.all[["Post-Quit Already Slipped"
   assessment.type=="Post-Quit Already Slipped" & rawdata.qty==7 ~ 11,
   TRUE ~ smoking.qty)) %>% 
   # Finally, use info from rawdata.indicator
+  # smoking.qty is missing if participant reported "No" smoking
   mutate(smoking.qty = if_else(is.na(smoking.qty) & (rawdata.indicator==0), 0, smoking.qty))
-
-#------------------------------------------------------------------------------
-# Change column names in each data frame within list.all to new column names 
-# in ema.item.names
-#------------------------------------------------------------------------------
-
-for(k in 1:length(list.all)){
-  current.assessment.type <- names(list.all)[k]
-  df.processed <- list.all[[current.assessment.type]]
-  old.column.names <- colnames(df.processed)
-  these.old <- ema.item.names %>% filter(assessment.type==current.assessment.type) %>% extract2("name.codebook")
-  these.new <- ema.item.names %>% filter(assessment.type==current.assessment.type) %>% extract2("name.new")
-  
-  for(i in 1:length(old.column.names)){
-    if(old.column.names[i] %in% these.old){
-      idx <- which(these.old==old.column.names[i])
-      colnames(df.processed)[i] <- these.new[idx]
-    }else{
-      next
-    }
-  }
-  # Update df.processed with new column names
-  list.all[[current.assessment.type]] <- df.processed
-}
 
 #------------------------------------------------------------------------------
 # Save list.all as an .RData object
