@@ -1,10 +1,14 @@
 ## Por Nuestra Salud Study
 
+## 0 About this Section of the MARS Repository
+
+This section of the MARS repository contains code for performing curation and analysis of Por Nuestra Salud (PNS) study data and documentation. Files corresponding to particular stages of the project are placed under the relevant header.
+
 ## 1 Essential
 
 | <img height=0 width=500> File Name <img height=0 width=500> | <img height=0 width=1000> Brief Description <img height=0 width=1000> |
 |:-----------------------------:|:-----------------------------------------------------------------------|
-| TBA | Documents data curation |
+| [PNS_documentation.pdf](https://github.com/jamieyap/MARS/blob/master/scripts-studies/pns/PNS_documentation.pdf) | Documents data curation |
 
 ## 2 More Details
 
@@ -16,7 +20,9 @@
 | [get-ema-item-names.R](https://github.com/jamieyap/MARS/blob/master/scripts-studies/pns/get-ema-item-names.R) | In preparation of merging data corresponding to each EMA type into one file, create new variable names with similar format, e.g., postquit.random.item.XX, and a dictionary mapping the correspondence of original item names and item names in the new format |
 | [get-ema-item-responses.R](https://github.com/jamieyap/MARS/blob/master/scripts-studies/pns/get-ema-item-responses.R) | Perform data preparation tasks and save intermediate results for further data preprocessing. Data preparation tasks in this script include: 1. exclude EMAs with some indication of unsuccessful delivery, 2. constuct variables for time when EMA was delivered, begun, completed, 3. construct variable indicating whether a response to any item was recorded 4. clean up smoking counts variable 5. apply new column names created in [get-ema-item-names.R](https://github.com/jamieyap/MARS/blob/master/scripts-studies/pns/get-ema-item-names.R) |
 | [get-smoking-vars.R](https://github.com/jamieyap/MARS/blob/master/scripts-studies/pns/get-smoking-vars.R) | Complete preparaton of smoking-related variables, particularly time variables related to the smoking outcome and save output to individual csv file |
-|[get-ema-data-frames.R](https://github.com/jamieyap/MARS/blob/master/scripts-studies/pns/get-ema-data-frames.R) | Complete preparaton for each type of EMA. Further, 1. One preparation for each individual type of EMA is complete, save output to individual csv files 2. Merge smoking outcome constructed in [get-smoking-vars.R](https://github.com/jamieyap/MARS/blob/master/scripts-studies/pns/get-smoking-vars.R) with curated data from all types of EMA into one file (this is the `BIG.df` variable in the script) |
+| [get-ema-data-frames-by-type.R](https://github.com/jamieyap/MARS/blob/master/scripts-studies/pns/get-ema-data-frames-by-type.R) | Complete preparaton for each type of EMA. Further, 1. One preparation for each individual type of EMA is complete, save output to individual csv files |
+| [get-ema-data-frames-merged.R](https://github.com/jamieyap/MARS/blob/master/scripts-studies/pns/get-ema-data-frames-merged.R) | Merge smoking outcome constructed in [get-smoking-vars.R](https://github.com/jamieyap/MARS/blob/master/scripts-studies/pns/get-smoking-vars.R) with curated data from all types of EMA into one file |
+
 
 ### 2.2 Checks on Input and Output Data
 
