@@ -77,7 +77,148 @@ df.other.participants.dates <- df.alldates %>% filter(id %in% these.other.partic
 
 load(file = file.path(path.pns.staged_data, "all_ema_processed.RData"))
 
-# Obtain rows & columns to be used in constructing the smoking outcome
+#------------------------------------------------------------------------------
+# Clean up smoking counts variable
+# Apply decision rule for counts of cigarettes smoked utilized to 
+# infer quit dates when quit date is ambiguous
+#------------------------------------------------------------------------------
+
+source(file.path(path.pns.code, "identify-smoking-vars.R"))
+
+for(i in 1:length(list.all)){
+  list.all[[i]]$smoking.qty = NA_real_
+}
+
+
+# note that the rules below to construct smoking.qty differ from the rules
+# in the script rules-smoking-quantity.R
+
+# Pre-Quit EMAs ###############################################################
+
+list.all[["Pre-Quit Random"]] <- list.all[["Pre-Quit Random"]] %>% 
+  mutate(smoking.qty = case_when(
+    assessment.type=="Pre-Quit Random" & rawdata.qty==0 ~ 0,
+    assessment.type=="Pre-Quit Random" & rawdata.qty==1 ~ 1,
+    assessment.type=="Pre-Quit Random" & rawdata.qty==2 ~ 2,
+    assessment.type=="Pre-Quit Random" & rawdata.qty==3 ~ 4,
+    assessment.type=="Pre-Quit Random" & rawdata.qty==4 ~ 6,
+    assessment.type=="Pre-Quit Random" & rawdata.qty==5 ~ 8,
+    assessment.type=="Pre-Quit Random" & rawdata.qty==6 ~ 10,
+    assessment.type=="Pre-Quit Random" & rawdata.qty==7 ~ 11,
+    TRUE ~ smoking.qty)) %>% 
+  # Finally, use info from rawdata.indicator
+  # smoking.qty is missing if participant reported "No" smoking
+  mutate(smoking.qty = if_else(is.na(smoking.qty) & (rawdata.indicator==0), 0, smoking.qty))
+
+list.all[["Pre-Quit Urge"]] <- list.all[["Pre-Quit Urge"]] %>% 
+  mutate(smoking.qty = case_when(
+    assessment.type=="Pre-Quit Urge" & rawdata.qty==0 ~ 0,
+    assessment.type=="Pre-Quit Urge" & rawdata.qty==1 ~ 1,
+    assessment.type=="Pre-Quit Urge" & rawdata.qty==2 ~ 2,
+    assessment.type=="Pre-Quit Urge" & rawdata.qty==3 ~ 4,
+    assessment.type=="Pre-Quit Urge" & rawdata.qty==4 ~ 6,
+    assessment.type=="Pre-Quit Urge" & rawdata.qty==5 ~ 8,
+    assessment.type=="Pre-Quit Urge" & rawdata.qty==6 ~ 10,
+    assessment.type=="Pre-Quit Urge" & rawdata.qty==7 ~ 11,
+    TRUE ~ smoking.qty)) %>% 
+  # Finally, use info from rawdata.indicator
+  # smoking.qty is missing if participant reported "No" smoking
+  mutate(smoking.qty = if_else(is.na(smoking.qty) & (rawdata.indicator==0), 0, smoking.qty))
+
+list.all[["Pre-Quit Smoking Part Two"]] <- list.all[["Pre-Quit Smoking Part Two"]] %>% 
+  mutate(rawdata.qty = case_when(
+    # Clean up responses so that smoking.qty for all EMA types below are on the same scale
+    assessment.type=="Pre-Quit Smoking Part Two" & rawdata.qty==3 ~ 2,
+    assessment.type=="Pre-Quit Smoking Part Two" & rawdata.qty==4 ~ 3,
+    assessment.type=="Pre-Quit Smoking Part Two" & rawdata.qty==5 ~ 4,
+    assessment.type=="Pre-Quit Smoking Part Two" & rawdata.qty==6 ~ 5,
+    assessment.type=="Pre-Quit Smoking Part Two" & rawdata.qty==7 ~ 6,
+    assessment.type=="Pre-Quit Smoking Part Two" & rawdata.qty==8 ~ 7,
+    TRUE ~ as.numeric(rawdata.qty))) %>% 
+  mutate(smoking.qty = case_when(
+    # Fill in smoking.qty
+    assessment.type=="Pre-Quit Smoking Part Two" & rawdata.qty==0 ~ 0,
+    assessment.type=="Pre-Quit Smoking Part Two" & rawdata.qty==1 ~ 1,
+    assessment.type=="Pre-Quit Smoking Part Two" & rawdata.qty==2 ~ 2,
+    assessment.type=="Pre-Quit Smoking Part Two" & rawdata.qty==3 ~ 4,
+    assessment.type=="Pre-Quit Smoking Part Two" & rawdata.qty==4 ~ 6,
+    assessment.type=="Pre-Quit Smoking Part Two" & rawdata.qty==5 ~ 8,
+    assessment.type=="Pre-Quit Smoking Part Two" & rawdata.qty==6 ~ 10,
+    assessment.type=="Pre-Quit Smoking Part Two" & rawdata.qty==7 ~ 11,
+    TRUE ~ smoking.qty)) 
+
+# Post-Quit EMAs ###############################################################
+list.all[["Post-Quit Random"]] <- list.all[["Post-Quit Random"]] %>% 
+  mutate(smoking.qty = case_when(
+    assessment.type=="Post-Quit Random" & rawdata.qty==0 ~ 0,
+    assessment.type=="Post-Quit Random" & rawdata.qty==1 ~ 1,
+    assessment.type=="Post-Quit Random" & rawdata.qty==2 ~ 2,
+    assessment.type=="Post-Quit Random" & rawdata.qty==3 ~ 4,
+    assessment.type=="Post-Quit Random" & rawdata.qty==4 ~ 6,
+    assessment.type=="Post-Quit Random" & rawdata.qty==5 ~ 8,
+    assessment.type=="Post-Quit Random" & rawdata.qty==6 ~ 10,
+    assessment.type=="Post-Quit Random" & rawdata.qty==7 ~ 11,
+    TRUE ~ smoking.qty)) %>% 
+  # Finally, use info from rawdata.indicator
+  # smoking.qty is missing if participant reported "No" smoking
+  mutate(smoking.qty = if_else(is.na(smoking.qty) & (rawdata.indicator==0), 0, smoking.qty))
+
+list.all[["Post-Quit Urge"]] <- list.all[["Post-Quit Urge"]] %>% 
+  mutate(smoking.qty = case_when(
+    assessment.type=="Post-Quit Urge" & rawdata.qty==0 ~ 0,
+    assessment.type=="Post-Quit Urge" & rawdata.qty==1 ~ 1,
+    assessment.type=="Post-Quit Urge" & rawdata.qty==2 ~ 2,
+    assessment.type=="Post-Quit Urge" & rawdata.qty==3 ~ 4,
+    assessment.type=="Post-Quit Urge" & rawdata.qty==4 ~ 6,
+    assessment.type=="Post-Quit Urge" & rawdata.qty==5 ~ 8,
+    assessment.type=="Post-Quit Urge" & rawdata.qty==6 ~ 10,
+    assessment.type=="Post-Quit Urge" & rawdata.qty==7 ~ 11,
+    TRUE ~ smoking.qty)) %>% 
+  # Finally, use info from rawdata.indicator
+  # smoking.qty is missing if participant reported "No" smoking
+  mutate(smoking.qty = if_else(is.na(smoking.qty) & (rawdata.indicator==0), 0, smoking.qty))
+
+list.all[["Post-Quit About to Slip Part Two"]] <- list.all[["Post-Quit About to Slip Part Two"]] %>% 
+  mutate(rawdata.qty = case_when(
+    # Clean up responses so that smoking.qty for all EMA types below are on the same scale
+    assessment.type=="Post-Quit About to Slip Part Two" & rawdata.qty==3 ~ 2,
+    assessment.type=="Post-Quit About to Slip Part Two" & rawdata.qty==4 ~ 3,
+    assessment.type=="Post-Quit About to Slip Part Two" & rawdata.qty==5 ~ 4,
+    assessment.type=="Post-Quit About to Slip Part Two" & rawdata.qty==6 ~ 5,
+    assessment.type=="Post-Quit About to Slip Part Two" & rawdata.qty==7 ~ 6,
+    assessment.type=="Post-Quit About to Slip Part Two" & rawdata.qty==8 ~ 7,
+    TRUE ~ as.numeric(rawdata.qty))) %>% 
+  mutate(smoking.qty = case_when(
+    # Fill in smoking.qty
+    assessment.type=="Post-Quit About to Slip Part Two" & rawdata.qty==0 ~ 0,
+    assessment.type=="Post-Quit About to Slip Part Two" & rawdata.qty==1 ~ 1,
+    assessment.type=="Post-Quit About to Slip Part Two" & rawdata.qty==2 ~ 2,
+    assessment.type=="Post-Quit About to Slip Part Two" & rawdata.qty==3 ~ 4,
+    assessment.type=="Post-Quit About to Slip Part Two" & rawdata.qty==4 ~ 6,
+    assessment.type=="Post-Quit About to Slip Part Two" & rawdata.qty==5 ~ 8,
+    assessment.type=="Post-Quit About to Slip Part Two" & rawdata.qty==6 ~ 10,
+    assessment.type=="Post-Quit About to Slip Part Two" & rawdata.qty==7 ~ 11,
+    TRUE ~ smoking.qty))
+
+list.all[["Post-Quit Already Slipped"]] <- list.all[["Post-Quit Already Slipped"]] %>% 
+  mutate(smoking.qty = case_when(
+    assessment.type=="Post-Quit Already Slipped" & rawdata.qty==0 ~ 0,
+    assessment.type=="Post-Quit Already Slipped" & rawdata.qty==1 ~ 1,
+    assessment.type=="Post-Quit Already Slipped" & rawdata.qty==2 ~ 2,
+    assessment.type=="Post-Quit Already Slipped" & rawdata.qty==3 ~ 4,
+    assessment.type=="Post-Quit Already Slipped" & rawdata.qty==4 ~ 6,
+    assessment.type=="Post-Quit Already Slipped" & rawdata.qty==5 ~ 8,
+    assessment.type=="Post-Quit Already Slipped" & rawdata.qty==6 ~ 10,
+    assessment.type=="Post-Quit Already Slipped" & rawdata.qty==7 ~ 11,
+    TRUE ~ smoking.qty)) %>% 
+  # Finally, use info from rawdata.indicator
+  # smoking.qty is missing if participant reported "No" smoking
+  mutate(smoking.qty = if_else(is.na(smoking.qty) & (rawdata.indicator==0), 0, smoking.qty))
+
+#------------------------------------------------------------------------------
+# Obtain rows & columns to be used to visualize pattern of smoking
+#------------------------------------------------------------------------------
+
 list.all <- lapply(list.all, function(dat){
   # Select first few columns
   dat <- dat %>% select(id, record.id, assessment.type, with.any.response,

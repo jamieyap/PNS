@@ -281,12 +281,13 @@ GetFutureRecords <- function(df.this.group, cols.today, h, this.numeric){
   # ---------------------------------------------------------------------------
   for(i in 1:length(h)){
     new.col.name <- paste(cols.today[i], "_shift.plus.", h[i], sep="")
-    future.records <- tail(df.this.group[, cols.today[i]], n=-h[i])
     
     if(isTRUE(this.numeric[i])){
+      future.records <- tail(df.this.group[[cols.today[i]]], n=-h[i])
       future.records <- as.numeric(unlist(future.records))
       df.this.group[, new.col.name] <- c(future.records, rep(NA_real_,h[i]))
     }else{
+      future.records <- tail(df.this.group[[cols.today[i]]], n=-h[i])
       future.records <- as.character(unlist(future.records))
       df.this.group[, new.col.name] <- c(future.records, rep(NA_character_,h[i]))
     }
@@ -333,12 +334,13 @@ GetPastRecords <- function(df.this.group, cols.today, h, this.numeric){
   
   for(i in 1:length(h)){
     new.col.name <- paste(cols.today[i], "_shift.minus.", h[i], sep="")
-    past.records <- head(df.this.group[, cols.today[i]], n=-h[i])
     
     if(isTRUE(this.numeric[i])){
+      past.records <- head(df.this.group[[cols.today[i]]], n=-h[i])
       past.records <- as.numeric(unlist(past.records))
       df.this.group[, new.col.name] <- c(rep(NA_real_,h[i]), past.records)
     }else{
+      past.records <- head(df.this.group[[cols.today[i]]], n=-h[i])
       past.records <- as.character(unlist(past.records))
       df.this.group[, new.col.name] <- c(rep(NA_character_,h[i]), past.records)
     }

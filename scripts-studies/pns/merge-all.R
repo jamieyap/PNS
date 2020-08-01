@@ -33,11 +33,11 @@ for(k in 1:length(list.all)){
   these.new <- ema.item.names %>% filter(assessment.type==current.assessment.type) %>% extract2("name.new")
   
   for(i in 1:length(old.column.names)){
-    if(old.column.names[i] %in% these.old){
-      idx <- which(these.old==old.column.names[i])
-      colnames(df.processed)[i] <- these.new[idx]
+    if(old.column.names[i] %in% these.old){  # if TRUE, then old.column.names[i] corresponds to an EMA item
+      idx <- which(these.old==old.column.names[i])  # search for the new column name based on the dictionary of old and new column names
+      colnames(df.processed)[i] <- these.new[idx]  # rename ith column of df.processed
     }else{
-      next
+      next  # do NOT rename ith column of df.processed
     }
   }
   # Update df.processed with new column names
@@ -63,17 +63,17 @@ for(i in 1:length(list.all)){
   # Reorder columns
   current.df <- current.df %>% 
     select(id, callnumr, 
-           start.study.hrts, quit.hrts, end.study.hrts, 
-           start.study.unixts, quit.unixts, end.study.unixts,
+           start_study_hrts, quit_hrts, end_study_hrts, 
+           start_study_unixts, quit_unixts, end_study_unixts,
            sensitivity,
-           record.id, assessment.type, 
-           use.as.postquit, with.any.response,
-           delivered.hrts, begin.hrts, end.hrts, time.hrts,
-           delivered.unixts, begin.unixts, end.unixts, time.unixts,
+           record_id, assessment_type, 
+           use_as_postquit, with_any_response,
+           delivered_hrts, begin_hrts, end_hrts, time_hrts,
+           delivered_unixts, begin_unixts, end_unixts, time_unixts,
            all.names)
   
   # Collect reshaped data frame
-  collect.reshaped.df <- append(collect.reshaped.df , list(current.df))
+  collect.reshaped.df <- append(collect.reshaped.df, list(current.df))
 }
 
 reshaped.df <- do.call(rbind, collect.reshaped.df)
@@ -86,10 +86,12 @@ colnames.merged <- c(colnames(df.smoking), colnames(reshaped.df))
 colnames.merged <- unique(colnames.merged)
 
 # Append column names to df.smoking
+# Use setdiff() to identify column names which are in colnames.merged but are not in df.smoking
 df.smoking.add.these.colnames <- setdiff(colnames.merged, colnames(df.smoking))
 df.smoking[,df.smoking.add.these.colnames] <- NA
 
 # Append column names to df.merged
+# Use setdiff() to identify column names which are in colnames.merged but are not in reshaped.df
 reshaped.df.add.these.colnames <- setdiff(colnames.merged, colnames(reshaped.df))
 reshaped.df[,reshaped.df.add.these.colnames] <- NA
 
@@ -101,5 +103,5 @@ BIG.df <- rbind(df.smoking, reshaped.df)
 #------------------------------------------------------------------------------
 # Save merged dataset to csv file
 #------------------------------------------------------------------------------
-write.csv(reshaped.df, file.path(path.pns.output_data, "merged.csv"), row.names = FALSE, na="")
+write.csv(BIG.df, file.path(path.pns.output_data, "merged.csv"), row.names = FALSE, na="")
 

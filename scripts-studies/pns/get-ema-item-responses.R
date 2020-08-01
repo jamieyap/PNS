@@ -4,8 +4,6 @@
 #   - exclude EMAs with some indication of unsuccessful delivery
 #   - constuct variables for time when EMA was delivered, begun, completed
 #   - construct variable indicating whether a response to any item was recorded
-#   - clean up smoking counts variable
-# * Apply new column names for EMA item (in ema_item_names.csv)
 # * Save to intermediate file in preparation for further data processing
 ###############################################################################
 
@@ -66,17 +64,12 @@ df.processed <- df.processed %>%
   mutate(time.hrts = if_else(with.any.response==1, begin.hrts, delivered.hrts),
          time.unixts = if_else(with.any.response==1, begin.unixts, delivered.unixts))
 
-# Create placeholder variables for smoking items
-df.processed <- df.processed %>% 
-  mutate(rawdata.indicator = NA_real_, rawdata.qty = NA_real_, rawdata.timing = NA_real_, smoking.qty = NA_real_)
-
 # Reorder columns
 df.processed <- df.processed %>%
   select(id, record.id, assessment.type, 
          with.any.response,
          delivered.hrts, begin.hrts, end.hrts, time.hrts,
-         delivered.unixts, begin.unixts, end.unixts, time.unixts,
-         rawdata.indicator, rawdata.qty, rawdata.timing, smoking.qty, 
+         delivered.unixts, begin.unixts, end.unixts, time.unixts, 
          these.ema.colnames)
 
 # Append data frame corresponding to this specific EMA type to list
@@ -116,17 +109,12 @@ df.processed <- df.processed %>%
   mutate(time.hrts = if_else(with.any.response==1, begin.hrts, delivered.hrts),
          time.unixts = if_else(with.any.response==1, begin.unixts, delivered.unixts))
 
-# Create placeholder variables for smoking items
-df.processed <- df.processed %>% 
-  mutate(rawdata.indicator = NA_real_, rawdata.qty = NA_real_, rawdata.timing = NA_real_, smoking.qty = NA_real_)
-
 # Reorder columns
 df.processed <- df.processed %>%
   select(id, record.id, assessment.type, 
          with.any.response,
          delivered.hrts, begin.hrts, end.hrts, time.hrts,
-         delivered.unixts, begin.unixts, end.unixts, time.unixts,
-         rawdata.indicator, rawdata.qty, rawdata.timing, smoking.qty, 
+         delivered.unixts, begin.unixts, end.unixts, time.unixts, 
          these.ema.colnames)
 
 # Append data frame corresponding to this specific EMA type to list
@@ -166,17 +154,12 @@ df.processed <- df.processed %>%
   mutate(time.hrts = if_else(with.any.response==1, begin.hrts, delivered.hrts),
          time.unixts = if_else(with.any.response==1, begin.unixts, delivered.unixts))
 
-# Create placeholder variables for smoking items
-df.processed <- df.processed %>% 
-  mutate(rawdata.indicator = NA_real_, rawdata.qty = NA_real_, rawdata.timing = NA_real_, smoking.qty = NA_real_)
-
 # Reorder columns
 df.processed <- df.processed %>%
   select(id, record.id, assessment.type, 
          with.any.response,
          delivered.hrts, begin.hrts, end.hrts, time.hrts,
-         delivered.unixts, begin.unixts, end.unixts, time.unixts,
-         rawdata.indicator, rawdata.qty, rawdata.timing, smoking.qty, 
+         delivered.unixts, begin.unixts, end.unixts, time.unixts, 
          these.ema.colnames)
 
 df.processed <- df.processed %>% mutate(assessment.type = replace(assessment.type, assessment.type=="Pre-Quit Smoking", "Pre-Quit Smoking Part One"))
@@ -218,17 +201,12 @@ df.processed <- df.processed %>%
   mutate(time.hrts = if_else(with.any.response==1, begin.hrts, delivered.hrts),
          time.unixts = if_else(with.any.response==1, begin.unixts, delivered.unixts))
 
-# Create placeholder variables for smoking items
-df.processed <- df.processed %>% 
-  mutate(rawdata.indicator = NA_real_, rawdata.qty = NA_real_, rawdata.timing = NA_real_, smoking.qty = NA_real_)
-
 # Reorder columns
 df.processed <- df.processed %>%
   select(id, record.id, assessment.type, 
          with.any.response,
          delivered.hrts, begin.hrts, end.hrts, time.hrts,
-         delivered.unixts, begin.unixts, end.unixts, time.unixts,
-         rawdata.indicator, rawdata.qty, rawdata.timing, smoking.qty, 
+         delivered.unixts, begin.unixts, end.unixts, time.unixts, 
          these.ema.colnames)
 
 df.processed <- df.processed %>% mutate(assessment.type = replace(assessment.type, assessment.type=="Pre-Quit Smoking - Part2", "Pre-Quit Smoking Part Two"))
@@ -270,17 +248,12 @@ df.processed <- df.processed %>%
   mutate(time.hrts = if_else(with.any.response==1, begin.hrts, delivered.hrts),
          time.unixts = if_else(with.any.response==1, begin.unixts, delivered.unixts))
 
-# Create placeholder variables for smoking items
-df.processed <- df.processed %>% 
-  mutate(rawdata.indicator = NA_real_, rawdata.qty = NA_real_, rawdata.timing = NA_real_, smoking.qty = NA_real_)
-
 # Reorder columns
 df.processed <- df.processed %>%
   select(id, record.id, assessment.type, 
          with.any.response,
          delivered.hrts, begin.hrts, end.hrts, time.hrts,
-         delivered.unixts, begin.unixts, end.unixts, time.unixts,
-         rawdata.indicator, rawdata.qty, rawdata.timing, smoking.qty, 
+         delivered.unixts, begin.unixts, end.unixts, time.unixts, 
          these.ema.colnames)
 
 # Append data frame corresponding to this specific EMA type to list
@@ -320,17 +293,12 @@ df.processed <- df.processed %>%
   mutate(time.hrts = if_else(with.any.response==1, begin.hrts, delivered.hrts),
          time.unixts = if_else(with.any.response==1, begin.unixts, delivered.unixts))
 
-# Create placeholder variables for smoking items
-df.processed <- df.processed %>% 
-  mutate(rawdata.indicator = NA_real_, rawdata.qty = NA_real_, rawdata.timing = NA_real_, smoking.qty = NA_real_)
-
 # Reorder columns
 df.processed <- df.processed %>%
   select(id, record.id, assessment.type, 
          with.any.response,
          delivered.hrts, begin.hrts, end.hrts, time.hrts,
-         delivered.unixts, begin.unixts, end.unixts, time.unixts,
-         rawdata.indicator, rawdata.qty, rawdata.timing, smoking.qty, 
+         delivered.unixts, begin.unixts, end.unixts, time.unixts, 
          these.ema.colnames)
 
 # Append data frame corresponding to this specific EMA type to list
@@ -370,17 +338,12 @@ df.processed <- df.processed %>%
   mutate(time.hrts = if_else(with.any.response==1, begin.hrts, delivered.hrts),
          time.unixts = if_else(with.any.response==1, begin.unixts, delivered.unixts))
 
-# Create placeholder variables for smoking items
-df.processed <- df.processed %>% 
-  mutate(rawdata.indicator = NA_real_, rawdata.qty = NA_real_, rawdata.timing = NA_real_, smoking.qty = NA_real_)
-
 # Reorder columns
 df.processed <- df.processed %>%
   select(id, record.id, assessment.type, 
          with.any.response,
          delivered.hrts, begin.hrts, end.hrts, time.hrts,
-         delivered.unixts, begin.unixts, end.unixts, time.unixts,
-         rawdata.indicator, rawdata.qty, rawdata.timing, smoking.qty, 
+         delivered.unixts, begin.unixts, end.unixts, time.unixts, 
          these.ema.colnames)
 
 df.processed <- df.processed %>% mutate(assessment.type = replace(assessment.type, assessment.type=="Post-Quit About to Slip", "Post-Quit About to Slip Part One"))
@@ -422,17 +385,12 @@ df.processed <- df.processed %>%
   mutate(time.hrts = if_else(with.any.response==1, begin.hrts, delivered.hrts),
          time.unixts = if_else(with.any.response==1, begin.unixts, delivered.unixts))
 
-# Create placeholder variables for smoking items
-df.processed <- df.processed %>% 
-  mutate(rawdata.indicator = NA_real_, rawdata.qty = NA_real_, rawdata.timing = NA_real_, smoking.qty = NA_real_)
-
 # Reorder columns
 df.processed <- df.processed %>%
   select(id, record.id, assessment.type, 
          with.any.response,
          delivered.hrts, begin.hrts, end.hrts, time.hrts,
-         delivered.unixts, begin.unixts, end.unixts, time.unixts,
-         rawdata.indicator, rawdata.qty, rawdata.timing, smoking.qty, 
+         delivered.unixts, begin.unixts, end.unixts, time.unixts, 
          these.ema.colnames)
 
 df.processed <- df.processed %>% mutate(assessment.type = replace(assessment.type, assessment.type=="Post-Quit About to Slip - Part2", "Post-Quit About to Slip Part Two"))
@@ -474,199 +432,17 @@ df.processed <- df.processed %>%
   mutate(time.hrts = if_else(with.any.response==1, begin.hrts, delivered.hrts),
          time.unixts = if_else(with.any.response==1, begin.unixts, delivered.unixts))
 
-# Create placeholder variables for smoking items
-df.processed <- df.processed %>% 
-  mutate(rawdata.indicator = NA_real_, rawdata.qty = NA_real_, rawdata.timing = NA_real_, smoking.qty = NA_real_)
-
 # Reorder columns
 df.processed <- df.processed %>%
   select(id, record.id, assessment.type, 
          with.any.response,
          delivered.hrts, begin.hrts, end.hrts, time.hrts,
-         delivered.unixts, begin.unixts, end.unixts, time.unixts,
-         rawdata.indicator, rawdata.qty, rawdata.timing, smoking.qty, 
+         delivered.unixts, begin.unixts, end.unixts, time.unixts, 
          these.ema.colnames)
 
 # Append data frame corresponding to this specific EMA type to list
 # that will contain data frames from each EMA type
 list.all <- append(list.all, list(`Post-Quit Already Slipped` = df.processed))
-
-#------------------------------------------------------------------------------
-# Identify smoking-related items in each EMA
-#------------------------------------------------------------------------------
-
-# Pre-Quit EMAs ###############################################################
-list.all[["Pre-Quit Random"]] <- list.all[["Pre-Quit Random"]] %>% 
-  mutate(rawdata.indicator = PreQRSmoking1, 
-         rawdata.qty = Smoking2_PreQ_Random, 
-         rawdata.timing = Smoking3)
-
-list.all[["Pre-Quit Urge"]] <- list.all[["Pre-Quit Urge"]] %>% 
-  mutate(rawdata.indicator = SmPQU1, 
-         rawdata.qty = Smoking2_PreQ_Urge, 
-         rawdata.timing = Smoking3)
-
-list.all[["Pre-Quit Smoking Part One"]] <- list.all[["Pre-Quit Smoking Part One"]] %>% 
-  mutate(rawdata.indicator = NA, 
-         rawdata.qty = NA, 
-         rawdata.timing = NA)
-
-list.all[["Pre-Quit Smoking Part Two"]] <- list.all[["Pre-Quit Smoking Part Two"]] %>% 
-  mutate(rawdata.qty = CigJustNow) %>%
-  mutate(rawdata.indicator = NA, 
-         rawdata.timing = NA)
-
-# Post-Quit EMAs ##############################################################
-list.all[["Post-Quit Random"]] <- list.all[["Post-Quit Random"]] %>% 
-  mutate(rawdata.indicator = PostQRSmoking1, 
-         rawdata.qty = Smoking2_PostQ_Random, 
-         rawdata.timing = Smoking3)
-
-list.all[["Post-Quit Urge"]] <- list.all[["Post-Quit Urge"]] %>%  
-  mutate(rawdata.indicator = SmPostQU1, 
-         rawdata.qty = Smoking2_PostQ_Urge, 
-         rawdata.timing = Smoking3)
-
-list.all[["Post-Quit About to Slip Part One"]] <- list.all[["Post-Quit About to Slip Part One"]] %>%  
-  mutate(rawdata.indicator = NA, 
-         rawdata.qty = NA, 
-         rawdata.timing = NA)
-
-list.all[["Post-Quit About to Slip Part Two"]] <- list.all[["Post-Quit About to Slip Part Two"]] %>%  
-  mutate(rawdata.qty = CigJustNow_PostQ_Slip2) %>%
-  mutate(rawdata.indicator = NA, 
-         rawdata.timing = NA)
-
-list.all[["Post-Quit Already Slipped"]] <- list.all[["Post-Quit Already Slipped"]] %>%  
-  mutate(rawdata.qty = HowManyCig, 
-         rawdata.timing = LastCig) %>%
-  mutate(rawdata.indicator = NA)
-
-#------------------------------------------------------------------------------
-# Clean up smoking counts variable
-#------------------------------------------------------------------------------
-
-# Pre-Quit EMAs ###############################################################
-
-list.all[["Pre-Quit Random"]] <- list.all[["Pre-Quit Random"]] %>% 
-  mutate(smoking.qty = case_when(
-    assessment.type=="Pre-Quit Random" & rawdata.qty==0 ~ 0,
-    assessment.type=="Pre-Quit Random" & rawdata.qty==1 ~ 1,
-    assessment.type=="Pre-Quit Random" & rawdata.qty==2 ~ 2,
-    assessment.type=="Pre-Quit Random" & rawdata.qty==3 ~ 4,
-    assessment.type=="Pre-Quit Random" & rawdata.qty==4 ~ 6,
-    assessment.type=="Pre-Quit Random" & rawdata.qty==5 ~ 8,
-    assessment.type=="Pre-Quit Random" & rawdata.qty==6 ~ 10,
-    assessment.type=="Pre-Quit Random" & rawdata.qty==7 ~ 11,
-    TRUE ~ smoking.qty)) %>% 
-  # Finally, use info from rawdata.indicator
-  # smoking.qty is missing if participant reported "No" smoking
-  mutate(smoking.qty = if_else(is.na(smoking.qty) & (rawdata.indicator==0), 0, smoking.qty))
-
-list.all[["Pre-Quit Urge"]] <- list.all[["Pre-Quit Urge"]] %>% 
-  mutate(smoking.qty = case_when(
-    assessment.type=="Pre-Quit Urge" & rawdata.qty==0 ~ 0,
-    assessment.type=="Pre-Quit Urge" & rawdata.qty==1 ~ 1,
-    assessment.type=="Pre-Quit Urge" & rawdata.qty==2 ~ 2,
-    assessment.type=="Pre-Quit Urge" & rawdata.qty==3 ~ 4,
-    assessment.type=="Pre-Quit Urge" & rawdata.qty==4 ~ 6,
-    assessment.type=="Pre-Quit Urge" & rawdata.qty==5 ~ 8,
-    assessment.type=="Pre-Quit Urge" & rawdata.qty==6 ~ 10,
-    assessment.type=="Pre-Quit Urge" & rawdata.qty==7 ~ 11,
-    TRUE ~ smoking.qty)) %>% 
-  # Finally, use info from rawdata.indicator
-  # smoking.qty is missing if participant reported "No" smoking
-  mutate(smoking.qty = if_else(is.na(smoking.qty) & (rawdata.indicator==0), 0, smoking.qty))
-
-list.all[["Pre-Quit Smoking Part Two"]] <- list.all[["Pre-Quit Smoking Part Two"]] %>% 
-  mutate(rawdata.qty = case_when(
-    # Clean up responses so that smoking.qty for all EMA types below are on the same scale
-    assessment.type=="Pre-Quit Smoking Part Two" & rawdata.qty==3 ~ 2,
-    assessment.type=="Pre-Quit Smoking Part Two" & rawdata.qty==4 ~ 3,
-    assessment.type=="Pre-Quit Smoking Part Two" & rawdata.qty==5 ~ 4,
-    assessment.type=="Pre-Quit Smoking Part Two" & rawdata.qty==6 ~ 5,
-    assessment.type=="Pre-Quit Smoking Part Two" & rawdata.qty==7 ~ 6,
-    assessment.type=="Pre-Quit Smoking Part Two" & rawdata.qty==8 ~ 7,
-    TRUE ~ as.numeric(rawdata.qty))) %>% 
-  mutate(smoking.qty = case_when(
-    # Fill in smoking.qty
-    assessment.type=="Pre-Quit Smoking Part Two" & rawdata.qty==0 ~ 0,
-    assessment.type=="Pre-Quit Smoking Part Two" & rawdata.qty==1 ~ 1,
-    assessment.type=="Pre-Quit Smoking Part Two" & rawdata.qty==2 ~ 2,
-    assessment.type=="Pre-Quit Smoking Part Two" & rawdata.qty==3 ~ 4,
-    assessment.type=="Pre-Quit Smoking Part Two" & rawdata.qty==4 ~ 6,
-    assessment.type=="Pre-Quit Smoking Part Two" & rawdata.qty==5 ~ 8,
-    assessment.type=="Pre-Quit Smoking Part Two" & rawdata.qty==6 ~ 10,
-    assessment.type=="Pre-Quit Smoking Part Two" & rawdata.qty==7 ~ 11,
-    TRUE ~ smoking.qty)) 
-
-# Post-Quit EMAs ###############################################################
-list.all[["Post-Quit Random"]] <- list.all[["Post-Quit Random"]] %>% 
-  mutate(smoking.qty = case_when(
-    assessment.type=="Post-Quit Random" & rawdata.qty==0 ~ 0,
-    assessment.type=="Post-Quit Random" & rawdata.qty==1 ~ 1,
-    assessment.type=="Post-Quit Random" & rawdata.qty==2 ~ 2,
-    assessment.type=="Post-Quit Random" & rawdata.qty==3 ~ 4,
-    assessment.type=="Post-Quit Random" & rawdata.qty==4 ~ 6,
-    assessment.type=="Post-Quit Random" & rawdata.qty==5 ~ 8,
-    assessment.type=="Post-Quit Random" & rawdata.qty==6 ~ 10,
-    assessment.type=="Post-Quit Random" & rawdata.qty==7 ~ 11,
-    TRUE ~ smoking.qty)) %>% 
-  # Finally, use info from rawdata.indicator
-  # smoking.qty is missing if participant reported "No" smoking
-  mutate(smoking.qty = if_else(is.na(smoking.qty) & (rawdata.indicator==0), 0, smoking.qty))
-
-list.all[["Post-Quit Urge"]] <- list.all[["Post-Quit Urge"]] %>% 
-  mutate(smoking.qty = case_when(
-  assessment.type=="Post-Quit Urge" & rawdata.qty==0 ~ 0,
-  assessment.type=="Post-Quit Urge" & rawdata.qty==1 ~ 1,
-  assessment.type=="Post-Quit Urge" & rawdata.qty==2 ~ 2,
-  assessment.type=="Post-Quit Urge" & rawdata.qty==3 ~ 4,
-  assessment.type=="Post-Quit Urge" & rawdata.qty==4 ~ 6,
-  assessment.type=="Post-Quit Urge" & rawdata.qty==5 ~ 8,
-  assessment.type=="Post-Quit Urge" & rawdata.qty==6 ~ 10,
-  assessment.type=="Post-Quit Urge" & rawdata.qty==7 ~ 11,
-  TRUE ~ smoking.qty)) %>% 
-  # Finally, use info from rawdata.indicator
-  # smoking.qty is missing if participant reported "No" smoking
-  mutate(smoking.qty = if_else(is.na(smoking.qty) & (rawdata.indicator==0), 0, smoking.qty))
-
-list.all[["Post-Quit About to Slip Part Two"]] <- list.all[["Post-Quit About to Slip Part Two"]] %>% 
-  mutate(rawdata.qty = case_when(
-    # Clean up responses so that smoking.qty for all EMA types below are on the same scale
-    assessment.type=="Post-Quit About to Slip Part Two" & rawdata.qty==3 ~ 2,
-    assessment.type=="Post-Quit About to Slip Part Two" & rawdata.qty==4 ~ 3,
-    assessment.type=="Post-Quit About to Slip Part Two" & rawdata.qty==5 ~ 4,
-    assessment.type=="Post-Quit About to Slip Part Two" & rawdata.qty==6 ~ 5,
-    assessment.type=="Post-Quit About to Slip Part Two" & rawdata.qty==7 ~ 6,
-    assessment.type=="Post-Quit About to Slip Part Two" & rawdata.qty==8 ~ 7,
-    TRUE ~ as.numeric(rawdata.qty))) %>% 
-  mutate(smoking.qty = case_when(
-    # Fill in smoking.qty
-    assessment.type=="Post-Quit About to Slip Part Two" & rawdata.qty==0 ~ 0,
-    assessment.type=="Post-Quit About to Slip Part Two" & rawdata.qty==1 ~ 1,
-    assessment.type=="Post-Quit About to Slip Part Two" & rawdata.qty==2 ~ 2,
-    assessment.type=="Post-Quit About to Slip Part Two" & rawdata.qty==3 ~ 4,
-    assessment.type=="Post-Quit About to Slip Part Two" & rawdata.qty==4 ~ 6,
-    assessment.type=="Post-Quit About to Slip Part Two" & rawdata.qty==5 ~ 8,
-    assessment.type=="Post-Quit About to Slip Part Two" & rawdata.qty==6 ~ 10,
-    assessment.type=="Post-Quit About to Slip Part Two" & rawdata.qty==7 ~ 11,
-    TRUE ~ smoking.qty))
-
-list.all[["Post-Quit Already Slipped"]] <- list.all[["Post-Quit Already Slipped"]] %>% 
-  mutate(smoking.qty = case_when(
-  assessment.type=="Post-Quit Already Slipped" & rawdata.qty==0 ~ 0,
-  assessment.type=="Post-Quit Already Slipped" & rawdata.qty==1 ~ 1,
-  assessment.type=="Post-Quit Already Slipped" & rawdata.qty==2 ~ 2,
-  assessment.type=="Post-Quit Already Slipped" & rawdata.qty==3 ~ 4,
-  assessment.type=="Post-Quit Already Slipped" & rawdata.qty==4 ~ 6,
-  assessment.type=="Post-Quit Already Slipped" & rawdata.qty==5 ~ 8,
-  assessment.type=="Post-Quit Already Slipped" & rawdata.qty==6 ~ 10,
-  assessment.type=="Post-Quit Already Slipped" & rawdata.qty==7 ~ 11,
-  TRUE ~ smoking.qty)) %>% 
-  # Finally, use info from rawdata.indicator
-  # smoking.qty is missing if participant reported "No" smoking
-  mutate(smoking.qty = if_else(is.na(smoking.qty) & (rawdata.indicator==0), 0, smoking.qty))
 
 #------------------------------------------------------------------------------
 # Save list.all as an .RData object

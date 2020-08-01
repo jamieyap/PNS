@@ -1,7 +1,8 @@
 ###############################################################################
 # ABOUT:
 # * Complete preparaton for each type of EMA
-# * Prior to running this script, run get-ema-item-responses.R
+# * Prior to running this script, run the scripts
+#   get-ema-item-responses.R and get-ema-item-responses.R
 ###############################################################################
 
 library(dplyr)
@@ -48,8 +49,6 @@ list.all <- lapply(list.all, function(this.df, use.quit.dates = df.quit.dates){
   this.df <- this.df %>% filter((delivered.unixts>=start.study.unixts) & (delivered.unixts<=end.study.unixts))
   this.df <- this.df %>% mutate(use.as.postquit = if_else(delivered.unixts>=quit.unixts, 1, 0))
   this.df <- this.df %>% 
-    select(-rawdata.indicator, -rawdata.qty, -rawdata.timing,
-           -smoking.qty) %>% 
     select(id, callnumr, 
            start.study.hrts, quit.hrts, end.study.hrts, 
            start.study.unixts, quit.unixts, end.study.unixts,
@@ -63,14 +62,13 @@ list.all <- lapply(list.all, function(this.df, use.quit.dates = df.quit.dates){
 })
 
 #------------------------------------------------------------------------------
-# Save individual files to output
+# Format dates prior to writing to csv file
 #------------------------------------------------------------------------------
 
 for(i in 1:length(list.all)){
   
   this.df <- list.all[[i]]
   
-  # Format dates prior to writing to csv file
   # Use argument tz="UTC" or else %H:%M:%S will not be displayed as 00:00:00 for start.study.hrts
   # and end.study.hrts, and 04:00:00 will not be displayed for quit.hrts
   # This trick prevents R from performing an automatic adjustment of these time variables
@@ -81,6 +79,54 @@ for(i in 1:length(list.all)){
   
   list.all[[i]] <- this.df
 }
+
+#------------------------------------------------------------------------------
+# Change periods in column names to underscrores
+# This is mostly to accomodate a wider range of end-users of the curated data
+# who may use a varied range of data analysis software, some of which
+# make it easier to work with column names with an underscore (rather than
+# dots) than others
+#------------------------------------------------------------------------------
+
+for(i in 1:length(list.all)){
+  
+  this.df <- list.all[[i]]
+  
+  this.df <- this.df %>%
+    rename(start_study_hrts = start.study.hrts,
+           end_study_hrts = end.study.hrts,
+           quit_hrts = quit.hrts,
+           start_study_unixts = start.study.unixts,
+           end_study_unixts = end.study.unixts,
+           quit_unixts = quit.unixts,
+           record_id = record.id,
+           assessment_type = assessment.type,
+           use_as_postquit = use.as.postquit,
+           with_any_response = with.any.response,
+           delivered_hrts = delivered.hrts,
+           begin_hrts = begin.hrts,
+           end_hrts = end.hrts,
+           time_hrts = time.hrts,
+           delivered_unixts = delivered.unixts,
+           begin_unixts = begin.unixts,
+           end_unixts = end.unixts,
+           time_unixts = time.unixts)
+  
+  list.all[[i]] <- this.df
+}
+
+df.quit.dates <- df.quit.dates %>%
+  rename(start_study_hrts = start.study.hrts,
+         end_study_hrts = end.study.hrts,
+         quit_hrts = quit.hrts,
+         start_study_unixts = start.study.unixts,
+         end_study_unixts = end.study.unixts,
+         quit_unixts = quit.unixts)
+
+
+#------------------------------------------------------------------------------
+# Save data corresponding to each EMA type into a csv file of its own
+#------------------------------------------------------------------------------
 
 write.csv(list.all[["Pre-Quit Random"]], file.path(path.pns.output_data, "pre_quit_random_ema.csv"), na="", row.names = FALSE)
 write.csv(list.all[["Pre-Quit Urge"]], file.path(path.pns.output_data, "pre_quit_urge_ema.csv"), na="", row.names = FALSE)
@@ -93,4 +139,18 @@ write.csv(list.all[["Post-Quit About to Slip Part One"]], file.path(path.pns.out
 write.csv(list.all[["Post-Quit About to Slip Part Two"]], file.path(path.pns.output_data, "post_quit_about_to_slip_part_two_ema.csv"), na="", row.names = FALSE)
 write.csv(list.all[["Post-Quit Already Slipped"]], file.path(path.pns.output_data, "post_quit_already_slipped_ema.csv"), na="", row.names = FALSE)
 
+#------------------------------------------------------------------------------
+# Reformat column names of quit_dates_final from using periods to underscores
+#------------------------------------------------------------------------------
+
+# Format dates prior to writing to csv file
+# Use argument tz="UTC" or else %H:%M:%S will not be displayed as 00:00:00 for start.study.date
+# and end.study.date, and 04:00:00 will not be displayed for quit.date in quit_dates_final.csv
+# This trick prevents R from performing an automatic adjustment of these time variables
+# to local time of machine in the output file quit_dates_final.csv
+df.quit.dates[["start_study_hrts"]] <- strftime(df.quit.dates[["start_study_hrts"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC", usetz = FALSE)
+df.quit.dates[["end_study_hrts"]] <- strftime(df.quit.dates[["end_study_hrts"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC", usetz = FALSE)
+df.quit.dates[["quit_hrts"]] <- strftime(df.quit.dates[["quit_hrts"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC", usetz = FALSE)
+
+write.csv(df.quit.dates, file.path(path.pns.output_data, "quit_dates_final_reformatted_column_names.csv"), row.names=FALSE, na="")
 

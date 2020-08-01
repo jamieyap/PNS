@@ -38,21 +38,29 @@ df.quit.dates <- df.quit.dates %>%
          start.study.unixts, quit.unixts, end.study.unixts, everything())
 
 #------------------------------------------------------------------------------
-# Obtain rows & columns to be used in constructing the smoking outcome
+# Implement inclusion/exclusion criteria
 #------------------------------------------------------------------------------
 
 load(file = file.path(path.pns.staged_data, "all_ema_processed.RData"))
 
-list.all <- lapply(list.all, function(dat){
-  # Select first few columns
-  dat <- dat %>% 
-    select(id, record.id, assessment.type, with.any.response,
-           delivered.hrts, begin.hrts, end.hrts, time.hrts,
-           delivered.unixts, begin.unixts, end.unixts, time.unixts,
-           rawdata.indicator, rawdata.qty, rawdata.timing,
-           smoking.qty) %>%
-    mutate(smoking.indicator = NA_real_, smoking.delta.minutes = NA_real_)
+list.all <- lapply(list.all, function(this.df, use.quit.dates = df.quit.dates){
+  this.df <- left_join(x = use.quit.dates, y = this.df, by = "id")
+  this.df <- this.df %>% filter((delivered.unixts>=start.study.unixts) & (delivered.unixts<=end.study.unixts))
+  this.df <- this.df %>% mutate(use.as.postquit = if_else(delivered.unixts>=quit.unixts, 1, 0))
+  this.df <- this.df %>% 
+    select(id, callnumr, 
+           start.study.hrts, quit.hrts, end.study.hrts, 
+           start.study.unixts, quit.unixts, end.study.unixts,
+           sensitivity,
+           record.id, assessment.type, 
+           use.as.postquit,
+           with.any.response,
+           everything())
   
+  return(this.df)
+})
+
+list.all <- lapply(list.all, function(dat){
   # Exclude assessments that meet the criteria below from creating the smoking outcome
   dat <- dat %>% 
     filter(!(with.any.response==0 & assessment.type=="Pre-Quit Random")) %>%
@@ -61,14 +69,34 @@ list.all <- lapply(list.all, function(dat){
   return(dat)
 })
 
+#------------------------------------------------------------------------------
+# Obtain rows & columns to be used in constructing the smoking outcome
+#------------------------------------------------------------------------------
+
+source(file.path(path.pns.code, "identify-smoking-vars.R"))
+source(file.path(path.pns.code, "rules-smoking-quantity.R"))
+source(file.path(path.pns.code, "rules-smoking-indicator.R"))
+
+list.all <- lapply(list.all, function(dat){
+  # Select first few columns
+  dat <- dat %>% 
+    select(id, callnumr, 
+           start.study.hrts, quit.hrts, end.study.hrts, 
+           start.study.unixts, quit.unixts, end.study.unixts,
+           sensitivity,
+           record.id, assessment.type, 
+           use.as.postquit,
+           with.any.response,
+           delivered.hrts, begin.hrts, end.hrts, time.hrts,
+           delivered.unixts, begin.unixts, end.unixts, time.unixts,
+           rawdata.indicator, rawdata.qty, rawdata.timing,
+           smoking.qty, smoking.indicator) %>%
+    mutate(smoking.delta.minutes = NA_real_)
+  
+  return(dat)
+})
+
 df.all <- bind_rows(list.all)
-
-#------------------------------------------------------------------------------
-# Implement inclusion/exclusion criteria
-#------------------------------------------------------------------------------
-
-df.all <- left_join(x = df.quit.dates, y = df.all, by = "id")
-df.all <- df.all %>% filter((delivered.unixts>=start.study.unixts) & (delivered.unixts<=end.study.unixts))
 
 #------------------------------------------------------------------------------
 # Construct id for each smoking interval
@@ -87,8 +115,7 @@ df.all <- df.all %>%
 df.all <- df.all %>%   
   arrange(id, time.unixts) %>%
   group_by(id) %>%
-  do(GetPastRecords(df.this.group = ., cols.today = c("time.unixts","assessment.type"), h = c(1,1), this.numeric = c(TRUE,FALSE))) 
-
+  do(GetPastRecords(df.this.group = ., cols.today = c("time.hrts","time.unixts","assessment.type"), h = c(1,1,1), this.numeric = c(FALSE,TRUE,FALSE))) 
 
 df.all <- df.all %>%
   mutate(time.unixts_shift.minus.1 = if_else(ema.order==1, start.study.unixts, time.unixts_shift.minus.1)) %>%
@@ -159,10 +186,14 @@ df.all <- df.all %>%
     TRUE ~ smoking.delta.minutes
   ))
 
+this.ave.time.between.hours <- df.all %>% filter(assessment.type == "Pre-Quit Smoking Part Two" & assessment.type_shift.minus.1 == "Pre-Quit Smoking Part One")
+this.ave.time.between.hours <- mean(this.ave.time.between.hours$time.between.hours, na.rm=TRUE)
+
 df.all <- df.all %>%
   mutate(smoking.delta.minutes = case_when(
     # Pre-Quit assessments
-    assessment.type == "Pre-Quit Smoking Part Two" & assessment.type_shift.minus.1 != "Pre-Quit Smoking Part One" ~ time.between.hours*60/2,
+    (assessment.type == "Pre-Quit Smoking Part Two") & (assessment.type_shift.minus.1 != "Pre-Quit Smoking Part One") & (this.ave.time.between.hours <= time.between.hours) ~ this.ave.time.between.hours*60/2,
+    (assessment.type == "Pre-Quit Smoking Part Two") & (assessment.type_shift.minus.1 != "Pre-Quit Smoking Part One") & (this.ave.time.between.hours > time.between.hours) ~ time.between.hours*60/2,
     # Else
     TRUE ~ smoking.delta.minutes
   ))
@@ -179,14 +210,16 @@ df.all <- df.all %>%
          sensitivity,
          record.id, ema.order, 
          assessment.type, 
+         use.as.postquit,
          with.any.response,
          delivered.hrts, begin.hrts, end.hrts, time.hrts,
          delivered.unixts, begin.unixts, end.unixts, time.unixts,
          time.between.hours,
          rawdata.indicator, rawdata.qty, rawdata.timing,
          assessment.type.past.1=assessment.type_shift.minus.1,
+         time.hrts.past.1=time.hrts_shift.minus.1,
          time.unixts.past.1=time.unixts_shift.minus.1,
-         smoking.qty, smoking.delta.minutes)
+         smoking.qty, smoking.delta.minutes) 
 
 # Format dates prior to writing to csv file
 # Use argument tz="UTC" or else %H:%M:%S will not be displayed as 00:00:00 for start.study.hrts
@@ -196,6 +229,46 @@ df.all <- df.all %>%
 df.all[["start.study.hrts"]] <- strftime(df.all[["start.study.hrts"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC", usetz = FALSE)
 df.all[["end.study.hrts"]] <- strftime(df.all[["end.study.hrts"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC", usetz = FALSE)
 df.all[["quit.hrts"]] <- strftime(df.all[["quit.hrts"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC", usetz = FALSE)
+
+
+#------------------------------------------------------------------------------
+# Change periods in column names to underscrores
+# This is mostly to accomodate a wider range of end-users of the curated data
+# who may use a varied range of data analysis software, some of which
+# make it easier to work with column names with an underscore (rather than
+# dots) than others
+#------------------------------------------------------------------------------
+
+df.all <- df.all %>%
+  rename(start_study_hrts = start.study.hrts,
+         end_study_hrts = end.study.hrts,
+         quit_hrts = quit.hrts,
+         start_study_unixts = start.study.unixts,
+         end_study_unixts = end.study.unixts,
+         quit_unixts = quit.unixts,
+         record_id = record.id,
+         assessment_type = assessment.type,
+         use_as_postquit = use.as.postquit,
+         with_any_response = with.any.response,
+         delivered_hrts = delivered.hrts,
+         begin_hrts = begin.hrts,
+         end_hrts = end.hrts,
+         time_hrts = time.hrts,
+         delivered_unixts = delivered.unixts,
+         begin_unixts = begin.unixts,
+         end_unixts = end.unixts,
+         time_unixts = time.unixts,
+         ema_order = ema.order,
+         time_between_hours = time.between.hours,
+         rawdata_indicator = rawdata.indicator,
+         rawdata_qty = rawdata.qty,
+         rawdata_timing = rawdata.timing,
+         smoking_qty = smoking.qty,
+         smoking_delta_minutes = smoking.delta.minutes) %>%
+  rename(assessment_type_past_1 = assessment.type.past.1, 
+         time_hrts_past_1 = time.hrts.past.1, 
+         time_unixts_past_1 = time.unixts.past.1)
+
 
 # Save output
 write.csv(df.all, file.path(path.pns.output_data, "smoking_outcome.csv"), row.names=FALSE, na = "")
