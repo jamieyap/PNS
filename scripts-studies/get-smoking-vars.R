@@ -219,7 +219,7 @@ df.all <- df.all %>%
          assessment.type.past.1=assessment.type_shift.minus.1,
          time.hrts.past.1=time.hrts_shift.minus.1,
          time.unixts.past.1=time.unixts_shift.minus.1,
-         smoking.qty, smoking.delta.minutes) 
+         smoking.indicator, smoking.qty, smoking.delta.minutes) 
 
 # Format dates prior to writing to csv file
 # Use argument tz="UTC" or else %H:%M:%S will not be displayed as 00:00:00 for start.study.hrts
@@ -229,6 +229,10 @@ df.all <- df.all %>%
 df.all[["start.study.hrts"]] <- strftime(df.all[["start.study.hrts"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC", usetz = FALSE)
 df.all[["end.study.hrts"]] <- strftime(df.all[["end.study.hrts"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC", usetz = FALSE)
 df.all[["quit.hrts"]] <- strftime(df.all[["quit.hrts"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC", usetz = FALSE)
+
+df.all[["begin.hrts"]] <- strftime(df.all[["begin.hrts"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC", usetz = FALSE)
+df.all[["end.hrts"]] <- strftime(df.all[["end.hrts"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC", usetz = FALSE)
+df.all[["time.hrts"]] <- strftime(df.all[["time.hrts"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC", usetz = FALSE)
 
 
 #------------------------------------------------------------------------------
@@ -263,6 +267,7 @@ df.all <- df.all %>%
          rawdata_indicator = rawdata.indicator,
          rawdata_qty = rawdata.qty,
          rawdata_timing = rawdata.timing,
+         smoking_indicator = smoking.indicator,
          smoking_qty = smoking.qty,
          smoking_delta_minutes = smoking.delta.minutes) %>%
   rename(assessment_type_past_1 = assessment.type.past.1, 

@@ -77,6 +77,10 @@ for(i in 1:length(list.all)){
   this.df[["end.study.hrts"]] <- strftime(this.df[["end.study.hrts"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC", usetz = FALSE)
   this.df[["quit.hrts"]] <- strftime(this.df[["quit.hrts"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC", usetz = FALSE)
   
+  this.df[["begin.hrts"]] <- strftime(this.df[["begin.hrts"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC", usetz = FALSE)
+  this.df[["end.hrts"]] <- strftime(this.df[["end.hrts"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC", usetz = FALSE)
+  this.df[["time.hrts"]] <- strftime(this.df[["time.hrts"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC", usetz = FALSE)
+  
   list.all[[i]] <- this.df
 }
 
@@ -115,15 +119,6 @@ for(i in 1:length(list.all)){
   list.all[[i]] <- this.df
 }
 
-df.quit.dates <- df.quit.dates %>%
-  rename(start_study_hrts = start.study.hrts,
-         end_study_hrts = end.study.hrts,
-         quit_hrts = quit.hrts,
-         start_study_unixts = start.study.unixts,
-         end_study_unixts = end.study.unixts,
-         quit_unixts = quit.unixts)
-
-
 #------------------------------------------------------------------------------
 # Save data corresponding to each EMA type into a csv file of its own
 #------------------------------------------------------------------------------
@@ -143,14 +138,13 @@ write.csv(list.all[["Post-Quit Already Slipped"]], file.path(path.pns.output_dat
 # Reformat column names of quit_dates_final from using periods to underscores
 #------------------------------------------------------------------------------
 
-# Format dates prior to writing to csv file
-# Use argument tz="UTC" or else %H:%M:%S will not be displayed as 00:00:00 for start.study.date
-# and end.study.date, and 04:00:00 will not be displayed for quit.date in quit_dates_final.csv
-# This trick prevents R from performing an automatic adjustment of these time variables
-# to local time of machine in the output file quit_dates_final.csv
-df.quit.dates[["start_study_hrts"]] <- strftime(df.quit.dates[["start_study_hrts"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC", usetz = FALSE)
-df.quit.dates[["end_study_hrts"]] <- strftime(df.quit.dates[["end_study_hrts"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC", usetz = FALSE)
-df.quit.dates[["quit_hrts"]] <- strftime(df.quit.dates[["quit_hrts"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC", usetz = FALSE)
+df.quit.dates <- df.quit.dates %>%
+  rename(start_study_hrts = start.study.hrts,
+         end_study_hrts = end.study.hrts,
+         quit_hrts = quit.hrts,
+         start_study_unixts = start.study.unixts,
+         end_study_unixts = end.study.unixts,
+         quit_unixts = quit.unixts)
 
 write.csv(df.quit.dates, file.path(path.pns.output_data, "quit_dates_final_reformatted_column_names.csv"), row.names=FALSE, na="")
 

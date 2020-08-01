@@ -98,6 +98,10 @@ reshaped.df[,reshaped.df.add.these.colnames] <- NA
 # Merge both data frames
 df.smoking <- df.smoking[, colnames.merged]
 reshaped.df <- reshaped.df[, colnames.merged]
+
+df.smoking$this_row_smoking_outcome <- 1
+reshaped.df$this_row_smoking_outcome <- 0
+
 BIG.df <- rbind(df.smoking, reshaped.df)
 
 #------------------------------------------------------------------------------

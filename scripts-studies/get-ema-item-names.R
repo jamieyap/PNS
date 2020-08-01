@@ -1,3 +1,5 @@
+library(dplyr)
+
 # ABOUT:
 # * Creates a file with a list of item names in each EMA raw data file;
 #   these item names correspond to that recorded in the codebooks
@@ -108,4 +110,20 @@ list.collect <- append(list.collect, list(df.item.names))
 df.collect <- do.call(rbind, list.collect)
 
 write.csv(df.collect, file.path(path.pns.output_data, "ema_item_names.csv"), row.names = FALSE)
+
+
+#------------------------------------------------------------------------------
+# Change periods in column names to underscrores
+# This is mostly to accomodate a wider range of end-users of the curated data
+# who may use a varied range of data analysis software, some of which
+# make it easier to work with column names with an underscore (rather than
+# dots) than others
+#------------------------------------------------------------------------------
+df.collect <- df.collect %>%
+  rename(is_postquit_assessment_type = is.postquit.assessment.type,
+         assessment_type = assessment.type,
+         name_codebook = name.codebook,
+         name_new = name.new)
+
+write.csv(df.collect, file.path(path.pns.output_data, "ema_item_names_reformatted_column_names.csv"), row.names = FALSE)
 
