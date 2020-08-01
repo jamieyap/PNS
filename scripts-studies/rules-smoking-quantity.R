@@ -68,13 +68,13 @@ list.all[["Pre-Quit Smoking Part Two"]] <- list.all[["Pre-Quit Smoking Part Two"
 list.all[["Post-Quit Random"]] <- list.all[["Post-Quit Random"]] %>% 
   mutate(smoking.qty = case_when(
     assessment.type=="Post-Quit Random" & rawdata.qty==0 ~ 0,
-    assessment.type=="Post-Quit Random" & rawdata.qty==1 ~ 1,
-    assessment.type=="Post-Quit Random" & rawdata.qty==2 ~ 2,
-    assessment.type=="Post-Quit Random" & rawdata.qty==3 ~ 4,
-    assessment.type=="Post-Quit Random" & rawdata.qty==4 ~ 6,
-    assessment.type=="Post-Quit Random" & rawdata.qty==5 ~ 8,
-    assessment.type=="Post-Quit Random" & rawdata.qty==6 ~ 10,
-    assessment.type=="Post-Quit Random" & rawdata.qty==7 ~ 11,
+    assessment.type=="Post-Quit Random" & rawdata.qty==1 ~ 1-.5,
+    assessment.type=="Post-Quit Random" & rawdata.qty==2 ~ 2-.5,
+    assessment.type=="Post-Quit Random" & rawdata.qty==3 ~ 4-.5,
+    assessment.type=="Post-Quit Random" & rawdata.qty==4 ~ 6-.5,
+    assessment.type=="Post-Quit Random" & rawdata.qty==5 ~ 8-.5,
+    assessment.type=="Post-Quit Random" & rawdata.qty==6 ~ 10-.5,
+    assessment.type=="Post-Quit Random" & rawdata.qty==7 ~ 11-1,
     TRUE ~ smoking.qty)) %>% 
   # Finally, use info from rawdata.indicator
   # smoking.qty is missing if participant reported "No" smoking
