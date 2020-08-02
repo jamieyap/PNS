@@ -8,6 +8,10 @@
 ###############################################################################
 
 # Set current working directory to location of curated data
+# Change path.pns.output_data to relevant working directory
+# For example,
+# path.pns.output_data <- "C:/Users/user/Desktop"
+# note that above, a backslash instead of a forward slash is used
 path.pns.output_data <- Sys.getenv("path.pns.output_data")
 setwd(path.pns.output_data)
 

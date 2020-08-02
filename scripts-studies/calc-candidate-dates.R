@@ -112,8 +112,12 @@ df.alldates <- df.alldates %>%
          postquit.earliest.longformatdate = postquit.earliest.date) %>%
   rename(prequit.latest.shortformatdate = prequit.latest.date,
          postquit.earliest.shortformatdate = postquit.earliest.date) %>%
-  mutate(prequit.latest.shortformatdate = as.POSIXct(strftime(prequit.latest.shortformatdate, "%Y-%m-%d")),
-         postquit.earliest.shortformatdate = as.POSIXct(strftime(postquit.earliest.shortformatdate, "%Y-%m-%d")))
+  mutate(prequit.latest.shortformatdate = as.POSIXct(strftime(prequit.latest.shortformatdate, "%Y-%m-%d", tz = "UTC", usetz=FALSE)),
+         postquit.earliest.shortformatdate = as.POSIXct(strftime(postquit.earliest.shortformatdate, "%Y-%m-%d", tz = "UTC", usetz=FALSE))) %>%
+  mutate(prequit.latest.shortformatdate = as.character(prequit.latest.shortformatdate),
+         postquit.earliest.shortformatdate = as.character(postquit.earliest.shortformatdate)) %>%
+  mutate(prequit.latest.shortformatdate = as.POSIXct(strptime(prequit.latest.shortformatdate, "%Y-%m-%d", tz = "UTC")),
+         postquit.earliest.shortformatdate = as.POSIXct(strptime(postquit.earliest.shortformatdate, "%Y-%m-%d", tz = "UTC")))
 
 #------------------------------------------------------------------------------
 # Create indicator variables based on date columns created thus far
@@ -137,6 +141,9 @@ df.alldates <- df.alldates %>%
 df.alldates <- df.alldates %>%
   mutate(prepost.is.greaterthan = if_else(is.equal==0 & !is.na(is.equal), 0, NA_real_)) %>%
   mutate(prepost.is.greaterthan = replace(prepost.is.greaterthan, (!is.na(prepost.is.greaterthan)) & (prequit.latest.shortformatdate > postquit.earliest.shortformatdate), 1))
+
+df.alldates <- df.alldates %>% arrange(is.equal, desc(prepost.is.equal), desc(prepost.is.lessthan), desc(prepost.is.greaterthan))
+df.alldates <- df.alldates %>% mutate(num = 1:nrow(df.alldates)) %>% select(num, everything())
 
 #------------------------------------------------------------------------------
 # Write out to file

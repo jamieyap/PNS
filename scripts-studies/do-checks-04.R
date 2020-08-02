@@ -62,9 +62,7 @@ inspect.these.participants3 <- unique(df.infer.quitdate3$id)
 
 # Participants for whom Quit Date is known
 these.other.participants <- df.alldates %>% 
-  filter(!(id %in% inspect.these.participants)) %>% 
-  filter(!(id %in% inspect.these.participants2)) %>%
-  filter(!(id %in% inspect.these.participants3)) %>%
+  filter(is.equal==1) %>%
   select(id) %>% 
   unique(.)
 
