@@ -127,6 +127,8 @@ data.ema <- use.this.data %>%
   filter(this_row_smoking_outcome == 0) %>%
   select(common.column.names, ema.column.names)
 
+table(data.ema$assessment_type)
+
 # -----------------------------------------------------------------------------
 # Let's calculate summary statistics using data.outcome
 # -----------------------------------------------------------------------------
@@ -165,7 +167,7 @@ dictionary.colnames <- read.csv("ema_item_names_reformatted_column_names.csv", s
 dictionary.colnames %>%
   filter(name_codebook=="Stressor1_PostQ_Random" | name_codebook=="Stressor1_PostQ_Urge"|
            name_codebook=="Stressor1_PostQ_Slip" | name_codebook=="Stressor1_PostQ_Slip2"|
-           name_codebook=="Stressor1_PreQ_Random" | name_codebook=="Stressor1_PreQ_Urge"|
+           name_codebook=="Stressor1_PreQ_Random" | name_codebook=="Stressor1_PreqUrge"|
            name_codebook=="Stressor1_PreQ_Sm" | name_codebook=="Stressor1_PreQ_Sm2")
 
 data.ema  <- data.ema %>%
@@ -200,6 +202,17 @@ data.ema %>%
   select(new_var) %>% 
   table(.)
 
+data.ema %>% filter(assessment_type=="Pre-Quit Random") %>% select(new_var) %>% table(.)
+data.ema %>% filter(assessment_type=="Pre-Quit Urge") %>% select(new_var) %>% table(.)
+data.ema %>% filter(assessment_type=="Pre-Quit Smoking Part One") %>% select(new_var) %>% table(.)
+data.ema %>% filter(assessment_type=="Pre-Quit Smoking Part Two") %>% select(new_var) %>% table(.)
+
+data.ema %>% filter(assessment_type=="Post-Quit Random") %>% select(new_var) %>% table(.)
+data.ema %>% filter(assessment_type=="Post-Quit Urge") %>% select(new_var) %>% table(.)
+data.ema %>% filter(assessment_type=="Post-Quit About to Slip Part One") %>% select(new_var) %>% table(.)
+data.ema %>% filter(assessment_type=="Post-Quit About to Slip Part Two") %>% select(new_var) %>% table(.)
+data.ema %>% filter(assessment_type=="Post-Quit Already Slipped") %>% select(new_var) %>% table(.)
+
 # -----------------------------------------------------------------------------
 # Now, using data.ema, let's examine the relationship between an individual's
 # rating of new_var in the current EMA and whether the individual reported any
@@ -210,8 +223,7 @@ data.ema %>%
 # Remember, we are limiting the scope of our analysis to the Post-Quit period
 # but some Pre-Quit Random EMAs may be utilized in a Post-Quit analysis
 # (see documentation ofr more details on why this is the case)
-data.ema  <- data.ema %>%
-  filter(assessment_type == "Post-Quit Random" | assessment_type == "Pre-Quit Random")
+data.ema  <- data.ema %>% filter(assessment_type == "Post-Quit Random" | assessment_type == "Pre-Quit Random")
 
 # Let's say we are interested to know how new_var may be related to smoking_indicator
 data.ema <- data.ema %>% select(id, callnumr, assessment_type, quit_hrts, quit_unixts, time_hrts, time_unixts, new_var)
@@ -267,9 +279,9 @@ for(i in 1:length(all.ids)){
       # smoke_next_H is still a missing value
       next
     }
-    # Update data for this participant
-    list.all <- append(list.all, list(current.participant.data))
   } # END of loop for one participant
+  # Update data for this participant
+  list.all <- append(list.all, list(current.participant.data))
 }  # END of loop for all participants with any EMA in data.ema
 
 
@@ -295,8 +307,7 @@ grand.average <- mean(data.ema$new_var, na.rm=TRUE)
 grand.variance <- var(data.ema$new_var, na.rm=TRUE)
 grand.sd <- sqrt(grand.variance)
 
-data.ema <- data.ema %>%
-  mutate(new_var_scaled = (new_var-grand.average)/grand.sd)
+data.ema <- data.ema %>% mutate(new_var_scaled = (new_var-grand.average)/grand.sd)
 
 # Plain vanilla models
 model1 <- glmer(smoke_next_H ~ new_var_scaled + (1|id), data=data.ema, family=binomial)

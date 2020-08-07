@@ -280,7 +280,7 @@ GetFutureRecords <- function(df.this.group, cols.today, h, this.numeric){
   # Begin tasks
   # ---------------------------------------------------------------------------
   for(i in 1:length(h)){
-    new.col.name <- paste(cols.today[i], "_shift.plus.", h[i], sep="")
+    new.col.name <- paste(cols.today[i], "_shift_plus_", h[i], sep="")
     
     if(isTRUE(this.numeric[i])){
       future.records <- tail(df.this.group[[cols.today[i]]], n=-h[i])
@@ -333,7 +333,7 @@ GetPastRecords <- function(df.this.group, cols.today, h, this.numeric){
   # ---------------------------------------------------------------------------
   
   for(i in 1:length(h)){
-    new.col.name <- paste(cols.today[i], "_shift.minus.", h[i], sep="")
+    new.col.name <- paste(cols.today[i], "_shift_minus_", h[i], sep="")
     
     if(isTRUE(this.numeric[i])){
       past.records <- head(df.this.group[[cols.today[i]]], n=-h[i])
