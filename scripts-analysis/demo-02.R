@@ -3,7 +3,7 @@
 # Sample code to
 # - read curated data csv files
 # - correctly identify subsets of the data to utilize in analysis
-# - constuct features in terms of past history
+# - construct features in terms of past history
 # - fit a random effects model
 ###############################################################################
 

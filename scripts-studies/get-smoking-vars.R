@@ -118,8 +118,8 @@ df.all <- df.all %>%
   do(GetPastRecords(df.this.group = ., cols.today = c("time.hrts","time.unixts","assessment.type"), h = c(1,1,1), this.numeric = c(FALSE,TRUE,FALSE))) 
 
 df.all <- df.all %>%
-  mutate(time.unixts_shift.minus.1 = if_else(ema.order==1, start.study.unixts, time.unixts_shift.minus.1)) %>%
-  mutate(time.between.hours = (time.unixts - time.unixts_shift.minus.1)/(60*60))
+  mutate(time.unixts_shift_minus_1 = if_else(ema.order==1, start.study.unixts, time.unixts_shift_minus_1)) %>%
+  mutate(time.between.hours = (time.unixts - time.unixts_shift_minus_1)/(60*60))
 
 #------------------------------------------------------------------------------
 # Clean up smoking time variable
@@ -163,12 +163,12 @@ df.all <- df.all %>%
 df.all <- df.all %>%
   mutate(smoking.delta.minutes = case_when(
     # Post-Quit assessments
-    assessment.type == "Post-Quit Random" & rawdata.timing==8 ~ 2*60 + (1/60)*((time.unixts-2*60*60) - time.unixts_shift.minus.1)/2,
-    assessment.type == "Post-Quit Urge" & rawdata.timing==8 ~ 2*60 + (1/60)*((time.unixts-2*60*60) - time.unixts_shift.minus.1)/2,
-    assessment.type == "Post-Quit Already Slipped" & rawdata.timing==8 ~ 2*60 + (1/60)*((time.unixts-2*60*60) - time.unixts_shift.minus.1)/2,
+    assessment.type == "Post-Quit Random" & rawdata.timing==8 ~ 2*60 + (1/60)*((time.unixts-2*60*60) - time.unixts_shift_minus_1)/2,
+    assessment.type == "Post-Quit Urge" & rawdata.timing==8 ~ 2*60 + (1/60)*((time.unixts-2*60*60) - time.unixts_shift_minus_1)/2,
+    assessment.type == "Post-Quit Already Slipped" & rawdata.timing==8 ~ 2*60 + (1/60)*((time.unixts-2*60*60) - time.unixts_shift_minus_1)/2,
     # Pre-Quit assessments
-    assessment.type == "Pre-Quit Random" & rawdata.timing==8 ~ 2*60 + (1/60)*((time.unixts-2*60*60) - time.unixts_shift.minus.1)/2,
-    assessment.type == "Pre-Quit Urge" & rawdata.timing==8 ~ 2*60 + (1/60)*((time.unixts-2*60*60) - time.unixts_shift.minus.1)/2,
+    assessment.type == "Pre-Quit Random" & rawdata.timing==8 ~ 2*60 + (1/60)*((time.unixts-2*60*60) - time.unixts_shift_minus_1)/2,
+    assessment.type == "Pre-Quit Urge" & rawdata.timing==8 ~ 2*60 + (1/60)*((time.unixts-2*60*60) - time.unixts_shift_minus_1)/2,
     # Else
     TRUE ~ smoking.delta.minutes
   ))
@@ -179,21 +179,21 @@ df.all <- df.all %>%
 df.all <- df.all %>%
   mutate(smoking.delta.minutes = case_when(
     # Post-Quit assessments
-    assessment.type == "Post-Quit About to Slip Part Two" & assessment.type_shift.minus.1 == "Post-Quit About to Slip Part One" ~ time.between.hours*60/2,
+    assessment.type == "Post-Quit About to Slip Part Two" & assessment.type_shift_minus_1 == "Post-Quit About to Slip Part One" ~ time.between.hours*60/2,
     # Pre-Quit assessments
-    assessment.type == "Pre-Quit Smoking Part Two" & assessment.type_shift.minus.1 == "Pre-Quit Smoking Part One" ~ time.between.hours*60/2,
+    assessment.type == "Pre-Quit Smoking Part Two" & assessment.type_shift_minus_1 == "Pre-Quit Smoking Part One" ~ time.between.hours*60/2,
     # Else
     TRUE ~ smoking.delta.minutes
   ))
 
-this.ave.time.between.hours <- df.all %>% filter(assessment.type == "Pre-Quit Smoking Part Two" & assessment.type_shift.minus.1 == "Pre-Quit Smoking Part One")
+this.ave.time.between.hours <- df.all %>% filter(assessment.type == "Pre-Quit Smoking Part Two" & assessment.type_shift_minus_1 == "Pre-Quit Smoking Part One")
 this.ave.time.between.hours <- mean(this.ave.time.between.hours$time.between.hours, na.rm=TRUE)
 
 df.all <- df.all %>%
   mutate(smoking.delta.minutes = case_when(
     # Pre-Quit assessments
-    (assessment.type == "Pre-Quit Smoking Part Two") & (assessment.type_shift.minus.1 != "Pre-Quit Smoking Part One") & (this.ave.time.between.hours <= time.between.hours) ~ this.ave.time.between.hours*60/2,
-    (assessment.type == "Pre-Quit Smoking Part Two") & (assessment.type_shift.minus.1 != "Pre-Quit Smoking Part One") & (this.ave.time.between.hours > time.between.hours) ~ time.between.hours*60/2,
+    (assessment.type == "Pre-Quit Smoking Part Two") & (assessment.type_shift_minus_1 != "Pre-Quit Smoking Part One") & (this.ave.time.between.hours <= time.between.hours) ~ this.ave.time.between.hours*60/2,
+    (assessment.type == "Pre-Quit Smoking Part Two") & (assessment.type_shift_minus_1 != "Pre-Quit Smoking Part One") & (this.ave.time.between.hours > time.between.hours) ~ time.between.hours*60/2,
     # Else
     TRUE ~ smoking.delta.minutes
   ))
@@ -216,9 +216,9 @@ df.all <- df.all %>%
          delivered.unixts, begin.unixts, end.unixts, time.unixts,
          time.between.hours,
          rawdata.indicator, rawdata.qty, rawdata.timing,
-         assessment.type.past.1=assessment.type_shift.minus.1,
-         time.hrts.past.1=time.hrts_shift.minus.1,
-         time.unixts.past.1=time.unixts_shift.minus.1,
+         assessment.type.past.1=assessment.type_shift_minus_1,
+         time.hrts.past.1=time.hrts_shift_minus_1,
+         time.unixts.past.1=time.unixts_shift_minus_1,
          smoking.indicator, smoking.qty, smoking.delta.minutes) 
 
 # Format dates prior to writing to csv file
