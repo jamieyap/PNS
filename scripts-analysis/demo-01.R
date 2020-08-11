@@ -57,6 +57,18 @@ data.sensitivity.analysis.postquit <- data.sensitivity.analysis.all %>% filter(u
 data.sensitivity.analysis.prequit <- data.sensitivity.analysis.all %>% filter(use_as_postquit==0)
 
 ###############################################################################
+# Sanity check:
+# - During the post-quit period, what EMA types are present in the data?
+# - During the pre-quit period, what EMA types are present in the data?
+###############################################################################
+
+data.main.analysis.postquit %>% group_by(assessment_type) %>% summarise(count.ema.type = n())
+data.main.analysis.prequit %>% group_by(assessment_type) %>% summarise(count.ema.type = n())
+
+data.sensitivity.analysis.postquit %>% group_by(assessment_type) %>% summarise(count.ema.type = n())
+data.sensitivity.analysis.prequit %>% group_by(assessment_type) %>% summarise(count.ema.type = n())
+
+###############################################################################
 # From here onward, let's focus on main analysis for a manuscript utilizing
 # ONLY the Post-Quit period
 ###############################################################################
@@ -93,7 +105,8 @@ common.column.names <- c("id",
                          "delivered_unixts",
                          "begin_unixts",
                          "end_unixts",
-                         "time_unixts")
+                         "time_unixts",
+                         "this_row_smoking_outcome")
 
 # smoking.column.names refers to column names that will ONLY be used
 # in relation to the smoking outcome in data analysis
@@ -133,8 +146,19 @@ table(data.ema$assessment_type)
 # Let's calculate summary statistics using data.outcome
 # -----------------------------------------------------------------------------
 
-data.outcome %>% summarise(rate = mean(smoking_indicator, na.rm=TRUE))
-data.outcome %>% filter(smoking_qty>0) %>% summarise(ave = mean(smoking_qty, na.rm=TRUE))
+table(data.outcome$smoking_indicator)
+summary(data.outcome$smoking_indicator)
+
+data.outcome %>% 
+  summarise(notmiss = sum(!is.na(smoking_indicator)),
+  rate = mean(smoking_indicator, na.rm=TRUE), 
+  stddev = sd(smoking_indicator, na.rm=TRUE),
+  minimum = min(smoking_indicator, na.rm=TRUE),
+  maximum = max(smoking_indicator, na.rm=TRUE))
+
+data.outcome %>% 
+  filter(smoking_qty>0) %>% 
+  summarise(ave = mean(smoking_qty, na.rm=TRUE))
 
 # -----------------------------------------------------------------------------
 # Let's calculate summary statistics using data.ema
@@ -181,12 +205,12 @@ data.ema  <- data.ema %>%
   # equal to postquit_random_item_35, else, do not change new_var
   mutate(new_var = if_else(assessment_type=="Post-Quit Random", postquit_random_item_35, new_var)) %>%
   mutate(new_var = if_else(assessment_type=="Post-Quit Urge", postquit_urge_item_35, new_var)) %>%
-  mutate(new_var = if_else(assessment_type=="Post-Quit About to Slip Part One", postquit_abouttoslippartone_item_32, new_var)) %>%
-  mutate(new_var = if_else(assessment_type=="Post-Quit About to Slip Part Two", postquit_abouttoslipparttwo_item_42, new_var)) %>%
+  mutate(new_var = if_else(assessment_type=="Post-Quit About to Slip Part One", postquit_partone_item_32, new_var)) %>%
+  mutate(new_var = if_else(assessment_type=="Post-Quit About to Slip Part Two", postquit_parttwo_item_42, new_var)) %>%
   mutate(new_var = if_else(assessment_type=="Pre-Quit Random", prequit_random_item_35, new_var)) %>%
   mutate(new_var = if_else(assessment_type=="Pre-Quit Urge", prequit_urge_item_35, new_var)) %>%
-  mutate(new_var = if_else(assessment_type=="Pre-Quit Smoking Part One", prequit_smokingpartone_item_32, new_var)) %>%
-  mutate(new_var = if_else(assessment_type=="Pre-Quit Smoking Part Two", prequit_smokingparttwo_item_37, new_var))
+  mutate(new_var = if_else(assessment_type=="Pre-Quit Smoking Part One", prequit_partone_item_32, new_var)) %>%
+  mutate(new_var = if_else(assessment_type=="Pre-Quit Smoking Part Two", prequit_parttwo_item_37, new_var))
 
 data.ema %>% 
   select(new_var) %>%
@@ -238,7 +262,7 @@ data.ema <- data.ema %>% arrange(id, time_unixts)
 
 # Note: set H to be 10/60 if interested in the next 10 minutes
 H <- 4
-data.ema$smoke_next_H <- NA_real_
+data.ema$smoke_next_H <- 0  # initialize smoke_next_H to zero
 all.ids <- unique(data.ema$id)
 
 list.all <- list()
@@ -267,7 +291,6 @@ for(i in 1:length(all.ids)){
       # First, check if all are missing
       if(sum(is.na(responses_within_H))==tot.outcome.rows){
         # Don't do anything
-        # smoke_next_H is still a missing value
         next
       }else{
         count_yes <- sum(subset.outcome[["smoking_indicator"]], na.rm=TRUE)
@@ -276,7 +299,6 @@ for(i in 1:length(all.ids)){
       }
     }else{
       # Don't do anything
-      # smoke_next_H is still a missing value
       next
     }
   } # END of loop for one participant
@@ -319,7 +341,10 @@ data.ema <- data.ema %>%
   # convert to days by dividing by 60*60*24 
   mutate(days_since_quit = (time_unixts - quit_unixts)/(60*60*24))
 
+# Let's add another covariate
 model2 <- glmer(smoke_next_H ~ new_var_scaled + days_since_quit + new_var_scaled:days_since_quit + (1|id), data=data.ema, family=binomial)
 summary(model2)
+
+
 
 
