@@ -40,16 +40,18 @@ for(i in 1:length(postquit.files)){
   df.tabulate.raw <- df.raw %>% 
     group_by(with.any.response) %>% 
     summarise(attempted = n(), 
+              completed.raw = sum(Record_Status=="Completed"),
               cancelled.raw = sum(Record_Status=="CANCELLED"), 
               timedout.raw = sum(Record_Status=="Incomplete/Timed Out"), 
               fragment.raw = sum(Record_Status=="FRAGMENT RECORD"))
   df.tabulate.out <- df.out %>% 
     group_by(with.any.response) %>% 
     summarise(success = n(),
+              completed.out = sum(record.status=="Completed"),
               cancelled.out = sum(record.status=="CANCELLED"), 
               timedout.out = sum(record.status=="Incomplete/Timed Out"), 
               fragment.out = sum(record.status=="FRAGMENT RECORD"))
-  df.tabulate <- cbind(df.tabulate.raw, df.tabulate.out[,2:5])
+  df.tabulate <- cbind(df.tabulate.raw, df.tabulate.out[,2:6])
   df.tabulate[["percent.success"]] <- df.tabulate[["success"]]/df.tabulate[["attempted"]]
   df.tabulate[["percent.success"]] <- round(100*df.tabulate[["percent.success"]], digits=1)
   df.tabulate[["assessment.type"]] <- postquit.colnames[i]
@@ -82,16 +84,18 @@ for(i in 1:length(prequit.files)){
   df.tabulate.raw <- df.raw %>% 
     group_by(with.any.response) %>% 
     summarise(attempted = n(), 
+              completed.raw = sum(Record_Status=="Completed"),
               cancelled.raw = sum(Record_Status=="CANCELLED"), 
               timedout.raw = sum(Record_Status=="Incomplete/Timed Out"), 
               fragment.raw = sum(Record_Status=="FRAGMENT RECORD"))
   df.tabulate.out <- df.out %>% 
     group_by(with.any.response) %>% 
     summarise(success = n(),
+              completed.out = sum(record.status=="Completed"),
               cancelled.out = sum(record.status=="CANCELLED"), 
               timedout.out = sum(record.status=="Incomplete/Timed Out"), 
               fragment.out = sum(record.status=="FRAGMENT RECORD"))
-  df.tabulate <- cbind(df.tabulate.raw, df.tabulate.out[,2:5])
+  df.tabulate <- cbind(df.tabulate.raw, df.tabulate.out[,2:6])
   df.tabulate[["percent.success"]] <- df.tabulate[["success"]]/df.tabulate[["attempted"]]
   df.tabulate[["percent.success"]] <- round(100*df.tabulate[["percent.success"]], digits=1)
   df.tabulate[["assessment.type"]] <- prequit.colnames[i]
@@ -101,6 +105,22 @@ for(i in 1:length(prequit.files)){
 
 df.summarise.prequit <- bind_rows(list.summarise.prequit)
 
-write.csv(df.summarise.postquit, file.path(path.pns.output_data, "summarise_postquit_1.csv"), row.names = FALSE)
-write.csv(df.summarise.prequit, file.path(path.pns.output_data, "summarise_prequit_1.csv"), row.names = FALSE)
+###############################################################################
+# Write out results to csv file
+###############################################################################
+
+df.summarise.postquit.0 <- df.summarise.postquit %>% filter(with.any.response==0) %>% select(-with.any.response)
+df.summarise.postquit.1 <- df.summarise.postquit %>% filter(with.any.response==1) %>% select(-with.any.response)
+
+write.csv(df.summarise.postquit.0, file.path(path.pns.output_data, "checks_output/summarise_postquit_1a.csv"), row.names = FALSE)
+write.csv(df.summarise.postquit.1 , file.path(path.pns.output_data, "checks_output/summarise_postquit_1b.csv"), row.names = FALSE)
+
+
+df.summarise.prequit.0 <- df.summarise.prequit %>% filter(with.any.response==0) %>% select(-with.any.response)
+df.summarise.prequit.1 <- df.summarise.prequit %>% filter(with.any.response==1) %>% select(-with.any.response)
+
+write.csv(df.summarise.prequit.0, file.path(path.pns.output_data, "checks_output/summarise_prequit_1a.csv"), row.names = FALSE)
+write.csv(df.summarise.prequit.1, file.path(path.pns.output_data, "checks_output/summarise_prequit_1b.csv"), row.names = FALSE)
+
+
 

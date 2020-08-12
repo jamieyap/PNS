@@ -9,81 +9,93 @@ library(ggplot2)
 
 path.pns.input_data <- Sys.getenv("path.pns.input_data")
 path.pns.output_data <- Sys.getenv("path.pns.output_data")
+path.pns.staged_data <- Sys.getenv("path.pns.staged_data")
 path.pns.code <- Sys.getenv("path.pns.code")
 path.shared.code <- Sys.getenv("path.shared.code")
 source(file.path(path.shared.code, "shared-data-manip-utils.R"))
 source(file.path(path.pns.code, "data-manip-utils.R"))
 
-ema.item.names <- read.csv(file.path(path.pns.output_data, "ema_item_names.csv"), header = TRUE, stringsAsFactors = FALSE)
+#------------------------------------------------------------------------------
+# Get time variables
+#------------------------------------------------------------------------------
 
-###############################################################################
-# Checks on Post-Quit EMAs
-###############################################################################
-postquit.files <- c("Post_Quit_Random.csv",
-                    "Post_Quit_Urge.csv",
-                    "Post_Quit_About_to_Slip.csv",
-                    "Post_Quit_About_to_Slip_Part2.csv",
-                    "Post_Quit_Already_Slipped.csv")
+df.quit.dates <- read.csv(file.path(path.pns.output_data, "quit_dates_final.csv"), stringsAsFactors = FALSE)
+df.quit.dates <- df.quit.dates %>% rename(start.study.hrts = start.study.date, end.study.hrts = end.study.date, quit.hrts = quit.date) 
+df.quit.dates[["start.study.hrts"]] <- as.POSIXct(strptime(df.quit.dates[["start.study.hrts"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC"))
+df.quit.dates[["end.study.hrts"]] <- as.POSIXct(strptime(df.quit.dates[["end.study.hrts"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC"))
+df.quit.dates[["quit.hrts"]] <- as.POSIXct(strptime(df.quit.dates[["quit.hrts"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC"))
 
-postquit.colnames <- c("Post-Quit Random",
-                       "Post-Quit Urge",
-                       "Post-Quit About to Slip Part One",
-                       "Post-Quit About to Slip Part Two",
-                       "Post-Quit Already Slipped")
+# Convert human-readable timestamps to UNIX timestamps
+df.quit.dates <- df.quit.dates %>%
+  mutate(start.study.unixts = as.numeric(start.study.hrts),
+         end.study.unixts = as.numeric(end.study.hrts),
+         quit.unixts = as.numeric(quit.hrts)) %>%
+  select(id, callnumr, 
+         start.study.hrts, quit.hrts, end.study.hrts,
+         start.study.unixts, quit.unixts, end.study.unixts, everything())
 
-list.summarise.postquit <- list()
+#------------------------------------------------------------------------------
+# Implement inclusion/exclusion criteria
+#------------------------------------------------------------------------------
 
-for(i in 1:length(postquit.files)){
-  df.raw <- read.csv(file.path(path.pns.input_data, postquit.files[i]), header = TRUE, stringsAsFactors = FALSE)
-  df.raw <- CheckAnyResponse(df = df.raw, keep.cols = (ema.item.names %>% filter(assessment.type==postquit.colnames[i]) %>% extract2("name.codebook")))
-  df.out <- CreateEMATimeVars(df.raw = df.raw) #%>% filter(is.delivered==1)
-  df.tabulate <- quantile((df.out$begin.unixts - df.out$delivered.unixts), c(.50, .75, .95), na.rm=TRUE)
-  df.tabulate <- as.data.frame(df.tabulate)
-  df.tabulate <- t(as.matrix(df.tabulate))
-  count.positive <- df.out %>% mutate(delay = begin.unixts - delivered.unixts) %>% summarise(count.positive = sum(1*(delay > 60*60), na.rm=TRUE))
-  count.positive <- as.matrix(count.positive)
-  count.negative <- df.out %>% mutate(delay = begin.unixts - delivered.unixts) %>% summarise(count.negative = sum(1*(delay < 0), na.rm=TRUE))
-  count.negative <- as.matrix(count.negative)
-  tot.ema <- nrow(df.out)
-  df.tabulate <- cbind(postquit.colnames[i], tot.ema, df.tabulate, count.positive, count.negative)
-  list.summarise.postquit <- append(list.summarise.postquit, list(df.tabulate))
-}
+# all_ema_processed.RData is the output of the script get-ema-item-responses.R
+load(file = file.path(path.pns.staged_data, "all_ema_processed.RData"))
 
-df.summarise.postquit <- do.call(rbind, list.summarise.postquit)
+list.all <- lapply(list.all, function(this.df, use.quit.dates = df.quit.dates){
+  # call left_join so that only individuals whose ID's are in quit_dates_final.csv
+  # will be retained
+  this.df <- left_join(x = use.quit.dates, y = this.df, by = "id")
+  this.df <- this.df %>% 
+    select(id, callnumr, 
+           start.study.hrts, quit.hrts, end.study.hrts, 
+           start.study.unixts, quit.unixts, end.study.unixts,
+           sensitivity,
+           record.id, assessment.type, 
+           with.any.response,
+           everything()) %>%
+    # participants not having a particular EMA type will still have 
+    # a row in this.df; this row will contain their ID but have a missing value
+    # for record.id
+    # note: in the file get-ema-data-frames-by-type.R, these columns were
+    # taken care of (removed) upon execution of
+    # the step filter((delivered.unixts>=start.study.unixts) & (delivered.unixts<=end.study.unixts))
+    # since these rows will have missing values in delivered.unixts,
+    # this criterion will return FALSE for these rows and hence will be dropped
+    filter(!is.na(record.id)) 
+  
+  return(this.df)
+})
 
-###############################################################################
-# Checks on Pre-Quit EMAs
-###############################################################################
+#------------------------------------------------------------------------------
+# Calculate time elapsed between begin.unixts and delivered.unixts
+#------------------------------------------------------------------------------
 
-prequit.files <- c("Pre_Quit_Random.csv",
-                   "Pre_Quit_Urge.csv",
-                   "Pre_Quit_Smoking.csv",
-                   "Pre_Quit_Smoking_Part2.csv")
+list.all <- lapply(list.all, function(this.df){
+  this.df <- this.df %>% 
+    mutate(delay = begin.unixts - delivered.unixts) %>%
+    select(id, record.id, assessment.type, delivered.unixts, begin.unixts, end.unixts, delay)
+  return(this.df)
+})
 
-prequit.colnames <- c("Pre-Quit Random",
-                      "Pre-Quit Urge",
-                      "Pre-Quit Smoking Part One",
-                      "Pre-Quit Smoking Part Two")
 
-list.summarise.prequit <- list()
+df.all <- bind_rows(list.all)
 
-for(i in 1:length(prequit.files)){
-  df.raw <- read.csv(file.path(path.pns.input_data, prequit.files[i]), header = TRUE, stringsAsFactors = FALSE)
-  df.raw <- CheckAnyResponse(df = df.raw, keep.cols = (ema.item.names %>% filter(assessment.type==prequit.colnames[i]) %>% extract2("name.codebook")))
-  df.out <- CreateEMATimeVars(df.raw = df.raw) #%>% filter(is.delivered==1)
-  df.tabulate <- quantile((df.out$begin.unixts - df.out$delivered.unixts), c(.50, .75, .95), na.rm=TRUE)
-  df.tabulate <- t(as.matrix(df.tabulate))
-  count.positive <- df.out %>% mutate(delay = begin.unixts - delivered.unixts) %>% summarise(count.positive = sum(1*(delay > 60*60), na.rm=TRUE))
-  count.positive <- as.matrix(count.positive)
-  count.negative <- df.out %>% mutate(delay = begin.unixts - delivered.unixts) %>% summarise(count.negative = sum(1*(delay < 0), na.rm=TRUE))
-  count.negative <- as.matrix(count.negative)
-  tot.ema <- nrow(df.out)
-  df.tabulate <- cbind(prequit.colnames[i], tot.ema, df.tabulate, count.positive, count.negative)
-  list.summarise.prequit <- append(list.summarise.prequit, list(df.tabulate))
-}
+#------------------------------------------------------------------------------
+# Calculate summary statistics in time variables
+#------------------------------------------------------------------------------
 
-df.summarise.prequit <- do.call(rbind,list.summarise.prequit)
+df.summary <- df.all %>% 
+  group_by(assessment.type) %>%
+  summarise(count.geq.than.0 = sum(1*(delay >= 0), na.rm=TRUE),
+            count.less.than.0 = sum(1*(delay < 0), na.rm=TRUE),
+            q0 = quantile(delay, probs=0, na.rm=TRUE),
+            q50 = quantile(delay, probs=.5, na.rm=TRUE),
+            q99 = quantile(delay, probs=.95, na.rm=TRUE),
+            q100 = quantile(delay, probs=1, na.rm=TRUE))
 
-write.csv(df.summarise.postquit, file.path(path.pns.output_data, "summarise_postquit_3.csv"), row.names = FALSE)
-write.csv(df.summarise.prequit, file.path(path.pns.output_data, "summarise_prequit_3.csv"), row.names = FALSE)
+#------------------------------------------------------------------------------
+# Write results to a csv file
+#------------------------------------------------------------------------------
+
+write.csv(df.summary, file.path(path.pns.output_data, "checks_output/summarise_delay.csv"), row.names = FALSE)
 

@@ -39,7 +39,7 @@ for(i in 1:length(postquit.files)){
   
   df.tabulate <- df.raw %>% 
     mutate(record.status.completed = if_else(Record_Status=="Completed",1,0)) %>%
-    group_by(with.any.response, record.status.completed) %>% 
+    group_by(with.any.response) %>% 
     summarise(attempted = n(),
               indicator.completed.true = sum(Completed=="True"), 
               indicator.completed.false = sum(Completed=="False"),
@@ -77,7 +77,7 @@ for(i in 1:length(prequit.files)){
   
   df.tabulate <- df.raw %>% 
     mutate(record.status.completed = if_else(Record_Status=="Completed",1,0)) %>%
-    group_by(with.any.response, record.status.completed) %>% 
+    group_by(with.any.response) %>% 
     summarise(attempted = n(),
               indicator.completed.true = sum(Completed=="True"), 
               indicator.completed.false = sum(Completed=="False"),
@@ -93,7 +93,13 @@ for(i in 1:length(prequit.files)){
 
 df.summarise.prequit <- bind_rows(list.summarise.prequit)
 
+###############################################################################
+# Write out results to csv file
+###############################################################################
 
-write.csv(df.summarise.postquit, file.path(path.pns.output_data, "summarise_postquit_2.csv"), row.names = FALSE)
-write.csv(df.summarise.prequit, file.path(path.pns.output_data, "summarise_prequit_2.csv"), row.names = FALSE)
+write.csv(df.summarise.postquit[which(df.summarise.postquit$with.any.response==0),], file.path(path.pns.output_data, "checks_output/summarise_postquit_2a.csv"), row.names = FALSE)
+write.csv(df.summarise.postquit[which(df.summarise.postquit$with.any.response==1),], file.path(path.pns.output_data, "checks_output/summarise_postquit_2b.csv"), row.names = FALSE)
+
+write.csv(df.summarise.prequit[which(df.summarise.prequit$with.any.response==0),], file.path(path.pns.output_data, "checks_output/summarise_prequit_2a.csv"), row.names = FALSE)
+write.csv(df.summarise.prequit[which(df.summarise.prequit$with.any.response==1),], file.path(path.pns.output_data, "checks_output/summarise_prequit_2b.csv"), row.names = FALSE)
 
