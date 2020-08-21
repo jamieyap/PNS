@@ -13,7 +13,6 @@
 # path.pns.output_data <- "C:/Users/user/Desktop"
 # note that above, a backslash instead of a forward slash is used
 path.pns.output_data <- Sys.getenv("path.pns.output_data")
-setwd(path.pns.output_data)
 
 # Load R packages we'll use
 library(dplyr)
@@ -25,8 +24,8 @@ library(dplyr)
 # factors. Both data types are handled differently in R. 
 # Hence, we set the argument stringsAsFactors=FALSE to prevent this behavior;
 # strings will remain strings
-data.prequit.random <- read.csv("pre_quit_random_ema.csv", stringsAsFactors = FALSE)
-data.postquit.random <- read.csv("post_quit_random_ema.csv", stringsAsFactors = FALSE)
+data.prequit.random <- read.csv(file.path(path.pns.output_data, "pre_quit_random_ema.csv"), stringsAsFactors = FALSE)
+data.postquit.random <- read.csv(file.path(path.pns.output_data, "post_quit_random_ema.csv"), stringsAsFactors = FALSE)
 
 # -----------------------------------------------------------------------------
 # Identify rows to be utilized in main analysis and sensitivity analysis
@@ -148,13 +147,14 @@ use.this.data <- use.this.data %>%
   do(GetFutureRecords(df.this.group=., cols.today=c("with_any_response"), h=1, this.numeric=TRUE))
 
 # Creates a new variable 
-# time_unixts_shift_minus_1: what is time_unixts for the next EMA in the PAST?
+# time_unixts_shift_plus_1: what is time_unixts for the next EMA in the FUTURE?
 use.this.data <- use.this.data %>% 
   group_by(id) %>%
-  do(GetPastRecords(df.this.group=., cols.today=c("time_unixts"), h=1, this.numeric=TRUE))
+  do(GetFutureRecords(df.this.group=., cols.today=c("time_unixts"), h=1, this.numeric=TRUE))
 
 # Now, let's create a new variable for time between two consecutive EMAs in hours
-use.this.data <- use.this.data %>% mutate(hours_between = time_unixts - time_unixts_shift_minus_1)
+# These two consecutive EMAs are: current EMA (kth EMA) and next EMA (k+1 th EMA)
+use.this.data <- use.this.data %>% mutate(hours_between = (time_unixts - time_unixts_shift_plus_1)/(60*60))
 
 # Inspect use.this.data
 head(use.this.data)
@@ -221,6 +221,12 @@ for(i in 1:total.ids){
 use.this.data <- do.call(rbind, list.all)
 
 # -----------------------------------------------------------------------------
+# Write use.this.data to a csv file
+# -----------------------------------------------------------------------------
+
+write.csv(use.this.data, file.path(path.pns.output_data, "use_this_data.csv"), row.names = FALSE)
+
+# -----------------------------------------------------------------------------
 # Now, let's fit a random effects model
 # -----------------------------------------------------------------------------
 
@@ -232,4 +238,5 @@ library(lme4)
 # hours_between, hours_since_start, use_as_postquit
 model1 <- glmer(with_any_response_shift_plus_1 ~ with_any_response + (1|id), data=use.this.data, family=binomial)
 summary(model1)
+
 

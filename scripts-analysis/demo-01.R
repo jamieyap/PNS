@@ -13,7 +13,6 @@
 # path.pns.output_data <- "C:/Users/user/Desktop"
 # note that above, a backslash instead of a forward slash is used
 path.pns.output_data <- Sys.getenv("path.pns.output_data")
-setwd(path.pns.output_data)
 
 # Load R packages we'll use
 library(dplyr)
@@ -25,7 +24,7 @@ library(dplyr)
 # factors. Both data types are handled differently in R. 
 # Hence, we set the argument stringsAsFactors=FALSE to prevent this behavior;
 # strings will remain strings
-merged <- read.csv("merged.csv", stringsAsFactors = FALSE)
+merged <- read.csv(file.path(path.pns.output_data, "merged.csv"), stringsAsFactors = FALSE)
 
 # -----------------------------------------------------------------------------
 # Identify rows to be utilized in Pre-Quit & Post-Quit manuscripts
