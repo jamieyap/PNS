@@ -182,7 +182,7 @@ table(data.ema$assessment_type)
 
 # Read in correspondence between codebook variable names and column names 
 # in the merged curated dataset
-dictionary.colnames <- read.csv("ema_item_names_reformatted_column_names.csv", stringsAsFactors = FALSE)
+dictionary.colnames <- read.csv(file.path(path.pns.output_data, "ema_item_names_reformatted_column_names.csv"), stringsAsFactors = FALSE)
 
 # Print out column names corresponding to the question
 # "Since the last computer recording, I experienced or thought about a 
@@ -286,10 +286,18 @@ for(i in 1:length(all.ids)){
     tot.outcome.rows <- nrow(subset.outcome)
     
     if(tot.outcome.rows > 0){
+      
+      add.this.idx <- max(subset.outcome[["ema_order"]])+1
+      add.this.row <- current.participant.outcome %>% filter(ema_order == add.this.idx)
+      
+      if(nrow(add.this.row) > 0){
+        subset.outcome <- rbind(subset.outcome, add.this.row)
+      }
+      
       responses_within_H <- subset.outcome[["smoking_indicator"]]
       # First, check if all are missing
       if(sum(is.na(responses_within_H))==tot.outcome.rows){
-        # Don't do anything
+        current.participant.data[j, "smoke_next_H"] <- NA
         next
       }else{
         count_yes <- sum(subset.outcome[["smoking_indicator"]], na.rm=TRUE)
@@ -297,8 +305,8 @@ for(i in 1:length(all.ids)){
         current.participant.data[j, "smoke_next_H"] <- any_yes
       }
     }else{
-      # Don't do anything
-      next
+      # this is the case when tot.outcome.rows==0
+      current.participant.data[j, "smoke_next_H"] <- NA
     }
   } # END of loop for one participant
   # Update data for this participant
