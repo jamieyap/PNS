@@ -53,15 +53,6 @@ CreateEMATimeVars <- function(df.raw){
     mutate(end.hrts = if_else(is.na(end.hrts) & !is.na(cancelled.hrts), cancelled.hrts, end.hrts)) %>%
     mutate(end.unixts = as.numeric(end.hrts))
   
-  # ---------------------------------------------------------------------------
-  # Decision rule: exclude EMAs that have some indication of unsuccessful 
-  # delivery. For now, simply create an indicator function is.delivered and
-  # perform the exclusion step outside of this function
-  # ---------------------------------------------------------------------------
-  df.out <- df.out %>%
-    mutate(responded = if_else(responded=="","Missing",responded), completed = if_else(completed=="","Missing",completed)) %>%
-    mutate(is.delivered = if_else((responded=="True" & completed=="True")|(responded=="True" & completed=="False")|(responded=="True" & completed=="Missing")|(responded=="Missing" & completed=="False"), 1, 0))
-  
   # --------------------------------------------------------------------------- 
   # Reorder columns
   # ---------------------------------------------------------------------------
@@ -69,7 +60,7 @@ CreateEMATimeVars <- function(df.raw){
     select(id, record.id, assessment.type,
            delivered.hrts, begin.hrts, end.hrts,
            delivered.unixts, begin.unixts, end.unixts,
-           record.status, responded, completed, is.delivered,
+           record.status, responded, completed,
            everything())
   
   return(df.out)

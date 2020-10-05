@@ -44,18 +44,18 @@ df.quit.dates <- df.quit.dates %>%
 load(file = file.path(path.pns.staged_data, "all_ema_processed.RData"))
 
 list.all <- lapply(list.all, function(this.df, use.quit.dates = df.quit.dates){
-  this.df <- left_join(x = use.quit.dates, y = this.df, by = "id")
-  this.df <- this.df %>% filter((delivered.unixts>=start.study.unixts) & (delivered.unixts<=end.study.unixts))
-  this.df <- this.df %>% mutate(use.as.postquit = if_else(delivered.unixts>=quit.unixts, 1, 0))
-  this.df <- this.df %>% 
-    select(id, callnumr, 
-           start.study.hrts, quit.hrts, end.study.hrts, 
-           start.study.unixts, quit.unixts, end.study.unixts,
-           sensitivity,
-           record.id, assessment.type, 
-           use.as.postquit,
-           with.any.response,
-           everything())
+  #this.df <- left_join(x = use.quit.dates, y = this.df, by = "id")
+  #this.df <- this.df %>% filter((delivered.unixts>=start.study.unixts) & (delivered.unixts<=end.study.unixts))
+  #this.df <- this.df %>% mutate(use.as.postquit = if_else(delivered.unixts>=quit.unixts, 1, 0))
+  #this.df <- this.df %>% 
+  #  select(id, callnumr, 
+  #         start.study.hrts, quit.hrts, end.study.hrts, 
+  #         start.study.unixts, quit.unixts, end.study.unixts,
+  #         sensitivity,
+  #         record.id, assessment.type, 
+  #         use.as.postquit,
+  #         with.any.response,
+  #         everything())
   
   return(this.df)
 })
@@ -80,15 +80,18 @@ source(file.path(path.pns.code, "rules-smoking-indicator.R"))
 list.all <- lapply(list.all, function(dat){
   # Select first few columns
   dat <- dat %>% 
-    select(id, callnumr, 
-           start.study.hrts, quit.hrts, end.study.hrts, 
-           start.study.unixts, quit.unixts, end.study.unixts,
-           sensitivity,
+    select(id, 
+           #callnumr, 
+           #start.study.hrts, quit.hrts, end.study.hrts, 
+           #start.study.unixts, quit.unixts, end.study.unixts,
+           #sensitivity,
            record.id, assessment.type, 
-           use.as.postquit,
+           #use.as.postquit,
            with.any.response,
-           delivered.hrts, begin.hrts, end.hrts, time.hrts,
-           delivered.unixts, begin.unixts, end.unixts, time.unixts,
+           #delivered.hrts, begin.hrts, end.hrts, 
+           time.hrts,
+           #delivered.unixts, begin.unixts, end.unixts, 
+           time.unixts,
            rawdata.indicator, rawdata.qty, rawdata.timing,
            smoking.qty, smoking.indicator) %>%
     mutate(smoking.delta.minutes = NA_real_)
@@ -115,10 +118,10 @@ df.all <- df.all %>%
 df.all <- df.all %>%   
   arrange(id, time.unixts) %>%
   group_by(id) %>%
-  do(GetPastRecords(df.this.group = ., cols.today = c("time.hrts","time.unixts","assessment.type"), h = c(1,1,1), this.numeric = c(FALSE,TRUE,FALSE))) 
+  do(GetPastRecords(df.this.group = ., cols.today = c("time.hrts","time.unixts","assessment.type","record.id"), h = c(1,1,1,1), this.numeric = c(FALSE,TRUE,FALSE,FALSE))) 
 
 df.all <- df.all %>%
-  mutate(time.unixts_shift_minus_1 = if_else(ema.order==1, start.study.unixts, time.unixts_shift_minus_1)) %>%
+  #mutate(time.unixts_shift_minus_1 = if_else(ema.order==1, start.study.unixts, time.unixts_shift_minus_1)) %>%
   mutate(time.between.hours = (time.unixts - time.unixts_shift_minus_1)/(60*60))
 
 #------------------------------------------------------------------------------
@@ -204,19 +207,23 @@ df.all <- df.all %>%
 
 # Select columns to retain
 df.all <- df.all %>%
-  select(id, callnumr, 
-         start.study.hrts, quit.hrts, end.study.hrts,
-         start.study.unixts, quit.unixts, end.study.unixts, 
-         sensitivity,
+  select(id, 
+         #callnumr, 
+         #start.study.hrts, quit.hrts, end.study.hrts,
+         #start.study.unixts, quit.unixts, end.study.unixts, 
+         #sensitivity,
          record.id, ema.order, 
          assessment.type, 
-         use.as.postquit,
+         #use.as.postquit,
          with.any.response,
-         delivered.hrts, begin.hrts, end.hrts, time.hrts,
-         delivered.unixts, begin.unixts, end.unixts, time.unixts,
+         #delivered.hrts, begin.hrts, end.hrts, 
+         time.hrts,
+         #delivered.unixts, begin.unixts, end.unixts, 
+         time.unixts,
          time.between.hours,
          rawdata.indicator, rawdata.qty, rawdata.timing,
          assessment.type.past.1=assessment.type_shift_minus_1,
+         record.id.past.1=record.id_shift_minus_1,
          time.hrts.past.1=time.hrts_shift_minus_1,
          time.unixts.past.1=time.unixts_shift_minus_1,
          smoking.indicator, smoking.qty, smoking.delta.minutes) 
@@ -226,12 +233,13 @@ df.all <- df.all %>%
 # and end.study.hrts, and 04:00:00 will not be displayed for quit.hrts
 # This trick prevents R from performing an automatic adjustment of these time variables
 # to local time of machine in the output file
-df.all[["start.study.hrts"]] <- strftime(df.all[["start.study.hrts"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC", usetz = FALSE)
-df.all[["end.study.hrts"]] <- strftime(df.all[["end.study.hrts"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC", usetz = FALSE)
-df.all[["quit.hrts"]] <- strftime(df.all[["quit.hrts"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC", usetz = FALSE)
 
-df.all[["begin.hrts"]] <- strftime(df.all[["begin.hrts"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC", usetz = FALSE)
-df.all[["end.hrts"]] <- strftime(df.all[["end.hrts"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC", usetz = FALSE)
+#df.all[["start.study.hrts"]] <- strftime(df.all[["start.study.hrts"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC", usetz = FALSE)
+#df.all[["end.study.hrts"]] <- strftime(df.all[["end.study.hrts"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC", usetz = FALSE)
+#df.all[["quit.hrts"]] <- strftime(df.all[["quit.hrts"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC", usetz = FALSE)
+
+#df.all[["begin.hrts"]] <- strftime(df.all[["begin.hrts"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC", usetz = FALSE)
+#df.all[["end.hrts"]] <- strftime(df.all[["end.hrts"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC", usetz = FALSE)
 df.all[["time.hrts"]] <- strftime(df.all[["time.hrts"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC", usetz = FALSE)
 
 
@@ -243,24 +251,43 @@ df.all[["time.hrts"]] <- strftime(df.all[["time.hrts"]], format = "%Y-%m-%d %H:%
 # dots) than others
 #------------------------------------------------------------------------------
 
+#df.all <- df.all %>%
+#  rename(start_study_hrts = start.study.hrts,
+#         end_study_hrts = end.study.hrts,
+#         quit_hrts = quit.hrts,
+#         start_study_unixts = start.study.unixts,
+#         end_study_unixts = end.study.unixts,
+#         quit_unixts = quit.unixts,
+#         record_id = record.id,
+#         assessment_type = assessment.type,
+#         use_as_postquit = use.as.postquit,
+#         with_any_response = with.any.response,
+#         delivered_hrts = delivered.hrts,
+#         begin_hrts = begin.hrts,
+#         end_hrts = end.hrts,
+#         time_hrts = time.hrts,
+#         delivered_unixts = delivered.unixts,
+#         begin_unixts = begin.unixts,
+#         end_unixts = end.unixts,
+#         time_unixts = time.unixts,
+#         ema_order = ema.order,
+#         time_between_hours = time.between.hours,
+#         rawdata_indicator = rawdata.indicator,
+#         rawdata_qty = rawdata.qty,
+#         rawdata_timing = rawdata.timing,
+#         smoking_indicator = smoking.indicator,
+#         smoking_qty = smoking.qty,
+#         smoking_delta_minutes = smoking.delta.minutes) %>%
+#  rename(assessment_type_past_1 = assessment.type.past.1, 
+#         record_id_past_1 = record.id.past.1,
+#         time_hrts_past_1 = time.hrts.past.1, 
+#         time_unixts_past_1 = time.unixts.past.1)
+
 df.all <- df.all %>%
-  rename(start_study_hrts = start.study.hrts,
-         end_study_hrts = end.study.hrts,
-         quit_hrts = quit.hrts,
-         start_study_unixts = start.study.unixts,
-         end_study_unixts = end.study.unixts,
-         quit_unixts = quit.unixts,
-         record_id = record.id,
+  rename(record_id = record.id,
          assessment_type = assessment.type,
-         use_as_postquit = use.as.postquit,
          with_any_response = with.any.response,
-         delivered_hrts = delivered.hrts,
-         begin_hrts = begin.hrts,
-         end_hrts = end.hrts,
          time_hrts = time.hrts,
-         delivered_unixts = delivered.unixts,
-         begin_unixts = begin.unixts,
-         end_unixts = end.unixts,
          time_unixts = time.unixts,
          ema_order = ema.order,
          time_between_hours = time.between.hours,
@@ -271,10 +298,11 @@ df.all <- df.all %>%
          smoking_qty = smoking.qty,
          smoking_delta_minutes = smoking.delta.minutes) %>%
   rename(assessment_type_past_1 = assessment.type.past.1, 
+         record_id_past_1 = record.id.past.1,
          time_hrts_past_1 = time.hrts.past.1, 
          time_unixts_past_1 = time.unixts.past.1)
 
 
 # Save output
-write.csv(df.all, file.path(path.pns.output_data, "smoking_outcome.csv"), row.names=FALSE, na = "")
-
+#write.csv(df.all, file.path(path.pns.output_data, "smoking_outcome.csv"), row.names=FALSE, na = "")
+write.csv(df.all, file.path(path.pns.output_data, "smoking_summary_stats.csv"), row.names=FALSE, na = "")
