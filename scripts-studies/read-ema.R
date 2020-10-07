@@ -92,7 +92,7 @@ for(i in 1:length(raw.data.file.names)){
   # Reorder columns
   df.processed <- df.processed %>%
     select(id, record.id, assessment.type, 
-           with.any.response,
+           with.any.response, record.status,
            delivered.hrts, begin.hrts, end.hrts, time.hrts,
            delivered.unixts, begin.unixts, end.unixts, time.unixts, 
            these.ema.colnames)
@@ -109,6 +109,5 @@ names(list.all) <- reformatted.ema.type.names
 #------------------------------------------------------------------------------
 
 save(list.all, file = file.path(path.pns.staged_data, "all_ema_processed.RData"))
-
 
 

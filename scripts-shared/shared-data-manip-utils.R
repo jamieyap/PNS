@@ -50,66 +50,68 @@ CheckAnyResponse <- function(df, keep.cols){
   return(df)
 }
 
-CountWithin <- function(df.this.group, ones.col, current.ts, H){
-  # About: ones.col is a column indicating which rows satisfy
-  #   some condition (i.e. equal to 1 if condition is satisfied). 
-  #   and equal to 0 if the condition is not satisfied. 
-  #   The number of rows with ones.col=1 in the past H hours from
-  #   current.ts are counted.
+CountWithin <- function(df.this.group, check.ts, current.ts, H, newvar.name){
   # Args: 
   #   df.this.group: a data frame corresponding groups in the
   #   data for which this counting operation is to be performed
   #   (e.g. each group may be 1 participant)
+  #   current.ts: seconds since Jan 1, 1970 in UNIX time format
+  #   H: number of hours prior to current.ts at which counting
+  #   should begin
+  #   check.ts: seconds since Jan 1, 1970 in UNIX time format
   # Output:
-  #   An array of counts with number of rows equal to 
-  #   number of current.ts entries in df.this.group
+  #   An array of means with number of rows equal to 
+  #   number of check.ts entries in df.this.group
   
   df.this.group[,"pastH.ts"] <- df.this.group[,current.ts] - H*60*60
-  list.counts <- list()
+  list.quantity <- list()
+  
   # For each row of df.this.group
   for(i in 1:nrow(df.this.group)){
     LB <- as.numeric(df.this.group[i,"pastH.ts"])
     UB <- as.numeric(df.this.group[i,current.ts])
     
     df.subset <- df.this.group %>% 
-      filter((time.unixts.scaled >= LB) & (time.unixts.scaled <= UB))
+      filter((.data[[check.ts]] >= LB) & (.data[[check.ts]] <= UB))
     
-    counts <- nrow(df.subset)
-    list.counts <- append(list.counts, counts)
+    quantity <- nrow(df.subset)
+    list.quantity <- append(list.quantity, quantity)
   }
-  vec.counts <- do.call(rbind, list.counts)
-  vec.counts <- as.data.frame(vec.counts)
+  vec.quantity <- do.call(rbind, list.quantity)
+  vec.quantity <- as.data.frame(vec.quantity)
   
-  return(vec.counts)
+  df.this.group[,newvar.name] <- vec.quantity
+  
+  return(df.this.group)
 }
 
-MeanWithin <- function(df.this.group, ones.col, current.ts, H, this.var){
-  # About: ones.col is a column indicating which rows satisfy
-  #   some condition (i.e. equal to 1 if condition is satisfied). 
-  #   and equal to 0 if the condition is not satisfied. 
-  #   The number of rows with ones.col=1 in the past H hours from
-  #   current.ts are used to obtain the mean of this.var.
+MeanWithin <- function(df.this.group, check.ts, current.ts, H, this.var, newvar.name){
   # Args: 
   #   df.this.group: a data frame corresponding groups in the
   #   data for which this counting operation is to be performed
   #   (e.g. each group may be 1 participant)
+  #   current.ts: seconds since Jan 1, 1970 in UNIX time format
+  #   H: number of hours prior to current.ts at which counting
+  #   should begin
+  #   check.ts: seconds since Jan 1, 1970 in UNIX time format
   # Output:
   #   An array of means with number of rows equal to 
-  #   number of current.ts entries in df.this.group
+  #   number of check.ts entries in df.this.group
   
   df.this.group[,"pastH.ts"] <- df.this.group[,current.ts] - H*60*60
   list.quantity <- list()
+  
   # For each row of df.this.group
   for(i in 1:nrow(df.this.group)){
     LB <- as.numeric(df.this.group[i,"pastH.ts"])
     UB <- as.numeric(df.this.group[i,current.ts])
     
-    df.subset <- df.this.group %>%
-      filter((.data[[current.ts]] >= LB) & (.data[[current.ts]] <= UB))
+    df.subset <- df.this.group %>% 
+      filter((.data[[check.ts]] >= LB) & (.data[[check.ts]] <= UB))
     
     check.missing <- sum(is.na(df.subset[,this.var]))
     if(check.missing == nrow(df.subset)){
-      quantity <- NA
+      quantity <- NA_real_
     }else{
       these.vals <- df.subset[,this.var]
       these.vals <- as.matrix(these.vals)
@@ -119,38 +121,40 @@ MeanWithin <- function(df.this.group, ones.col, current.ts, H, this.var){
     list.quantity <- append(list.quantity, quantity)
   }
   vec.quantity <- do.call(rbind, list.quantity)
-  vec.quantity <- as.data.frame(vec.quantity)
+  vec.quantity <- as.numeric(vec.quantity)
   
-  return(vec.quantity)
+  df.this.group[,newvar.name] <- vec.quantity
+  
+  return(df.this.group)
 }
 
-VarianceWithin <- function(df.this.group, ones.col, current.ts, H, this.var){
-  # About: ones.col is a column indicating which rows satisfy
-  #   some condition (i.e. equal to 1 if condition is satisfied). 
-  #   and equal to 0 if the condition is not satisfied. 
-  #   The number of rows with ones.col=1 in the past H hours from
-  #   current.ts are used to obtain the variance of this.var.
+VarianceWithin <- function(df.this.group, check.ts, current.ts, H, this.var, newvar.name){
   # Args: 
   #   df.this.group: a data frame corresponding groups in the
   #   data for which this counting operation is to be performed
   #   (e.g. each group may be 1 participant)
+  #   current.ts: seconds since Jan 1, 1970 in UNIX time format
+  #   H: number of hours prior to current.ts at which counting
+  #   should begin
+  #   check.ts: seconds since Jan 1, 1970 in UNIX time format
   # Output:
   #   An array of variances with number of rows equal to 
-  #   number of current.ts entries in df.this.group
+  #   number of check.ts entries in df.this.group
   
   df.this.group[,"pastH.ts"] <- df.this.group[,current.ts] - H*60*60
   list.quantity <- list()
+  
   # For each row of df.this.group
   for(i in 1:nrow(df.this.group)){
     LB <- as.numeric(df.this.group[i,"pastH.ts"])
     UB <- as.numeric(df.this.group[i,current.ts])
     
     df.subset <- df.this.group %>% 
-      filter((.data[[current.ts]] >= LB) & (.data[[current.ts]] <= UB))
+      filter((.data[[check.ts]] >= LB) & (.data[[check.ts]] <= UB))
     
     check.missing <- sum(is.na(df.subset[,this.var]))
     if(check.missing == nrow(df.subset)){
-      quantity <- NA
+      quantity <- NA_real_
     }else{
       these.vals <- df.subset[,this.var]
       these.vals <- as.matrix(these.vals)
@@ -160,91 +164,11 @@ VarianceWithin <- function(df.this.group, ones.col, current.ts, H, this.var){
     list.quantity <- append(list.quantity, quantity)
   }
   vec.quantity <- do.call(rbind, list.quantity)
-  vec.quantity <- as.data.frame(vec.quantity)
+  vec.quantity <- as.numeric(vec.quantity)
   
-  return(vec.quantity)
-}
-
-MaxWithin <- function(df.this.group, ones.col, current.ts, H, this.var){
-  # About: ones.col is a column indicating which rows satisfy
-  #   some condition (i.e. equal to 1 if condition is satisfied). 
-  #   and equal to 0 if the condition is not satisfied. 
-  #   The number of rows with ones.col=1 in the past H hours from
-  #   current.ts are used to obtain the maximum of this.var.
-  # Args: 
-  #   df.this.group: a data frame corresponding groups in the
-  #   data for which this counting operation is to be performed
-  #   (e.g. each group may be 1 participant)
-  # Output:
-  #   An array of max values with number of rows equal to 
-  #   number of current.ts entries in df.this.group
+  df.this.group[,newvar.name] <- vec.quantity
   
-  df.this.group[,"pastH.ts"] <- df.this.group[,current.ts] - H*60*60
-  list.quantity <- list()
-  # For each row of df.this.group
-  for(i in 1:nrow(df.this.group)){
-    LB <- as.numeric(df.this.group[i,"pastH.ts"])
-    UB <- as.numeric(df.this.group[i,current.ts])
-    
-    df.subset <- df.this.group %>% 
-      filter((.data[[current.ts]] >= LB) & (.data[[current.ts]] <= UB))
-    
-    check.missing <- sum(is.na(df.subset[,this.var]))
-    if(check.missing == nrow(df.subset)){
-      quantity <- NA
-    }else{
-      these.vals <- df.subset[,this.var]
-      these.vals <- as.matrix(these.vals)
-      quantity <- max(these.vals, na.rm=TRUE)
-    }
-    
-    list.quantity <- append(list.quantity, quantity)
-  }
-  vec.quantity <- do.call(rbind, list.quantity)
-  vec.quantity <- as.data.frame(vec.quantity)
-  
-  return(vec.quantity)
-}
-
-MinWithin <- function(df.this.group, ones.col, current.ts, H, this.var){
-  # About: ones.col is a column indicating which rows satisfy
-  #   some condition (i.e. equal to 1 if condition is satisfied). 
-  #   and equal to 0 if the condition is not satisfied. 
-  #   The number of rows with ones.col=1 in the past H hours from
-  #   current.ts are used to obtain the minimum of this.var.
-  # Args: 
-  #   df.this.group: a data frame corresponding groups in the
-  #   data for which this counting operation is to be performed
-  #   (e.g. each group may be 1 participant)
-  # Output:
-  #   An array of min values with number of rows equal to 
-  #   number of current.ts entries in df.this.group
-  
-  df.this.group[,"pastH.ts"] <- df.this.group[,current.ts] - H*60*60
-  list.quantity <- list()
-  # For each row of df.this.group
-  for(i in 1:nrow(df.this.group)){
-    LB <- as.numeric(df.this.group[i,"pastH.ts"])
-    UB <- as.numeric(df.this.group[i,current.ts])
-    
-    df.subset <- df.this.group %>% 
-      filter((.data[[current.ts]] >= LB) & (.data[[current.ts]] <= UB))
-    
-    check.missing <- sum(is.na(df.subset[,this.var]))
-    if(check.missing == nrow(df.subset)){
-      quantity <- NA
-    }else{
-      these.vals <- df.subset[,this.var]
-      these.vals <- as.matrix(these.vals)
-      quantity <- min(these.vals, na.rm=TRUE)
-    }
-    
-    list.quantity <- append(list.quantity, quantity)
-  }
-  vec.quantity <- do.call(rbind, list.quantity)
-  vec.quantity <- as.data.frame(vec.quantity)
-  
-  return(vec.quantity)
+  return(df.this.group)
 }
 
 GetFutureRecords <- function(df.this.group, cols.today, h, this.numeric){
