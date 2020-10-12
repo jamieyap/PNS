@@ -90,7 +90,7 @@ data.for.analysis <- data.for.analysis %>%
 # Now, let's create a new variable for time between two consecutive EMAs in hours
 # These two consecutive EMAs are: current EMA (kth EMA) and next EMA (k+1 th EMA)
 data.for.analysis <- data.for.analysis %>% 
-  mutate(hours_between = (time_unixts_shift_plus_1 - time_unixts)/(60*60)) %>%
+  mutate(hours_between_present_and_future = (time_unixts_shift_plus_1 - time_unixts)/(60*60)) %>%
   select(-time_unixts_shift_plus_1)  # don't need this variable anymore
 
 # -----------------------------------------------------------------------------
@@ -120,7 +120,8 @@ data.for.analysis <- data.for.analysis %>%
          record_id, assessment_type, use_as_postquit, sensitivity,
          delivered_hrts, begin_hrts, end_hrts, time_hrts, 
          delivered_unixts, begin_unixts, end_unixts, time_unixts, study_day,
-         record_status, with_any_response, with_any_response_shift_plus_1, hours_between,
+         record_status, with_any_response, with_any_response_shift_plus_1, 
+         hours_between_present_and_future,
          current_total_delivered, current_total_responded,
          Affect1, Affect2, Affect3, Affect4, Affect5, 
          Affect6, Affect7, Affect8, Affect9, Affect10,

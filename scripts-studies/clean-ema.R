@@ -419,7 +419,7 @@ longdf.bp <- longdf.bp %>%
          end_unixts = end.unixts,
          time_unixts = time.unixts)
 
-write.csv(longdf.bp, file.path(path.pns.output_data, "button_press_smoking.csv"), na="", row.names = FALSE)
+write.csv(longdf.bp, file.path(path.pns.output_data, "curated_database_button_press.csv"), na="", row.names = FALSE)
 
 #------------------------------------------------------------------------------
 # Save data corresponding to each EMA type into a csv file of its own
