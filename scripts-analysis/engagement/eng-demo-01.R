@@ -1,11 +1,16 @@
+# Assign name of output csv file here
+output.csv.file.name <- "data_for_analysis_engagement.csv"
+
 # -----------------------------------------------------------------------------
 # Preparatory steps
 # -----------------------------------------------------------------------------
 
 # Change path.pns.output_data to relevant working directory
-# For example,
-# path.pns.output_data <- "C:/Users/user/Desktop"
-# note that above, a backslash instead of a forward slash is used
+# For example, replace the following line
+#     path.pns.output_data <- Sys.getenv("path.pns.output_data")
+# with the following line
+#     path.pns.output_data <- "C:/Users/user/Desktop"
+# Note that above, a backslash instead of a forward slash is used
 
 path.pns.output_data <- Sys.getenv("path.pns.output_data")  # location of curated_database_engagement.csv
 path.pns.demo.engagement <- Sys.getenv("path.pns.demo.engagement")  # location of eng-functions.R
@@ -94,6 +99,5 @@ View(data.for.analysis)
 # -----------------------------------------------------------------------------
 # Save output
 # -----------------------------------------------------------------------------
-write.csv(data.for.analysis, file.path(path.analysis, "data_for_analysis_engagement.csv"), row.names = FALSE, na="")
-
+write.csv(data.for.analysis, file.path(path.analysis, output.csv.file.name), row.names = FALSE, na="")
 

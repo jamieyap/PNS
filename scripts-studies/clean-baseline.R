@@ -21,7 +21,8 @@ path.shared.code <- Sys.getenv("path.shared.code")
 source(file.path(path.shared.code, "shared-data-manip-utils.R"))
 source(file.path(path.pns.code, "data-manip-utils.R"))
 
-# Read in final quit date file and get ID's of participants having exclude==1
+# Read in final quit date file and retain a given row of the baseline data file 
+# only if it corresponds to a participant having exclude==0
 df.quit.dates <- read.csv(file.path(path.pns.output_data, "quit_dates_final.csv"), stringsAsFactors = FALSE)
 df.ids <- df.quit.dates %>% filter(exclude==0) %>% select(id, callnumr)
 

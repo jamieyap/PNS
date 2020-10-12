@@ -60,14 +60,13 @@ subset.data.postquit.random <- data.postquit.random %>%
          Affect6, Affect7, Affect8, Affect9, Affect10)
 
 subset.data.random <- rbind(subset.data.prequit.random, subset.data.postquit.random)
-data.for.analysis <- left_join(x = subset.data.random, y = subset.data.baseline, by = c("id", "callnumr"))
 
 # -----------------------------------------------------------------------------
 # Create outcome variable
 # -----------------------------------------------------------------------------
 
 # with_any_response_shift_plus_1: does next EMA in the FUTURE have a response to at least one item?
-data.for.analysis <- data.for.analysis %>% 
+data.for.analysis <- subset.data.random %>% 
   group_by(id) %>%
   do(GetFutureRecords(df.this.group=., cols.today=c("with_any_response"), h=c(1), this.numeric=c(TRUE)))
 
@@ -107,6 +106,11 @@ data.for.analysis <- data.for.analysis %>%
   mutate(current_total_delivered = cumsum(ones),
          current_total_responded = cumsum(with_any_response)) %>%
   select(-ones)
+
+# -----------------------------------------------------------------------------
+# Add baseline variables into data.for.analysis
+# -----------------------------------------------------------------------------
+data.for.analysis <- left_join(x = data.for.analysis, y = subset.data.baseline, by = c("id", "callnumr"))
 
 # Rearrange columns so that baseline variables appear first
 data.for.analysis <- data.for.analysis %>%
