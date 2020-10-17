@@ -1,7 +1,24 @@
 ###############################################################################
 # ABOUT:
-# * Get start of study, end of study, and quit dates per individual
-# * Prior to running this script, run get-ema-item-responses.R
+# * For each individual calculate the following:
+#   (a) timestamp corresponding to when the very first EMA in 
+#       Post-Quit Mode was initiated/delivered
+#   (b) timestamp corresponding to when the very last EMA in
+#       Pre-Quit Mode was initiated/delivered
+#   (c) date recorded in the variable 'quitday' in baseline raw data file
+#   (d) date recorded in the variable 'EMA_Qday' in records of study staff
+#
+# * Perform the following checks on the time variables above:
+#   - check whether all three dates in (a), (c), (d) fall on the same day
+#   - check whether time timestamps in (a) and (b) fall on the same date;
+#     perform a sanity check as to whether (a) is indeed behind (b)
+#
+# * Output file contains a row for each individual; new columns corresponding
+#   to time variables (a), (b), (c), (d) are created; 
+#   time variables (a) and (b) are provided in two formats: 
+#   a 'short format' where only the year-month-day is displayed and a
+#   'long format' where, in addition to displaying the year-month-day,
+#   hour-minute-second information is also displayed
 ###############################################################################
 
 library(dplyr)
@@ -14,9 +31,6 @@ path.pns.output_data <- Sys.getenv("path.pns.output_data")
 path.pns.staged_data <- Sys.getenv("path.pns.staged_data")
 path.pns.code <- Sys.getenv("path.pns.code")
 path.shared.code <- Sys.getenv("path.shared.code")
-
-source(file.path(path.shared.code, "shared-data-manip-utils.R"))
-source(file.path(path.pns.code, "data-manip-utils.R"))
 
 #------------------------------------------------------------------------------
 # Get dates from Post-Quit raw data files
@@ -97,9 +111,6 @@ df.baseline.dates <- df.baseline %>%
   select(callnumr, quitday) %>%
   mutate(quitday = as.POSIXct(strptime(quitday, "%m/%d/%Y", tz = "UTC")))
 
-# Remove from environment
-remove(df.baseline)
-
 #------------------------------------------------------------------------------
 # Merge several streams of data into one data frame
 #------------------------------------------------------------------------------
@@ -120,8 +131,11 @@ df.alldates <- df.alldates %>%
          postquit.earliest.shortformatdate = as.POSIXct(strptime(postquit.earliest.shortformatdate, "%Y-%m-%d", tz = "UTC")))
 
 #------------------------------------------------------------------------------
-# Create indicator variables based on date columns created thus far
+# Compare time variables created above
 #------------------------------------------------------------------------------
+
+# CHECK: Are the values of the following three time variables identical?
+# EMA_Qday, quitday, and postquit.earliest.shortformatdate
 df.alldates <- df.alldates %>% 
   mutate(is.equal = case_when(
     is.na(postquit.earliest.shortformatdate) ~ NA_real_,
@@ -129,7 +143,10 @@ df.alldates <- df.alldates %>%
     TRUE ~ 0)) %>%
   arrange(is.equal)
 
-# Among those for whom is.equal==0: 
+# Among those individuals for whom the above three time variables
+# do not match up, compare the date when the very last EMA in Pre-Quit Mode
+# was delivered/initiated against the date when the very first EMA in
+# Post-Quit Mode was initiated
 df.alldates <- df.alldates %>%
   mutate(prepost.is.equal = if_else(is.equal==0 & !is.na(is.equal), 0, NA_real_)) %>%
   mutate(prepost.is.equal = replace(prepost.is.equal, (!is.na(prepost.is.equal)) & (prequit.latest.shortformatdate==postquit.earliest.shortformatdate), 1))
@@ -148,5 +165,6 @@ df.alldates <- df.alldates %>% mutate(num = 1:nrow(df.alldates)) %>% select(num,
 #------------------------------------------------------------------------------
 # Write out to file
 #------------------------------------------------------------------------------
-write.csv(df.alldates, file.path(path.pns.output_data, "alldates.csv"), row.names=FALSE, na = "")
+saveRDS(df.alldates, file.path(path.pns.staged_data, "candidate_dates.RData"))
+
 
