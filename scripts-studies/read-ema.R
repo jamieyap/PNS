@@ -42,7 +42,7 @@ df.all.names <- data.frame(raw.data.file.names = raw.data.file.names,
                            stringsAsFactors = FALSE)
 
 # Read in item names from all EMA types
-ema.item.names <- read.csv(file.path(path.pns.output_data, "ema_item_names.csv"), header = TRUE, stringsAsFactors = FALSE)
+ema.item.names <- readRDS(file.path(path.pns.staged_data, "ema_item_names.RData"))
 
 # List will contain data frames corresponding to each EMA type
 list.all <- list()

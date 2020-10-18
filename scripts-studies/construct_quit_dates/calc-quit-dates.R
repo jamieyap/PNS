@@ -28,7 +28,8 @@ df.quit.dates <- data.frame(id = df.alldates$id,
                             quit.date = df.alldates$final.quit.date, 
                             end.study.date = as.POSIXct(NA),
                             exclude = df.alldates$exclude,
-                            sensitivity = df.alldates$sensitivity)
+                            sensitivity = df.alldates$sensitivity,
+                            stringsAsFactors = FALSE)
 
 # Time of day in start.study.date and end.study.date are set to 12AM
 df.quit.dates[["start.study.date"]] <- df.quit.dates[["quit.date"]] - 7*24*60*60  # seven-day Pre-Quit period

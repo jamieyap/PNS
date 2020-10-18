@@ -11,9 +11,9 @@ library(assertthat)
 CreateEMATimeVars <- function(df.raw){
   # About: Common data pre-processing tasks for PNS EMA data
   # Args: 
-  #   df.raw : raw data from one type of EMA only
+  #   df.raw, a data frame containing raw data from one type of EMA only
   # Output:
-  #   dataset with EMA time variables
+  #   df.raw, but with additional columns for time vriables
   
   # --------------------------------------------------------------------------- 
   # Rename variables in the raw data that will be relevant to the tasks
@@ -64,44 +64,6 @@ CreateEMATimeVars <- function(df.raw){
            everything())
   
   return(df.out)
-}
-
-SearchRecordID <- function(timestamp, df.covariate, past = TRUE){
-  # About: Gets record.id of most proximal EMA in the prior to (if
-  #        past==TRUE) timestamp or right after (if past==FALSE)
-  #        timestamp
-  # Args: 
-  #   timestamp: a timestamp
-  #   df.covariate: a data frame whose rows are records of
-  #     responses to Random EMA items
-  #   past: TRUE or FALSE to indicate whether a past or future
-  #     record is desired
-  # Output:
-  #   record.id of most proximal EMA in the prior to (if
-  #   past==TRUE) timestamp or right after (if past==FALSE)
-  #   timestamp
-  
-  assert_that(is.numeric(timestamp), msg = "timestamp must be in numeric format")
-  
-  if(isTRUE(past)){
-    # Get record.id from most proximal random EMA prior to timestamp
-    collect.idx <- which(df.covariate$time.unixts <= timestamp)
-    if(length(collect.idx) == 0){
-      this.record.id <- NA_character_
-    }else{
-      this.record.id <- as.character(df.covariate[max(collect.idx), ]$record.id)
-    }
-  }else{ 
-    # Get record.id from most proximal random EMA after timestamp
-    collect.idx <- which(df.covariate$time.unixts >= timestamp)
-    if(length(collect.idx) == 0){
-      this.record.id <- NA_character_
-    }else{
-      this.record.id <- as.character(df.covariate[min(collect.idx), ]$record.id)
-    }
-  }
-  
-  return(this.record.id)
 }
 
 
