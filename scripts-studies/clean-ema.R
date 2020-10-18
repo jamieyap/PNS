@@ -148,7 +148,7 @@ list.all.subset[["Post-Quit Urge"]] %>%
   saveRDS(., file.path(path.pns.staged_data, "delivered_no_issues_rdata_files", paste("delivered_no_issues_", "post_quit_urge_ema.RData", sep="")))
 
 list.all.subset[["Post-Quit About to Slip Part One"]] %>% 
-  filter(with.any.response==0 & (record.status=="Completed" | record.status=="FRAGMENT RECORD")) %>%
+  filter(with.any.response==1 | (with.any.response==0 & record.status=="Incomplete/Timed Out")) %>%
   saveRDS(., file.path(path.pns.staged_data, "delivered_no_issues_rdata_files", paste("delivered_no_issues_", "post_quit_about_to_slip_part_one_ema.RData", sep="")))
 
 list.all.subset[["Post-Quit About to Slip Part Two"]] %>% 
