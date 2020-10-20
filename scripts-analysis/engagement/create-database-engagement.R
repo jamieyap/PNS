@@ -26,7 +26,7 @@ path.shared.code <- Sys.getenv("path.shared.code")
 source(file.path(path.shared.code, "shared-data-manip-utils.R"))
 source(file.path(path.pns.code, "data-manip-utils.R"))
 
-data.baseline <- read.csv(file.path(path.pns.output_data, "pns_curated_baseline_data.csv"), stringsAsFactors = FALSE)
+data.baseline <- read.csv(file.path(path.pns.output_data, "curated_database_baseline.csv"), stringsAsFactors = FALSE)
 data.prequit.random <- read.csv(file.path(path.pns.output_data, "pre_quit_random_ema.csv"), stringsAsFactors = FALSE)
 data.postquit.random <- read.csv(file.path(path.pns.output_data, "post_quit_random_ema.csv"), stringsAsFactors = FALSE)
 
