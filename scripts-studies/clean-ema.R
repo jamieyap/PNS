@@ -31,7 +31,10 @@ path.shared.code <- Sys.getenv("path.shared.code")
 # Create time variables
 #------------------------------------------------------------------------------
 df.quit.dates <- readRDS(file.path(path.pns.staged_data, "quit_dates_final.RData"))
-df.quit.dates <- df.quit.dates %>% rename(start.study.hrts = start.study.date, end.study.hrts = end.study.date, quit.hrts = quit.date) 
+df.quit.dates <- df.quit.dates %>% 
+  rename(start.study.hrts = start.study.date, 
+         end.study.hrts = end.study.date, 
+         quit.hrts = quit.date) 
 
 # Convert human-readable timestamps to UNIX timestamps
 df.quit.dates <- df.quit.dates %>%
@@ -87,131 +90,223 @@ list.all.subset <- lapply(list.all, function(this.df, use.quit.dates = df.quit.d
 
 #------------------------------------------------------------------------------
 # Identify EMAs (any type) which the software chose to launch and were 
-# successfully delivered/initiated but had some indication of 
-# issues relating to the software
-#------------------------------------------------------------------------------
-
-# POST-QUIT MODE EMAs #################
-
-list.all.subset[["Post-Quit Random"]] %>% 
-  filter((with.any.response==0 & record.status=="Completed") | (with.any.response==0 & record.status=="FRAGMENT RECORD")) %>%
-  saveRDS(., file.path(path.pns.staged_data, "delivered_with_issues_rdata_files", paste("delivered_with_issues_", "post_quit_random_ema.RData", sep="")))
-  
-list.all.subset[["Post-Quit Urge"]] %>% 
-  filter((with.any.response==0 & record.status=="Completed") | (with.any.response==0 & record.status=="FRAGMENT RECORD")) %>%
-  saveRDS(., file.path(path.pns.staged_data, "delivered_with_issues_rdata_files", paste("delivered_with_issues_", "post_quit_urge_ema.RData", sep="")))
-
-list.all.subset[["Post-Quit About to Slip Part One"]] %>% 
-  filter((with.any.response==0 & record.status=="Completed") | (with.any.response==0 & record.status=="FRAGMENT RECORD")) %>%
-  saveRDS(., file.path(path.pns.staged_data, "delivered_with_issues_rdata_files", paste("delivered_with_issues_", "post_quit_about_to_slip_part_one_ema.RData", sep="")))
-
-list.all.subset[["Post-Quit About to Slip Part Two"]] %>% 
-  filter((with.any.response==0 & record.status=="Completed") | (with.any.response==0 & record.status=="FRAGMENT RECORD")) %>%
-  saveRDS(., file.path(path.pns.staged_data, "delivered_with_issues_rdata_files", paste("delivered_with_issues_", "post_quit_about_to_slip_part_two_ema.RData", sep="")))
-
-list.all.subset[["Post-Quit Already Slipped"]] %>% 
-  filter((with.any.response==0 & record.status=="Completed") | (with.any.response==0 & record.status=="FRAGMENT RECORD")) %>%
-  saveRDS(., file.path(path.pns.staged_data, "delivered_with_issues_rdata_files", paste("delivered_with_issues_", "post_quit_already_slipped_ema.RData", sep="")))
-
-# PRE-QUIT MODE EMAs ##################
-
-list.all.subset[["Pre-Quit Random"]] %>% 
-  filter((with.any.response==0 & record.status=="Completed") | (with.any.response==0 & record.status=="FRAGMENT RECORD")) %>%
-  saveRDS(., file.path(path.pns.staged_data, "delivered_with_issues_rdata_files", paste("delivered_with_issues_", "pre_quit_random_ema.RData", sep="")))
-
-list.all.subset[["Pre-Quit Urge"]] %>% 
-  filter((with.any.response==0 & record.status=="Completed") | (with.any.response==0 & record.status=="FRAGMENT RECORD")) %>%
-  saveRDS(., file.path(path.pns.staged_data, "delivered_with_issues_rdata_files", paste("delivered_with_issues_", "pre_quit_urge_ema.RData", sep="")))
-
-list.all.subset[["Pre-Quit Smoking Part One"]] %>% 
-  filter((with.any.response==0 & record.status=="Completed") | (with.any.response==0 & record.status=="FRAGMENT RECORD")) %>%
-  saveRDS(., file.path(path.pns.staged_data, "delivered_with_issues_rdata_files", paste("delivered_with_issues_", "pre_quit_smoking_part_one_ema.RData", sep="")))
-
-list.all.subset[["Pre-Quit Smoking Part Two"]] %>% 
-  filter((with.any.response==0 & record.status=="Completed") | (with.any.response==0 & record.status=="FRAGMENT RECORD")) %>%
-  saveRDS(., file.path(path.pns.staged_data, "delivered_with_issues_rdata_files", paste("delivered_with_issues_", "pre_quit_smoking_part_two_ema.RData", sep="")))
-
-#------------------------------------------------------------------------------
-# Identify EMAs (any type) which the software chose to launch and were 
 # successfully delivered/initiated and had no indication of 
 # issues relating to the software
 #------------------------------------------------------------------------------
 
+list.clean.launched <- list()
+
 # POST-QUIT MODE EMAs #################
 
-list.all.subset[["Post-Quit Random"]] %>% 
-  filter(with.any.response==1 | (with.any.response==0 & record.status=="Incomplete/Timed Out")) %>%
-  saveRDS(., file.path(path.pns.staged_data, "delivered_no_issues_rdata_files", paste("delivered_no_issues_", "post_quit_random_ema.RData", sep="")))
+list.clean.launched[["Post-Quit Random"]] <- list.all.subset[["Post-Quit Random"]] %>% 
+  filter(with.any.response==1 | (with.any.response==0 & record.status=="Incomplete/Timed Out"))
 
-list.all.subset[["Post-Quit Urge"]] %>% 
-  filter(with.any.response==1 | (with.any.response==0 & record.status=="Incomplete/Timed Out")) %>%
-  saveRDS(., file.path(path.pns.staged_data, "delivered_no_issues_rdata_files", paste("delivered_no_issues_", "post_quit_urge_ema.RData", sep="")))
+list.clean.launched[["Post-Quit Urge"]] <- list.all.subset[["Post-Quit Urge"]] %>% 
+  filter(with.any.response==1 | (with.any.response==0 & record.status=="Incomplete/Timed Out"))
 
-list.all.subset[["Post-Quit About to Slip Part One"]] %>% 
-  filter(with.any.response==1 | (with.any.response==0 & record.status=="Incomplete/Timed Out")) %>%
-  saveRDS(., file.path(path.pns.staged_data, "delivered_no_issues_rdata_files", paste("delivered_no_issues_", "post_quit_about_to_slip_part_one_ema.RData", sep="")))
+list.clean.launched[["Post-Quit About to Slip Part One"]] <- list.all.subset[["Post-Quit About to Slip Part One"]] %>% 
+  filter(with.any.response==1 | (with.any.response==0 & record.status=="Incomplete/Timed Out")) 
 
-list.all.subset[["Post-Quit About to Slip Part Two"]] %>% 
-  filter(with.any.response==1 | (with.any.response==0 & record.status=="Incomplete/Timed Out")) %>%
-  saveRDS(., file.path(path.pns.staged_data, "delivered_no_issues_rdata_files", paste("delivered_no_issues_", "post_quit_about_to_slip_part_two_ema.RData", sep="")))
+list.clean.launched[["Post-Quit About to Slip Part Two"]] <- list.all.subset[["Post-Quit About to Slip Part Two"]] %>% 
+  filter(with.any.response==1 | (with.any.response==0 & record.status=="Incomplete/Timed Out")) 
 
-list.all.subset[["Post-Quit Already Slipped"]] %>% 
-  filter(with.any.response==1 | (with.any.response==0 & record.status=="Incomplete/Timed Out")) %>%
-  saveRDS(., file.path(path.pns.staged_data, "delivered_no_issues_rdata_files", paste("delivered_no_issues_", "post_quit_already_slipped_ema.RData", sep="")))
+list.clean.launched[["Post-Quit Already Slipped"]] <- list.all.subset[["Post-Quit Already Slipped"]] %>% 
+  filter(with.any.response==1 | (with.any.response==0 & record.status=="Incomplete/Timed Out")) 
 
-# PRE-QUIT MODE EMAs
+# PRE-QUIT MODE EMAs ##################
 
-list.all.subset[["Pre-Quit Random"]] %>% 
-  filter(with.any.response==1 | (with.any.response==0 & record.status=="Incomplete/Timed Out")) %>%
-  saveRDS(., file.path(path.pns.staged_data, "delivered_no_issues_rdata_files", paste("delivered_no_issues_", "pre_quit_random_ema.RData", sep="")))
+list.clean.launched[["Pre-Quit Random"]] <- list.all.subset[["Pre-Quit Random"]] %>% 
+  filter(with.any.response==1 | (with.any.response==0 & record.status=="Incomplete/Timed Out")) 
 
-list.all.subset[["Pre-Quit Urge"]] %>% 
-  filter(with.any.response==1 | (with.any.response==0 & record.status=="Incomplete/Timed Out")) %>%
-  saveRDS(., file.path(path.pns.staged_data, "delivered_no_issues_rdata_files", paste("delivered_no_issues_", "pre_quit_urge_ema.RData", sep="")))
+list.clean.launched[["Pre-Quit Urge"]] <- list.all.subset[["Pre-Quit Urge"]] %>% 
+  filter(with.any.response==1 | (with.any.response==0 & record.status=="Incomplete/Timed Out")) 
 
-list.all.subset[["Pre-Quit Smoking Part One"]] %>% 
-  filter(with.any.response==1 | (with.any.response==0 & record.status=="Incomplete/Timed Out")) %>%
-  saveRDS(., file.path(path.pns.staged_data, "delivered_no_issues_rdata_files", paste("delivered_no_issues_", "pre_quit_smoking_part_one_ema.RData", sep="")))
+list.clean.launched[["Pre-Quit Smoking Part One"]] <- list.all.subset[["Pre-Quit Smoking Part One"]] %>% 
+  filter(with.any.response==1 | (with.any.response==0 & record.status=="Incomplete/Timed Out")) 
 
-list.all.subset[["Pre-Quit Smoking Part Two"]] %>% 
-  filter(with.any.response==1 | (with.any.response==0 & record.status=="Incomplete/Timed Out")) %>%
-  saveRDS(., file.path(path.pns.staged_data, "delivered_no_issues_rdata_files", paste("delivered_no_issues_", "pre_quit_smoking_part_two_ema.RData", sep="")))
+list.clean.launched[["Pre-Quit Smoking Part Two"]] <- list.all.subset[["Pre-Quit Smoking Part Two"]] %>% 
+  filter(with.any.response==1 | (with.any.response==0 & record.status=="Incomplete/Timed Out"))
+
+saveRDS(list.clean.launched, file.path(path.pns.staged_data, "clean_launched.RData"))
+
+#------------------------------------------------------------------------------
+# Identify EMAs (any type) which the software chose to launch and were 
+# successfully delivered/initiated but had some indication of 
+# issues relating to the software
+#------------------------------------------------------------------------------
+
+list.dirty.launched <- list()
+
+# POST-QUIT MODE EMAs #################
+
+list.dirty.launched[["Post-Quit Random"]] <- list.all.subset[["Post-Quit Random"]] %>% 
+  filter((with.any.response==0 & record.status=="Completed") | (with.any.response==0 & record.status=="FRAGMENT RECORD")) %>%
+  select(id, callnumr, 
+         start.study.hrts, quit.hrts, end.study.hrts, 
+         start.study.unixts, quit.unixts, end.study.unixts,
+         record.id, assessment.type, 
+         use.as.postquit, sensitivity,
+         delivered.hrts, begin.hrts, end.hrts, time.hrts,
+         delivered.unixts, begin.unixts, end.unixts, time.unixts,
+         record.status, with.any.response)
+
+list.dirty.launched[["Post-Quit Urge"]] <- list.all.subset[["Post-Quit Urge"]] %>% 
+  filter((with.any.response==0 & record.status=="Completed") | (with.any.response==0 & record.status=="FRAGMENT RECORD")) %>%
+  select(id, callnumr, 
+         start.study.hrts, quit.hrts, end.study.hrts, 
+         start.study.unixts, quit.unixts, end.study.unixts,
+         record.id, assessment.type, 
+         use.as.postquit, sensitivity,
+         delivered.hrts, begin.hrts, end.hrts, time.hrts,
+         delivered.unixts, begin.unixts, end.unixts, time.unixts,
+         record.status, with.any.response)
+
+list.dirty.launched[["Post-Quit About to Slip Part One"]] <- list.all.subset[["Post-Quit About to Slip Part One"]] %>% 
+  filter((with.any.response==0 & record.status=="Completed") | (with.any.response==0 & record.status=="FRAGMENT RECORD")) %>%
+  select(id, callnumr, 
+         start.study.hrts, quit.hrts, end.study.hrts, 
+         start.study.unixts, quit.unixts, end.study.unixts,
+         record.id, assessment.type, 
+         use.as.postquit, sensitivity,
+         delivered.hrts, begin.hrts, end.hrts, time.hrts,
+         delivered.unixts, begin.unixts, end.unixts, time.unixts,
+         record.status, with.any.response)
+
+list.dirty.launched[["Post-Quit About to Slip Part Two"]] <- list.all.subset[["Post-Quit About to Slip Part Two"]] %>% 
+  filter((with.any.response==0 & record.status=="Completed") | (with.any.response==0 & record.status=="FRAGMENT RECORD")) %>%
+  select(id, callnumr, 
+         start.study.hrts, quit.hrts, end.study.hrts, 
+         start.study.unixts, quit.unixts, end.study.unixts,
+         record.id, assessment.type, 
+         use.as.postquit, sensitivity,
+         delivered.hrts, begin.hrts, end.hrts, time.hrts,
+         delivered.unixts, begin.unixts, end.unixts, time.unixts,
+         record.status, with.any.response)
+
+list.dirty.launched[["Post-Quit Already Slipped"]] <- list.all.subset[["Post-Quit Already Slipped"]] %>% 
+  filter((with.any.response==0 & record.status=="Completed") | (with.any.response==0 & record.status=="FRAGMENT RECORD")) %>%
+  select(id, callnumr, 
+         start.study.hrts, quit.hrts, end.study.hrts, 
+         start.study.unixts, quit.unixts, end.study.unixts,
+         record.id, assessment.type, 
+         use.as.postquit, sensitivity,
+         delivered.hrts, begin.hrts, end.hrts, time.hrts,
+         delivered.unixts, begin.unixts, end.unixts, time.unixts,
+         record.status, with.any.response)
+
+# PRE-QUIT MODE EMAs ##################
+
+list.dirty.launched[["Pre-Quit Random"]] <- list.all.subset[["Pre-Quit Random"]] %>% 
+  filter((with.any.response==0 & record.status=="Completed") | (with.any.response==0 & record.status=="FRAGMENT RECORD")) %>%
+  select(id, callnumr, 
+         start.study.hrts, quit.hrts, end.study.hrts, 
+         start.study.unixts, quit.unixts, end.study.unixts,
+         record.id, assessment.type, 
+         use.as.postquit, sensitivity,
+         delivered.hrts, begin.hrts, end.hrts, time.hrts,
+         delivered.unixts, begin.unixts, end.unixts, time.unixts,
+         record.status, with.any.response)
+
+list.dirty.launched[["Pre-Quit Urge"]] <- list.all.subset[["Pre-Quit Urge"]] %>% 
+  filter((with.any.response==0 & record.status=="Completed") | (with.any.response==0 & record.status=="FRAGMENT RECORD")) %>%
+  select(id, callnumr, 
+         start.study.hrts, quit.hrts, end.study.hrts, 
+         start.study.unixts, quit.unixts, end.study.unixts,
+         record.id, assessment.type, 
+         use.as.postquit, sensitivity,
+         delivered.hrts, begin.hrts, end.hrts, time.hrts,
+         delivered.unixts, begin.unixts, end.unixts, time.unixts,
+         record.status, with.any.response)
+
+list.dirty.launched[["Pre-Quit Smoking Part One"]] <- list.all.subset[["Pre-Quit Smoking Part One"]] %>% 
+  filter((with.any.response==0 & record.status=="Completed") | (with.any.response==0 & record.status=="FRAGMENT RECORD")) %>%
+  select(id, callnumr, 
+         start.study.hrts, quit.hrts, end.study.hrts, 
+         start.study.unixts, quit.unixts, end.study.unixts,
+         record.id, assessment.type, 
+         use.as.postquit, sensitivity,
+         delivered.hrts, begin.hrts, end.hrts, time.hrts,
+         delivered.unixts, begin.unixts, end.unixts, time.unixts,
+         record.status, with.any.response)
+
+list.dirty.launched[["Pre-Quit Smoking Part Two"]] <- list.all.subset[["Pre-Quit Smoking Part Two"]] %>% 
+  filter((with.any.response==0 & record.status=="Completed") | (with.any.response==0 & record.status=="FRAGMENT RECORD")) %>%
+  select(id, callnumr, 
+         start.study.hrts, quit.hrts, end.study.hrts, 
+         start.study.unixts, quit.unixts, end.study.unixts,
+         record.id, assessment.type, 
+         use.as.postquit, sensitivity,
+         delivered.hrts, begin.hrts, end.hrts, time.hrts,
+         delivered.unixts, begin.unixts, end.unixts, time.unixts,
+         record.status, with.any.response)
+
+df.dirty.launched <- bind_rows(list.dirty.launched)
+saveRDS(df.dirty.launched, file.path(path.pns.staged_data, "dirty_launched.RData"))
 
 #------------------------------------------------------------------------------
 # Identify self-initiated EMA (any type) button press where the software chose 
 # to NOT launch an EMA
 #------------------------------------------------------------------------------
 
+list.bp <- list()
+
 # POST-QUIT MODE EMAs #################
-list.all.subset[["Post-Quit Urge"]] %>% 
+list.bp[["Post-Quit Urge"]] <- list.all.subset[["Post-Quit Urge"]] %>% 
   filter(with.any.response==0 & record.status=="CANCELLED") %>%
-  saveRDS(., file.path(path.pns.staged_data, "button_press_rdata_files", paste("button_press_", "post_quit_urge_ema.RData", sep="")))
+  select(id, callnumr, 
+         start.study.hrts, quit.hrts, end.study.hrts, 
+         start.study.unixts, quit.unixts, end.study.unixts,
+         record.id, assessment.type, 
+         use.as.postquit, sensitivity,
+         delivered.hrts, begin.hrts, end.hrts, time.hrts,
+         delivered.unixts, begin.unixts, end.unixts, time.unixts,
+         record.status, with.any.response)
 
-list.all.subset[["Post-Quit About to Slip Part One"]] %>% 
+list.bp[["Post-Quit About to Slip Part One"]] <- list.all.subset[["Post-Quit About to Slip Part One"]] %>% 
   filter(with.any.response==0 & record.status=="CANCELLED") %>%
-  saveRDS(., file.path(path.pns.staged_data, "button_press_rdata_files", paste("button_press_", "post_quit_about_to_slip_part_one_ema.RData", sep="")))
+  select(id, callnumr, 
+         start.study.hrts, quit.hrts, end.study.hrts, 
+         start.study.unixts, quit.unixts, end.study.unixts,
+         record.id, assessment.type, 
+         use.as.postquit, sensitivity,
+         delivered.hrts, begin.hrts, end.hrts, time.hrts,
+         delivered.unixts, begin.unixts, end.unixts, time.unixts,
+         record.status, with.any.response)
 
-list.all.subset[["Post-Quit About to Slip Part Two"]] %>% 
+list.bp[["Post-Quit Already Slipped"]] <- list.all.subset[["Post-Quit Already Slipped"]] %>% 
   filter(with.any.response==0 & record.status=="CANCELLED") %>%
-  saveRDS(., file.path(path.pns.staged_data, "button_press_rdata_files", paste("button_press_", "post_quit_about_to_slip_part_two_ema.RData", sep="")))
-
-list.all.subset[["Post-Quit Already Slipped"]] %>% 
-  filter(with.any.response==0 & record.status=="CANCELLED") %>%
-  saveRDS(., file.path(path.pns.staged_data, "button_press_rdata_files", paste("button_press_", "post_quit_already_slipped_ema.RData", sep="")))
+  select(id, callnumr, 
+         start.study.hrts, quit.hrts, end.study.hrts, 
+         start.study.unixts, quit.unixts, end.study.unixts,
+         record.id, assessment.type, 
+         use.as.postquit, sensitivity,
+         delivered.hrts, begin.hrts, end.hrts, time.hrts,
+         delivered.unixts, begin.unixts, end.unixts, time.unixts,
+         record.status, with.any.response)
 
 # PRE-QUIT MODE EMAs ##################
-list.all.subset[["Pre-Quit Urge"]] %>% 
+list.bp[["Pre-Quit Urge"]] <- list.all.subset[["Pre-Quit Urge"]] %>% 
   filter(with.any.response==0 & record.status=="CANCELLED") %>%
-  saveRDS(., file.path(path.pns.staged_data, "button_press_rdata_files", paste("button_press_", "pre_quit_urge_ema.RData", sep="")))
+  select(id, callnumr, 
+         start.study.hrts, quit.hrts, end.study.hrts, 
+         start.study.unixts, quit.unixts, end.study.unixts,
+         record.id, assessment.type, 
+         use.as.postquit, sensitivity,
+         delivered.hrts, begin.hrts, end.hrts, time.hrts,
+         delivered.unixts, begin.unixts, end.unixts, time.unixts,
+         record.status, with.any.response)
 
-list.all.subset[["Pre-Quit Smoking Part One"]] %>% 
+list.bp[["Pre-Quit Smoking Part One"]] <- list.all.subset[["Pre-Quit Smoking Part One"]] %>% 
   filter(with.any.response==0 & record.status=="CANCELLED") %>%
-  saveRDS(., file.path(path.pns.staged_data, "button_press_rdata_files", paste("button_press_", "pre_quit_smoking_part_one_ema.RData", sep="")))
+  select(id, callnumr, 
+         start.study.hrts, quit.hrts, end.study.hrts, 
+         start.study.unixts, quit.unixts, end.study.unixts,
+         record.id, assessment.type, 
+         use.as.postquit, sensitivity,
+         delivered.hrts, begin.hrts, end.hrts, time.hrts,
+         delivered.unixts, begin.unixts, end.unixts, time.unixts,
+         record.status, with.any.response)
 
-list.all.subset[["Pre-Quit Smoking Part Two"]] %>% 
-  filter(with.any.response==0 & record.status=="CANCELLED") %>%
-  saveRDS(., file.path(path.pns.staged_data, "button_press_rdata_files", paste("button_press_", "pre_quit_smoking_part_two_ema.RData", sep="")))
-
-
-
+df.bp <- bind_rows(list.bp)
+saveRDS(df.bp, file.path(path.pns.staged_data, "buttonpress.RData"))
 
