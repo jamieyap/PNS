@@ -47,9 +47,9 @@ for(i in 1:length(ema.types)){
 #     have been smoked within a specified time period
 #------------------------------------------------------------------------------
 
-source(file.path(path.pns.code, "smoking_outcome", "identify-smoking-vars.R"))
-source(file.path(path.pns.code, "smoking_outcome", "rules-smoking-quantity.R"))
-source(file.path(path.pns.code, "smoking_outcome", "rules-smoking-indicator.R"))
+source(file.path(path.pns.code, "construct_smoking_outcome", "identify-smoking-vars.R"))
+source(file.path(path.pns.code, "construct_smoking_outcome", "rules-smoking-quantity.R"))
+source(file.path(path.pns.code, "construct_smoking_outcome", "rules-smoking-indicator.R"))
 
 #------------------------------------------------------------------------------
 # Set up data frame prior to implementing decision rules on constructing
@@ -65,7 +65,7 @@ list.all <- lapply(list.all, function(dat){
            sensitivity,
            record.id, assessment.type, 
            use.as.postquit,
-           with.any.response,
+           with.any.response, record.status,
            delivered.hrts, begin.hrts, end.hrts, time.hrts,
            delivered.unixts, begin.unixts, end.unixts, time.unixts,
            rawdata.indicator, rawdata.qty, rawdata.timing,
@@ -99,7 +99,7 @@ df.all <- df.all %>%
   mutate(time.unixts_shift_minus_1 = if_else(ema.order==1, as.double(start.study.unixts), time.unixts_shift_minus_1)) %>%
   mutate(hours.between.past.and.present = (time.unixts - time.unixts_shift_minus_1)/(60*60))
 
-source(file.path(path.pns.code, "smoking_outcome", "rules-smoking-timing.R"))
+source(file.path(path.pns.code, "construct_smoking_outcome", "rules-smoking-timing.R"))
 
 #------------------------------------------------------------------------------
 # Save output
