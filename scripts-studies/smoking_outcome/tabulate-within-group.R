@@ -35,10 +35,11 @@ tab.by.smk <- smokingdb %>%
   arrange(desc(is.all.no))
 
 # Identify individuals having at least 1 pre quit mode EMA and 
-# who self-reported no smoking all throughout all delivered EMAs
+# who self-reported no smoking all EMA having any self-report
+# of number of cigarettes smoked
 tab.by.smk.subset <- tab.by.smk %>% 
   filter(is.all.no==1) %>%
   select(id, count.not.miss, is.all.no)
 
-
+saveRDS(tab.by.smk.subset, file.path(path.pns.staged_data, "tabulate_smk.RData"))
 

@@ -19,36 +19,22 @@ source(file.path(path.shared.code, "shared-data-manip-utils.R"))
 #------------------------------------------------------------------------------
 # Read in output of clean-ema.R and store each data frame in list.all
 #------------------------------------------------------------------------------
-list.all <- list()
-
-# Random EMA
-list.all[["Post-Quit Random"]] <- readRDS(file.path(path.pns.staged_data, "delivered_no_issues_rdata_files", "delivered_no_issues_post_quit_random_ema.RData"))
-list.all[["Pre-Quit Random"]] <- readRDS(file.path(path.pns.staged_data, "delivered_no_issues_rdata_files", "delivered_no_issues_pre_quit_random_ema.RData"))
-
-# Urge EMA
-list.all[["Post-Quit Urge"]] <- readRDS(file.path(path.pns.staged_data, "delivered_no_issues_rdata_files", "delivered_no_issues_post_quit_urge_ema.RData"))
-list.all[["Pre-Quit Urge"]] <- readRDS(file.path(path.pns.staged_data, "delivered_no_issues_rdata_files", "delivered_no_issues_pre_quit_urge_ema.RData"))
-
-# Smoking Part One EMA
-list.all[["Post-Quit About to Slip Part One"]] <- readRDS(file.path(path.pns.staged_data, "delivered_no_issues_rdata_files", "delivered_no_issues_post_quit_about_to_slip_part_one_ema.RData"))
-list.all[["Pre-Quit Smoking Part One"]] <- readRDS(file.path(path.pns.staged_data, "delivered_no_issues_rdata_files", "delivered_no_issues_pre_quit_smoking_part_one_ema.RData"))
-
-# Smoking Part Two EMA
-list.all[["Post-Quit About to Slip Part Two"]] <- readRDS(file.path(path.pns.staged_data, "delivered_no_issues_rdata_files", "delivered_no_issues_post_quit_about_to_slip_part_two_ema.RData"))
-list.all[["Pre-Quit Smoking Part Two"]] <- readRDS(file.path(path.pns.staged_data, "delivered_no_issues_rdata_files", "delivered_no_issues_pre_quit_smoking_part_two_ema.RData"))
-
-# Already Slipped EMA
-list.all[["Post-Quit Already Slipped"]] <- readRDS(file.path(path.pns.staged_data, "delivered_no_issues_rdata_files", "delivered_no_issues_post_quit_already_slipped_ema.RData"))
+list.all <- readRDS(file.path(path.pns.staged_data, "clean_launched.RData"))
 
 #------------------------------------------------------------------------------
 # Exclude assessments meeting the criteria below from creating a curated
 # data base of smoking information based on EMAs
 #------------------------------------------------------------------------------
+ema.types <- names(list.all)
 
-list.all <- lapply(list.all, function(dat){
-  dat <- dat %>% filter(with.any.response==1)
-  return(dat)
-})
+for(i in 1:length(ema.types)){
+  if(ema.types[i]=="Post-Quit Random" | ema.types[i]=="Pre-Quit Random"){
+    dat <- list.all[[ema.types[i]]]
+    list.all[[ema.types[i]]] <- dat %>% filter(with.any.response==1)
+  }else{
+    next
+  }
+}
 
 #------------------------------------------------------------------------------
 # Implement decision rules for constructing curated database of smoking

@@ -40,12 +40,12 @@ df.all <- df.all %>%
 df.all <- df.all %>%
   mutate(smoking.delta.minutes = case_when(
     # Post-Quit assessments
-    assessment.type == "Post-Quit Random" & rawdata.timing==8 ~ 2*60 + (1/60)*((time.unixts-2*60*60) - time.unixts_shift_minus_1)/2,
-    assessment.type == "Post-Quit Urge" & rawdata.timing==8 ~ 2*60 + (1/60)*((time.unixts-2*60*60) - time.unixts_shift_minus_1)/2,
-    assessment.type == "Post-Quit Already Slipped" & rawdata.timing==8 ~ 2*60 + (1/60)*((time.unixts-2*60*60) - time.unixts_shift_minus_1)/2,
+    assessment.type == "Post-Quit Random" & rawdata.timing==8 & (hours.between.past.and.present<=24) ~ 2*60 + (1/60)*((time.unixts-2*60*60) - time.unixts_shift_minus_1)/2,
+    assessment.type == "Post-Quit Urge" & rawdata.timing==8 & (hours.between.past.and.present<=24) ~ 2*60 + (1/60)*((time.unixts-2*60*60) - time.unixts_shift_minus_1)/2,
+    assessment.type == "Post-Quit Already Slipped" & rawdata.timing==8 & (hours.between.past.and.present<=24) ~ 2*60 + (1/60)*((time.unixts-2*60*60) - time.unixts_shift_minus_1)/2,
     # Pre-Quit assessments
-    assessment.type == "Pre-Quit Random" & rawdata.timing==8 ~ 2*60 + (1/60)*((time.unixts-2*60*60) - time.unixts_shift_minus_1)/2,
-    assessment.type == "Pre-Quit Urge" & rawdata.timing==8 ~ 2*60 + (1/60)*((time.unixts-2*60*60) - time.unixts_shift_minus_1)/2,
+    assessment.type == "Pre-Quit Random" & rawdata.timing==8 & (hours.between.past.and.present<=24) ~ 2*60 + (1/60)*((time.unixts-2*60*60) - time.unixts_shift_minus_1)/2,
+    assessment.type == "Pre-Quit Urge" & rawdata.timing==8 & (hours.between.past.and.present<=24) ~ 2*60 + (1/60)*((time.unixts-2*60*60) - time.unixts_shift_minus_1)/2,
     # Else
     TRUE ~ smoking.delta.minutes
   ))
@@ -63,6 +63,7 @@ df.all <- df.all %>%
     TRUE ~ smoking.delta.minutes
   ))
 
+# Calculate smoking.delta.minutes for Pre-Quit Smoking Part Two EMAs which are not preceded by Pre-Quit Smoking Part One EMAs
 this.ave.hours.between.past.and.present <- df.all %>% filter(assessment.type == "Pre-Quit Smoking Part Two" & assessment.type_shift_minus_1 == "Pre-Quit Smoking Part One")
 this.ave.hours.between.past.and.present <- mean(this.ave.hours.between.past.and.present$hours.between.past.and.present, na.rm=TRUE)
 
@@ -75,8 +76,20 @@ df.all <- df.all %>%
     TRUE ~ smoking.delta.minutes
   ))
 
-df.all <- df.all %>%
-  mutate(smoking.delta.minutes = replace(smoking.delta.minutes, smoking.qty==0, NA_real_)) %>%
-  mutate(smoking.delta.minutes = replace(smoking.delta.minutes, is.na(smoking.qty), NA_real_))
+remove(this.ave.hours.between.past.and.present)
 
+# Calculate smoking.delta.minutes for Post-Quit About to Slip Part Two EMAs which are not preceded by Post-Quit About to Slip Part One EMAs
+this.ave.hours.between.past.and.present <- df.all %>% filter(assessment.type == "Post-Quit About to Slip Part Two" & assessment.type_shift_minus_1 == "Post-Quit About to Slip Part One")
+this.ave.hours.between.past.and.present <- mean(this.ave.hours.between.past.and.present$hours.between.past.and.present, na.rm=TRUE)
+
+df.all <- df.all %>%
+  mutate(smoking.delta.minutes = case_when(
+    # Pre-Quit assessments
+    (assessment.type == "Post-Quit About to Slip Part Two") & (assessment.type_shift_minus_1 != "Post-Quit About to Slip Part One") & (this.ave.hours.between.past.and.present <= hours.between.past.and.present) ~ this.ave.hours.between.past.and.present*60/2,
+    (assessment.type == "Post-Quit About to Slip Part Two") & (assessment.type_shift_minus_1 != "Post-Quit About to Slip Part One") & (this.ave.hours.between.past.and.present > hours.between.past.and.present) ~ hours.between.past.and.present*60/2,
+    # Else
+    TRUE ~ smoking.delta.minutes
+  ))
+
+remove(this.ave.hours.between.past.and.present)
 
