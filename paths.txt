@@ -1,5 +1,5 @@
 ###############################################################################
-# GitHub Repository: PNS
+# Por Nuestra Salud
 ###############################################################################
 
 # -----------------------------------------------------------------------------
@@ -10,7 +10,12 @@ path.pns.staged_data = ".../Staged Data/PNS"
 path.pns.output_data = ".../Curated Data/PNS"
 path.pns.code = ".../PNS/scripts-studies"
 
+path.pns.demo.engagement = ".../PNS/scripts-analysis/engagement"
+path.pns.demo.smoking = ".../PNS/scripts-analysis/smoking"
+
 # -----------------------------------------------------------------------------
 # Shared paths for all studies
 # -----------------------------------------------------------------------------
 path.shared.code = ".../PNS/scripts-shared"
+
+
