@@ -1,7 +1,10 @@
 ###############################################################################
 # ABOUT:
-# * Creates a file with a list of item names in each EMA raw data file;
-#   these item names correspond to that recorded in the codebooks
+# * Identify column names in raw data where responses to EMA items are recorded
+# * For each of the original column names, new names are given;
+#   the format used in name_new enables end-users to determine the particular 
+#   kind of EMA in which the value in the merged dataset (having data from two
+#   or more kinds of EMA; there are nine kinds of EMA) was originally provided
 ###############################################################################
 
 library(dplyr)
@@ -128,7 +131,8 @@ list.collect <- append(list.collect, list(df.item.names))
 
 # Prepare output --------------------------------------------------------------
 df.collect <- do.call(rbind, list.collect)
-saveRDS(df.collect, file.path(path.pns.staged_data, "ema_item_names.RData"))
+ema.item.names <- df.collect
+saveRDS(ema.item.names, file = file.path(path.pns.staged_data, "ema_item_names.RData"))
 
 #------------------------------------------------------------------------------
 # Change periods in column names to underscrores
@@ -144,4 +148,15 @@ df.collect <- df.collect %>%
          name_new = name.new)
 
 write.csv(df.collect, file.path(path.pns.output_data, "ema_item_names.csv"), row.names = FALSE)
+
+# Add documentation on column names
+docs <- data.frame(dataset = "ema_item_names.csv", columns = colnames(df.collect), description = NA, stringsAsFactors = FALSE)
+docs <- docs %>%
+  mutate(description = replace(description, columns == "is_postquit_assessment_type", "1: Post-Quit Mode type of EMA; 0: Pre-Quit Mode type of EMA")) %>%
+  mutate(description = replace(description, columns == "assessment_type", "kind of EMA; there are a total of 9 kinds of EMA")) %>%
+  mutate(description = replace(description, columns == "name_codebook", "original variable name in the raw data; can be cross-referenced against variable name in codebook")) %>%
+  mutate(description = replace(description, columns == "name_new", "new names given to variables in curated datasets where data from two or more kinds of EMA are merged; the format used in name_new enables end-users to determine the particular kind of EMA in which the value in the merged dataset was originally provided"))
+
+write.csv(docs, file.path(path.pns.output_data, "docs_ema_item_names.csv"), row.names = FALSE)
+
 

@@ -4,6 +4,7 @@
 # * Constuct variables for time when EMA was delivered, begun, completed
 # * Construct variable indicating whether a response to any item was recorded
 # * Save to intermediate file in preparation for further data processing
+# * CALLS WITHIN SCRIPT: shared-data-manip-utils.R and data-manip-utils.R
 ###############################################################################
 
 library(dplyr)
@@ -42,7 +43,7 @@ df.all.names <- data.frame(raw.data.file.names = raw.data.file.names,
                            stringsAsFactors = FALSE)
 
 # Read in item names from all EMA types
-ema.item.names <- readRDS(file.path(path.pns.staged_data, "ema_item_names.RData"))
+ema.item.names <- readRDS(file = file.path(path.pns.staged_data, "ema_item_names.RData"))
 
 # List will contain data frames corresponding to each EMA type
 list.all <- list()
@@ -95,7 +96,7 @@ for(i in 1:length(raw.data.file.names)){
            with.any.response, record.status,
            delivered.hrts, begin.hrts, end.hrts, time.hrts,
            delivered.unixts, begin.unixts, end.unixts, time.unixts, 
-           these.ema.colnames)
+           all_of(these.ema.colnames))
   
   # Append data frame corresponding to this specific EMA type to list
   # that will contain data frames from each EMA type
@@ -108,6 +109,6 @@ names(list.all) <- reformatted.ema.type.names
 # Save list.all as an .RData object
 #------------------------------------------------------------------------------
 
-save(list.all, file = file.path(path.pns.staged_data, "all_ema_processed.RData"))
+saveRDS(list.all, file = file.path(path.pns.staged_data, "all_ema_processed.RData"))
 
 

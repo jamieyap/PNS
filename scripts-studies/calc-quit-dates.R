@@ -5,11 +5,9 @@
 #     the overall analytic datasets (via the variable 'exclude') and
 #     whether an individual will be included in sensitivity analysis
 #     (via the variable 'sensitivity')
-#   
 #   * The first few columns of alldates_annotated.xlsx were created
 #     using calc-candidate-dates.R and the following scripts were used
 #     to determine 'Working Quit Date' (the value of the variable 'quit.date')
-# 
 #   * From 'Working Quit Date', the dates viewed as an individual's 
 #     beginning and end times in the study were calculated; these are then
 #     named as 'start.study.date' and 'end.study.date', respectively
@@ -38,5 +36,5 @@ df.quit.dates[["end.study.date"]] <- df.quit.dates[["quit.date"]] + 21*24*60*60 
 df.quit.dates[["quit.date"]] <- df.quit.dates[["quit.date"]] + 4*60*60
 
 # Save dates
-saveRDS(df.quit.dates, file.path(path.pns.staged_data, "quit_dates_final.RData"))
+saveRDS(df.quit.dates, file = file.path(path.pns.staged_data, "quit_dates_final.RData"))
 

@@ -1,7 +1,7 @@
 ###############################################################################
 # ABOUT:
-# * Exclude rows corresponding to baseline participants who will not be
-#   included in any analysis
+# Exclude rows corresponding to baseline participants who will not be
+# included in any analysis
 ###############################################################################
 
 library(dplyr)
@@ -16,13 +16,15 @@ path.pns.code <- Sys.getenv("path.pns.code")
 path.shared.code <- Sys.getenv("path.shared.code")
 
 # Read in final quit date file
-df.quit.dates <- readRDS(file.path(path.pns.staged_data, "quit_dates_final.RData"))
+df.quit.dates <- readRDS(file = file.path(path.pns.staged_data, "quit_dates_final.RData"))
 
 # Read baseline raw data file
 raw.data.baseline <- read.csv(file.path(path.pns.input_data, "PNSBaseline.csv"), stringsAsFactors = FALSE)
 
-# Exclude individuals who will be not be included in all data analysis
+# Identify the subset of individuals who will NOT be excluded
 df.ids <- df.quit.dates %>% filter(exclude==0) %>% select(id, callnumr)
 subset.raw.data.baseline <- left_join(x = df.ids, y = raw.data.baseline, by = c("callnumr"))
 
-saveRDS(subset.raw.data.baseline, file.path(path.pns.staged_data, "baseline.RData"))
+df.baseline <- subset.raw.data.baseline
+saveRDS(df.baseline, file = file.path(path.pns.staged_data, "baseline.RData"))
+

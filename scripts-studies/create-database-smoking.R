@@ -1,6 +1,6 @@
 ###############################################################################
 # ABOUT:
-# * Create database of smoking information using EMA data
+# Create database of smoking information using 'cleaned' EMA data
 ###############################################################################
 
 library(dplyr)
@@ -48,8 +48,13 @@ for(i in 1:length(ema.types)){
 #------------------------------------------------------------------------------
 
 source(file.path(path.pns.code, "construct_smoking_outcome", "identify-smoking-vars.R"))
+list.all <- IdentifySmokingVars(list.all = list.all)
+
 source(file.path(path.pns.code, "construct_smoking_outcome", "rules-smoking-quantity.R"))
+list.all <- ApplyRulesSmokingQuantity(list.all = list.all)
+
 source(file.path(path.pns.code, "construct_smoking_outcome", "rules-smoking-indicator.R"))
+list.all <- ApplyRulesSmokingIndicator(list.all = list.all)
 
 #------------------------------------------------------------------------------
 # Set up data frame prior to implementing decision rules on constructing
@@ -100,9 +105,12 @@ df.all <- df.all %>%
   mutate(hours.between.past.and.present = (time.unixts - time.unixts_shift_minus_1)/(60*60))
 
 source(file.path(path.pns.code, "construct_smoking_outcome", "rules-smoking-timing.R"))
+df.all <- ApplyRulesSmokingTiming(df.all = df.all)
 
 #------------------------------------------------------------------------------
 # Save output
 #------------------------------------------------------------------------------
 saveRDS(df.all, file.path(path.pns.staged_data, "curated_smoking_database.RData"))
+
+
 

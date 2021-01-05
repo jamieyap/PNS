@@ -1,7 +1,6 @@
 ###############################################################################
 # ABOUT:
 # * Complete preparaton by type of EMA
-#
 # * Focus of this script is not on individual items within an EMA but on
 #   identifying which rows which are likely to result from one of the following
 #   circumstances:
@@ -13,7 +12,6 @@
 #        issues relating to the software
 #      - self-initiated EMA button press where the software chose to NOT
 #        launch an EMA
-#
 ###############################################################################
 
 library(dplyr)
@@ -30,7 +28,8 @@ path.shared.code <- Sys.getenv("path.shared.code")
 #------------------------------------------------------------------------------
 # Create time variables
 #------------------------------------------------------------------------------
-df.quit.dates <- readRDS(file.path(path.pns.staged_data, "quit_dates_final.RData"))
+
+df.quit.dates <- readRDS(file = file.path(path.pns.staged_data, "quit_dates_final.RData"))
 df.quit.dates <- df.quit.dates %>% 
   rename(start.study.hrts = start.study.date, 
          end.study.hrts = end.study.date, 
@@ -47,9 +46,8 @@ df.quit.dates <- df.quit.dates %>%
 
 #------------------------------------------------------------------------------
 # Read in raw data (already contains time variables at the EMA-level)
-# Loading this RData file will add list.all to the global environment
 #------------------------------------------------------------------------------
-load(file = file.path(path.pns.staged_data, "all_ema_processed.RData"))
+list.all <- readRDS(file = file.path(path.pns.staged_data, "all_ema_processed.RData"))
 
 #------------------------------------------------------------------------------
 # Implement inclusion/exclusion criteria applicable to all datasets
@@ -309,4 +307,8 @@ list.bp[["Pre-Quit Smoking Part One"]] <- list.all.subset[["Pre-Quit Smoking Par
 
 df.bp <- bind_rows(list.bp)
 saveRDS(df.bp, file.path(path.pns.staged_data, "buttonpress.RData"))
+
+
+
+
 

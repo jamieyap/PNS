@@ -3,7 +3,6 @@
 #   * Create plots where reported number of cigarettes smoked is overlaid
 #     against EMA_Qday, quitday, and date when the very first EMA in
 #     Post-Quit Mode was delivered/initiated
-#
 #   * This script utilizes create-smoking-plots.R and
 #     and create-zoomed-smoking-plots.R to create these plots
 ###############################################################################
@@ -59,7 +58,7 @@ df.other.participants.dates <- df.alldates %>% filter(id %in% these.other.partic
 # Read in EMA data
 #------------------------------------------------------------------------------
 
-load(file = file.path(path.pns.staged_data, "all_ema_processed.RData"))
+list.all <- readRDS(file = file.path(path.pns.staged_data, "all_ema_processed.RData"))
 
 #------------------------------------------------------------------------------
 # Clean up smoking counts variable
@@ -67,7 +66,9 @@ load(file = file.path(path.pns.staged_data, "all_ema_processed.RData"))
 # infer quit dates when quit date is ambiguous
 #------------------------------------------------------------------------------
 
-source(file.path(path.pns.code, "smoking_outcome", "identify-smoking-vars.R"))
+source(file.path(path.pns.code, "construct_smoking_outcome", "identify-smoking-vars.R"))
+list.all <- IdentifySmokingVars(list.all = list.all)
+
 
 for(i in 1:length(list.all)){
   list.all[[i]]$smoking.qty = NA_real_

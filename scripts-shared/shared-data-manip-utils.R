@@ -23,7 +23,7 @@ CheckAnyResponse <- function(df, keep.cols){
   # ---------------------------------------------------------------------------
   # Begin tasks
   # ---------------------------------------------------------------------------
-  df.items <- df %>% select(keep.cols)
+  df.items <- df %>% select(all_of(keep.cols))
   
   if(ncol(df.items)>0){
     df.items <- apply(df.items, 2, function(x){
