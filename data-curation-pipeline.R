@@ -58,6 +58,9 @@ rm(list = ls())
 source(file.path(Sys.getenv("path.pns.code"), "clean-baseline.R"))
 rm(list = ls())
 
+# Format and save RData files into stand-alone or merged databases
+source(file.path(Sys.getenv("path.pns.code"), "output-formatted-database.R"))
+rm(list = ls())
 
 # -----------------------------------------------------------------------------
 # Visualize pipeline
