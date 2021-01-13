@@ -134,29 +134,6 @@ df.collect <- do.call(rbind, list.collect)
 ema.item.names <- df.collect
 saveRDS(ema.item.names, file = file.path(path.pns.staged_data, "ema_item_names.RData"))
 
-#------------------------------------------------------------------------------
-# Change periods in column names to underscrores
-# This is mostly to accomodate a wider range of end-users of the curated data
-# who may use a varied range of data analysis software, some of which
-# make it easier to work with column names with an underscore (rather than
-# dots) than others
-#------------------------------------------------------------------------------
-df.collect <- df.collect %>%
-  rename(is_postquit_assessment_type = is.postquit.assessment.type,
-         assessment_type = assessment.type,
-         name_codebook = name.codebook,
-         name_new = name.new)
 
-write.csv(df.collect, file.path(path.pns.output_data, "ema_item_names.csv"), row.names = FALSE)
-
-# Add documentation on column names
-docs <- data.frame(dataset = "ema_item_names.csv", columns = colnames(df.collect), description = NA, stringsAsFactors = FALSE)
-docs <- docs %>%
-  mutate(description = replace(description, columns == "is_postquit_assessment_type", "1: Post-Quit Mode type of EMA; 0: Pre-Quit Mode type of EMA")) %>%
-  mutate(description = replace(description, columns == "assessment_type", "kind of EMA; there are a total of 9 kinds of EMA")) %>%
-  mutate(description = replace(description, columns == "name_codebook", "original variable name in the raw data; can be cross-referenced against variable name in codebook")) %>%
-  mutate(description = replace(description, columns == "name_new", "new names given to variables in curated datasets where data from two or more kinds of EMA are merged; the format used in name_new enables end-users to determine the particular kind of EMA in which the value in the merged dataset was originally provided"))
-
-write.csv(docs, file.path(path.pns.output_data, "docs_ema_item_names.csv"), row.names = FALSE)
 
 

@@ -67,20 +67,22 @@ library(ggdag)
 theme_set(theme_dag_grid())
 
 # Record dependencies using a directed acyclic graph
-data_curation_dag <- dagify(clean_baseline ~ calc_quit_dates,
+data_curation_dag <- dagify(output_formatted_database ~ calc_quit_dates,
+                            output_formatted_database ~ clean_ema,
+                            output_formatted_database ~ create_database_smoking,
+                            output_formatted_database ~ clean_baseline,
+                            output_formatted_database ~ create_dictionary,
+                            clean_baseline ~ calc_quit_dates,
                             read_ema ~ create_dictionary,
                             read_ema ~ shared_data_manip_utils,
                             read_ema ~ data_manip_utils,
                             clean_ema ~ read_ema,
                             clean_ema ~ calc_quit_dates,
-                            output_formatted_database ~ clean_ema,
                             create_database_smoking ~ clean_ema,
                             create_database_smoking ~ identify_smoking_vars,
                             create_database_smoking ~ rules_smoking_quantity,
                             create_database_smoking ~ rules_smoking_indicator,
                             create_database_smoking ~ rules_smoking_timing,
-                            output_formatted_database ~ create_database_smoking,
-                            output_formatted_database ~ clean_baseline,
                             labels = c("clean_baseline" = "clean-baseline.R",
                                        "read_ema" = "read-ema.R",
                                        "create_dictionary" = "create-dictionary.R",
@@ -96,7 +98,7 @@ data_curation_dag <- dagify(clean_baseline ~ calc_quit_dates,
                                        "rules_smoking_timing" = "rules-smoking-timing.R"
                                        )) 
 
-ggdag(data_curation_dag, text = FALSE, use_labels = "label", text_size = 2.75) 
+ggdag(data_curation_dag, text = FALSE, use_labels = "label", text_size = 2.88) 
 
 
 
