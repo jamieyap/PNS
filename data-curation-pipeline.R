@@ -73,25 +73,30 @@ data_curation_dag <- dagify(clean_baseline ~ calc_quit_dates,
                             read_ema ~ data_manip_utils,
                             clean_ema ~ read_ema,
                             clean_ema ~ calc_quit_dates,
+                            output_formatted_database ~ clean_ema,
                             create_database_smoking ~ clean_ema,
                             create_database_smoking ~ identify_smoking_vars,
                             create_database_smoking ~ rules_smoking_quantity,
                             create_database_smoking ~ rules_smoking_indicator,
                             create_database_smoking ~ rules_smoking_timing,
-                            labels = c("read_ema" = "read-ema.R",
+                            output_formatted_database ~ create_database_smoking,
+                            output_formatted_database ~ clean_baseline,
+                            labels = c("clean_baseline" = "clean-baseline.R",
+                                       "read_ema" = "read-ema.R",
                                        "create_dictionary" = "create-dictionary.R",
                                        "shared_data_manip_utils" = "shared-data-manip-utils.R",
                                        "data_manip_utils" = "data-manip-utils.R",
                                        "clean_ema" = "clean-ema.R",
+                                       "output_formatted_database" = "output-formatted-database.R",
                                        "calc_quit_dates" = "calc-quit-dates.R",
                                        "create_database_smoking" = "create-database-smoking.R",
                                        "identify_smoking_vars" = "identify-smoking-vars.R",
                                        "rules_smoking_quantity" = "rules-smoking-quantity.R",
                                        "rules_smoking_indicator" = "rules-smoking-indicator.R",
-                                       "rules_smoking_timing" = "rules-smoking-timing.R",
-                                       "clean_baseline" = "clean-baseline.R")) 
+                                       "rules_smoking_timing" = "rules-smoking-timing.R"
+                                       )) 
 
-ggdag(data_curation_dag, text = FALSE, use_labels = "label") 
+ggdag(data_curation_dag, text = FALSE, use_labels = "label", text_size = 2.75) 
 
 
 
