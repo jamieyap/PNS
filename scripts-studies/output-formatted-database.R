@@ -383,5 +383,57 @@ docs <- docs %>%
 write.csv(docs, file.path(path.pns.output_data, paste("docs_", "buttonpress_smoking_part_one.csv", sep="")), row.names = FALSE)
 rm(docs)
 
+#------------------------------------------------------------------------------
+# Format output of: create-database-smoking.R
+# Output was: curated_smoking_database.RData
+#------------------------------------------------------------------------------
+
+df.smoking <- readRDS(file.path(path.pns.staged_data, "curated_smoking_database.RData"))
+
+df.smoking <- df.smoking %>%
+  select(id, callnumr, 
+         start.study.hrts, quit.hrts, end.study.hrts,
+         start.study.unixts, quit.unixts, end.study.unixts,
+         sensitivity, record.id, assessment.type, use.as.postquit,
+         with.any.response, delivered.hrts, begin.hrts, end.hrts, time.hrts,
+         delivered.unixts, begin.unixts, end.unixts, time.unixts,
+         record.id_shift_minus_1, assessment.type_shift_minus_1, 
+         time.hrts_shift_minus_1, time.unixts_shift_minus_1,
+         hours.between.past.and.present,
+         everything()) %>%
+  rename(start_study_hrts = start.study.hrts,
+         end_study_hrts = end.study.hrts,
+         quit_hrts = quit.hrts,
+         start_study_unixts = start.study.unixts,
+         end_study_unixts = end.study.unixts,
+         quit_unixts = quit.unixts,
+         record_id = record.id,
+         assessment_type = assessment.type,
+         use_as_postquit = use.as.postquit,
+         with_any_response = with.any.response,
+         record_status = record.status,
+         delivered_hrts = delivered.hrts,
+         begin_hrts = begin.hrts,
+         end_hrts = end.hrts,
+         time_hrts = time.hrts,
+         delivered_unixts = delivered.unixts,
+         begin_unixts = begin.unixts,
+         end_unixts = end.unixts,
+         time_unixts = time.unixts,
+         rawdata_indicator = rawdata.indicator,
+         rawdata_qty = rawdata.qty,
+         rawdata_timing = rawdata.timing,
+         smoking_qty = smoking.qty,
+         smoking_indicator = smoking.indicator,
+         smoking_delta_minutes = smoking.delta.minutes,
+         ema_order = ema.order,
+         time_hrts_shift_minus_1 = time.hrts_shift_minus_1,
+         time_unixts_shift_minus_1 = time.unixts_shift_minus_1,
+         assessment_type_shift_minus_1 = assessment.type_shift_minus_1,
+         record_id_shift_minus_1 = record.id_shift_minus_1,
+         hours_between_past_and_present = hours.between.past.and.present)
+
+write.csv(df.smoking, file.path(path.pns.output_data, "smoking.csv"), row.names=FALSE, na="")
+
 
 
