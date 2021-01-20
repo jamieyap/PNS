@@ -33,19 +33,7 @@ ema.item.names <- ema.item.names %>%
 
 write.csv(ema.item.names, file.path(path.pns.output_data, "ema_item_names.csv"), row.names = FALSE)
 
-# Add documentation on column names
-docs <- data.frame(dataset = "ema_item_names.csv", columns = colnames(ema.item.names), description = NA, stringsAsFactors = FALSE)
-docs <- docs %>%
-  mutate(description = replace(description, columns == "is_postquit_assessment_type", "1: Post-Quit Mode type of EMA; 0: Pre-Quit Mode type of EMA")) %>%
-  mutate(description = replace(description, columns == "assessment_type", "kind of EMA; there are a total of 9 kinds of EMA")) %>%
-  mutate(description = replace(description, columns == "name_codebook", paste("original variable name in the raw data;",
-                                                                              " can be cross-referenced against variable name in codebook", sep=""))) %>%
-  mutate(description = replace(description, columns == "name_new", paste("new names given to variables in curated datasets where data from two or more kinds of EMA are merged;",
-                                                                         " the format used in name_new enables end-users to determine the particular kind of EMA",
-                                                                         " in which the value in the merged dataset was originally provided", sep="")))
 
-write.csv(docs, file.path(path.pns.output_data, "docs_ema_item_names.csv"), row.names = FALSE)
-rm(docs)
 
 #------------------------------------------------------------------------------
 # Format output of: calc-quit-dates.R
@@ -72,25 +60,7 @@ df.quit.dates <- df.quit.dates %>%
 
 write.csv(df.quit.dates, file.path(path.pns.output_data, "quit_dates_final.csv"), row.names=FALSE, na="")
 
-# Add documentation on column names
-docs <- data.frame(dataset = "quit_dates_final.csv", columns = colnames(df.quit.dates), description = NA, stringsAsFactors = FALSE)
-docs <- docs %>%
-  mutate(description = replace(description, columns == "id", "Participant ID utilized in EMA raw data")) %>%
-  mutate(description = replace(description, columns == "callnumr", "Participant ID utilized in baseline raw data")) %>%
-  mutate(description = replace(description, columns == "start_study_hrts", paste("Start Date and Time to be used in data analysis;",
-                                                                                 " Date is in the human-readable timestamp format YYY-MM-DD H:M:S",
-                                                                                 sep=""))) %>%
-  mutate(description = replace(description, columns == "quit_hrts", paste("Quit Date and Time to be used in data analysis;",
-                                                                          " Date is in the human-readable timestamp format YYY-MM-DD H:M:S",
-                                                                          sep=""))) %>%
-  mutate(description = replace(description, columns == "end_study_hrts", paste("End Date and Time to be used in data analysis;",
-                                                                               " Date is in the human-readable timestamp format YYY-MM-DD H:M:S",
-                                                                               sep=""))) %>%
-  mutate(description = replace(description, columns == "exclude", "equal to 1 if participant is to be excluded from all data analysis; 0 otherwise")) %>%
-  mutate(description = replace(description, columns == "sensitivity", "equal to 1 if participant will be utilized in sensitivity analysis; 0 otherwise"))
 
-write.csv(docs, file.path(path.pns.output_data, "docs_quit_dates_final.csv"), row.names = FALSE)
-rm(docs)
 
 #------------------------------------------------------------------------------
 # Format output of: clean-ema.R
@@ -162,102 +132,7 @@ write.csv(list.clean.launched[["Post-Quit About to Slip Part One"]], file.path(p
 write.csv(list.clean.launched[["Post-Quit About to Slip Part Two"]], file.path(path.pns.output_data, "post_quit_about_to_slip_part_two_ema.csv"), na="", row.names = FALSE)
 write.csv(list.clean.launched[["Post-Quit Already Slipped"]], file.path(path.pns.output_data, "post_quit_already_slipped_ema.csv"), na="", row.names = FALSE)
 
-# Add documentation on column names
 
-for(i in 1:length(list.clean.launched)){
-  curr.df <- list.clean.launched[[i]]
-  curr.ema.type <- names(list.clean.launched)[i]
-  curr.df.name <- case_when(
-    # Pre-Quit EMA Types
-    curr.ema.type == "Pre-Quit Random" ~ "pre_quit_random_ema.csv",
-    curr.ema.type == "Pre-Quit Urge" ~ "pre_quit_urge_ema.csv",
-    curr.ema.type == "Pre-Quit Smoking Part One" ~ "pre_quit_smoking_part_one_ema.csv",
-    curr.ema.type == "Pre-Quit Smoking Part Two" ~ "pre_quit_smoking_part_two_ema.csv",
-    # Post-Quit EMA types
-    curr.ema.type == "Post-Quit Random" ~ "post_quit_random_ema.csv",
-    curr.ema.type == "Post-Quit Urge" ~ "post_quit_urge_ema.csv",
-    curr.ema.type == "Post-Quit About to Slip Part One" ~ "post_quit_about_to_slip_part_one_ema.csv",
-    curr.ema.type == "Post-Quit About to Slip Part Two" ~ "post_quit_about_to_slip_part_two_ema.csv",
-    curr.ema.type == "Post-Quit Already Slipped" ~ "post_quit_already_slipped_ema.csv",
-    TRUE ~ NA_character_
-  )
-  
-  docs <- data.frame(dataset = curr.df.name, columns = colnames(curr.df), description = NA, stringsAsFactors = FALSE)
-  docs <- docs %>%
-    mutate(description = replace(description, columns == "id", "Participant ID utilized in EMA raw data")) %>%
-    mutate(description = replace(description, columns == "callnumr", "Participant ID utilized in baseline raw data")) %>%
-    # Describe time variables relating to time in study in human-readable format
-    mutate(description = replace(description, columns == "start_study_hrts", paste("Start Date and Time to be used in data analysis;",
-                                                                                   " Date is in the human-readable timestamp format YYY-MM-DD H:M:S",
-                                                                                   sep=""))) %>%
-    mutate(description = replace(description, columns == "quit_hrts", paste("Quit Date and Time to be used in data analysis;",
-                                                                            " Date is in the human-readable timestamp format YYY-MM-DD H:M:S",
-                                                                            sep=""))) %>%
-    mutate(description = replace(description, columns == "end_study_hrts", paste("End Date and Time to be used in data analysis;",
-                                                                                 " Date is in the human-readable timestamp format YYY-MM-DD H:M:S",
-                                                                                 sep=""))) %>%
-    mutate(description = replace(description, columns == "start_study_unixts", paste("Same as similarly-named variable suffixed by _unixts;",
-                                                                                     " time in UNIX timestamp format",
-                                                                                     " (no. seconds elapsed since January 1, 1970);",
-                                                                                     " e.g., if UNIX time is 1610564920, use the following R code to recover start_study_hrts column: as.POSIXct(x=1610564920, origin=\"1970-01-01\", tz=\"GMT\")"))) %>%
-    mutate(description = replace(description, columns == "quit_unixts", paste("Same as similarly-named variable suffixed by _unixts;",
-                                                                              " time in UNIX timestamp format",
-                                                                              " (no. seconds elapsed since January 1, 1970);",
-                                                                              " e.g., if UNIX time is 1610564920, use the following R code to recover start_study_hrts column: as.POSIXct(x=1610564920, origin=\"1970-01-01\", tz=\"GMT\")"))) %>%
-    mutate(description = replace(description, columns == "end_study_unixts", paste("Same as similarly-named variable suffixed by _unixts;",
-                                                                                   " time in UNIX timestamp format",
-                                                                                   " (no. seconds elapsed since January 1, 1970);",
-                                                                                   " e.g., if UNIX time is 1610564920, use the following R code to recover start_study_hrts column: as.POSIXct(x=1610564920, origin=\"1970-01-01\", tz=\"GMT\")"))) %>%
-    # Describe variable relating to participant
-    mutate(description = replace(description, columns == "sensitivity", "equal to 1 if participant will be utilized in sensitivity analysis; 0 otherwise")) %>%
-    # Describe variables relating to EMA questionnaire
-    mutate(description = replace(description, columns == "record_id", "unique identifier for EMA questionnaire")) %>%
-    mutate(description = replace(description, columns == "assessment_type", "kind of EMA questionnaire; there are nine kinds of questionnaires in total")) %>%
-    mutate(description = replace(description, columns == "use_as_postquit", "equal to 1 if questionnaire is to be used as post-quit observation in data analysis; 0 if questionnaire is to be used as pre-quit observation in data analysis")) %>%
-    # Describe variables relating to items within EMA questionnaire
-    mutate(description = replace(description, columns == "delivered_hrts", paste("Generally, this refers to the time when an EMA questionnaire was delivered/initiated to/by a participant;",
-                                                                                 " Date is in the human-readable timestamp format YYY-MM-DD H:M:S;",
-                                                                                 " Refer to documentation for details on possible exceptions to this rule of thumb description.",
-                                                                                 sep=""))) %>%
-    mutate(description = replace(description, columns == "begin_hrts", paste("Generally, this refers to the time when participant began responding to items in the EMA questionnaire;",
-                                                                             " Date is in the human-readable timestamp format YYY-MM-DD H:M:S;",
-                                                                             " Refer to documentation for details on possible exceptions to this rule of thumb description.",
-                                                                             sep=""))) %>%
-    mutate(description = replace(description, columns == "end_hrts", paste("Generally, this refers to the time when participant finished responding to all items in the EMA questionnaire;",
-                                                                           " Date is in the human-readable timestamp format YYY-MM-DD H:M:S;",
-                                                                           " Refer to documentation for details on possible exceptions to this rule of thumb description.",
-                                                                           sep=""))) %>%
-    mutate(description = replace(description, columns == "time_hrts", paste("Generally: equal to begin_hrts if with_any_response=1; equal to delivered_hrts if with_any_response=0;",
-                                                                            " Date is in the human-readable timestamp format YYY-MM-DD H:M:S;",
-                                                                            " Refer to documentation for details on possible exceptions to this rule of thumb description.",
-                                                                            sep=""))) %>%
-    mutate(description = replace(description, columns == "delivered_unixts", paste("Same as similarly-named variable suffixed by _unixts;",
-                                                                                   " time in UNIX timestamp format",
-                                                                                   " (no. seconds elapsed since January 1, 1970);",
-                                                                                   " e.g., if UNIX time is 1610564920, use the following R code to recover start_study_hrts column: as.POSIXct(x=1610564920, origin=\"1970-01-01\", tz=\"GMT\")"))) %>%
-    mutate(description = replace(description, columns == "begin_unixts", paste("Same as similarly-named variable suffixed by _unixts;",
-                                                                               " time in UNIX timestamp format",
-                                                                               " (no. seconds elapsed since January 1, 1970);",
-                                                                               " e.g., if UNIX time is 1610564920, use the following R code to recover start_study_hrts column: as.POSIXct(x=1610564920, origin=\"1970-01-01\", tz=\"GMT\")"))) %>%
-    mutate(description = replace(description, columns == "end_unixts", paste("Same as similarly-named variable suffixed by _unixts;",
-                                                                             " time in UNIX timestamp format",
-                                                                             " (no. seconds elapsed since January 1, 1970);",
-                                                                             " e.g., if UNIX time is 1610564920, use the following R code to recover start_study_hrts column: as.POSIXct(x=1610564920, origin=\"1970-01-01\", tz=\"GMT\")"))) %>%
-    mutate(description = replace(description, columns == "time_unixts", paste("Same as similarly-named variable suffixed by _unixts;",
-                                                                              " time in UNIX timestamp format",
-                                                                              " (no. seconds elapsed since January 1, 1970);",
-                                                                              " e.g., if UNIX time is 1610564920, use the following R code to recover start_study_hrts column: as.POSIXct(x=1610564920, origin=\"1970-01-01\", tz=\"GMT\")"))) %>%
-    mutate(description = replace(description, columns == "record_status", paste("A variable in the raw data used to determine whether a particular EMA questionnaire",
-                                                                                " should be retained or excluded in curated database; See documentation for more details",
-                                                                                sep=""))) %>%
-    mutate(description = replace(description, columns == "with_any_response", paste("Equal to 1 if there is a record of a response to at least one item in EMA questionnaire;",
-                                                                                    "Equal to 0 if there is no record of a response to any of the items in EMA questionnaire",
-                                                                                    sep=""))) %>%
-    mutate(description = replace(description, is.na(description), "Refer to the raw data codebook file PNS EMA Codebook 07202010.docx; values in this column are left unmodified from the raw data"))
-  
-  write.csv(docs, file.path(path.pns.output_data, paste("docs_", curr.df.name, sep="")), row.names = FALSE)
-  rm(docs)
-}
 
 #------------------------------------------------------------------------------
 # Work with df.buttonpress
@@ -302,86 +177,15 @@ this.df <- this.df %>%
          end_unixts = end.unixts,
          time_unixts = time.unixts)
 
-# Update df.buttonpress
+# Partition out records attributed to button press
 df.buttonpress <- this.df %>% filter(assessment_type == "Pre-Quit Smoking Part One" | assessment_type == "Post-Quit About to Slip Part One")
-write.csv(df.buttonpress, file.path(path.pns.output_data, "buttonpress_smoking_part_one.csv"), na="", row.names = FALSE)
+write.csv(df.buttonpress, file.path(path.pns.output_data, "buttonpress_smoking.csv"), na="", row.names = FALSE)
 
-# Add documentation on column names
+# Partition out records attributed to unknown tech issue
+df.unknown.techissue <- this.df %>% filter(!(assessment_type == "Pre-Quit Smoking Part One" | assessment_type == "Post-Quit About to Slip Part One"))
+write.csv(df.unknown.techissue, file.path(path.pns.output_data, "unknown_techissue.csv"), na="", row.names = FALSE)
 
-docs <- data.frame(dataset = "buttonpress_smoking_part_one.csv", columns = colnames(df.buttonpress), description = NA, stringsAsFactors = FALSE)
-docs <- docs %>%
-  mutate(description = replace(description, columns == "id", "Participant ID utilized in EMA raw data")) %>%
-  mutate(description = replace(description, columns == "callnumr", "Participant ID utilized in baseline raw data")) %>%
-  # Describe time variables relating to time in study in human-readable format
-  mutate(description = replace(description, columns == "start_study_hrts", paste("Start Date and Time to be used in data analysis;",
-                                                                                 " Date is in the human-readable timestamp format YYY-MM-DD H:M:S",
-                                                                                 sep=""))) %>%
-  mutate(description = replace(description, columns == "quit_hrts", paste("Quit Date and Time to be used in data analysis;",
-                                                                          " Date is in the human-readable timestamp format YYY-MM-DD H:M:S",
-                                                                          sep=""))) %>%
-  mutate(description = replace(description, columns == "end_study_hrts", paste("End Date and Time to be used in data analysis;",
-                                                                               " Date is in the human-readable timestamp format YYY-MM-DD H:M:S",
-                                                                               sep=""))) %>%
-  mutate(description = replace(description, columns == "start_study_unixts", paste("Same as similarly-named variable suffixed by _unixts;",
-                                                                                   " time in UNIX timestamp format",
-                                                                                   " (no. seconds elapsed since January 1, 1970);",
-                                                                                   " e.g., if UNIX time is 1610564920, use the following R code to recover start_study_hrts column: as.POSIXct(x=1610564920, origin=\"1970-01-01\", tz=\"GMT\")"))) %>%
-  mutate(description = replace(description, columns == "quit_unixts", paste("Same as similarly-named variable suffixed by _unixts;",
-                                                                            " time in UNIX timestamp format",
-                                                                            " (no. seconds elapsed since January 1, 1970);",
-                                                                            " e.g., if UNIX time is 1610564920, use the following R code to recover start_study_hrts column: as.POSIXct(x=1610564920, origin=\"1970-01-01\", tz=\"GMT\")"))) %>%
-  mutate(description = replace(description, columns == "end_study_unixts", paste("Same as similarly-named variable suffixed by _unixts;",
-                                                                                 " time in UNIX timestamp format",
-                                                                                 " (no. seconds elapsed since January 1, 1970);",
-                                                                                 " e.g., if UNIX time is 1610564920, use the following R code to recover start_study_hrts column: as.POSIXct(x=1610564920, origin=\"1970-01-01\", tz=\"GMT\")"))) %>%
-  # Describe variable relating to participant
-  mutate(description = replace(description, columns == "sensitivity", "equal to 1 if participant will be utilized in sensitivity analysis; 0 otherwise")) %>%
-  # Describe variables relating to EMA questionnaire
-  mutate(description = replace(description, columns == "record_id", "unique identifier for EMA questionnaire")) %>%
-  mutate(description = replace(description, columns == "assessment_type", "kind of EMA questionnaire; there are nine kinds of questionnaires in total")) %>%
-  mutate(description = replace(description, columns == "use_as_postquit", "equal to 1 if questionnaire is to be used as post-quit observation in data analysis; 0 if questionnaire is to be used as pre-quit observation in data analysis")) %>%
-  # Describe variables relating to items within EMA questionnaire
-  mutate(description = replace(description, columns == "delivered_hrts", paste("Generally, this refers to the time when an EMA questionnaire was delivered/initiated to/by a participant;",
-                                                                               " Date is in the human-readable timestamp format YYY-MM-DD H:M:S;",
-                                                                               " Refer to documentation for details on possible exceptions to this rule of thumb description.",
-                                                                               sep=""))) %>%
-  mutate(description = replace(description, columns == "begin_hrts", paste("Generally, this refers to the time when participant began responding to items in the EMA questionnaire;",
-                                                                           " Date is in the human-readable timestamp format YYY-MM-DD H:M:S;",
-                                                                           " Refer to documentation for details on possible exceptions to this rule of thumb description.",
-                                                                           sep=""))) %>%
-  mutate(description = replace(description, columns == "end_hrts", paste("Generally, this refers to the time when participant finished responding to all items in the EMA questionnaire;",
-                                                                         " Date is in the human-readable timestamp format YYY-MM-DD H:M:S;",
-                                                                         " Refer to documentation for details on possible exceptions to this rule of thumb description.",
-                                                                         sep=""))) %>%
-  mutate(description = replace(description, columns == "time_hrts", paste("Generally: equal to begin_hrts if with_any_response=1; equal to delivered_hrts if with_any_response=0;",
-                                                                          " Date is in the human-readable timestamp format YYY-MM-DD H:M:S;",
-                                                                          " Refer to documentation for details on possible exceptions to this rule of thumb description.",
-                                                                          sep=""))) %>%
-  mutate(description = replace(description, columns == "delivered_unixts", paste("Same as similarly-named variable suffixed by _unixts;",
-                                                                                 " time in UNIX timestamp format",
-                                                                                 " (no. seconds elapsed since January 1, 1970);",
-                                                                                 " e.g., if UNIX time is 1610564920, use the following R code to recover start_study_hrts column: as.POSIXct(x=1610564920, origin=\"1970-01-01\", tz=\"GMT\")"))) %>%
-  mutate(description = replace(description, columns == "begin_unixts", paste("Same as similarly-named variable suffixed by _unixts;",
-                                                                             " time in UNIX timestamp format",
-                                                                             " (no. seconds elapsed since January 1, 1970);",
-                                                                             " e.g., if UNIX time is 1610564920, use the following R code to recover start_study_hrts column: as.POSIXct(x=1610564920, origin=\"1970-01-01\", tz=\"GMT\")"))) %>%
-  mutate(description = replace(description, columns == "end_unixts", paste("Same as similarly-named variable suffixed by _unixts;",
-                                                                           " time in UNIX timestamp format",
-                                                                           " (no. seconds elapsed since January 1, 1970);",
-                                                                           " e.g., if UNIX time is 1610564920, use the following R code to recover start_study_hrts column: as.POSIXct(x=1610564920, origin=\"1970-01-01\", tz=\"GMT\")"))) %>%
-  mutate(description = replace(description, columns == "time_unixts", paste("Same as similarly-named variable suffixed by _unixts;",
-                                                                            " time in UNIX timestamp format",
-                                                                            " (no. seconds elapsed since January 1, 1970);",
-                                                                            " e.g., if UNIX time is 1610564920, use the following R code to recover start_study_hrts column: as.POSIXct(x=1610564920, origin=\"1970-01-01\", tz=\"GMT\")"))) %>%
-  mutate(description = replace(description, columns == "record_status", paste("A variable in the raw data used to determine whether a particular EMA questionnaire",
-                                                                              " should be retained or excluded in curated database; See documentation for more details",
-                                                                              sep=""))) %>%
-  mutate(description = replace(description, columns == "with_any_response", paste("Equal to 1 if there is a record of a response to at least one item in EMA questionnaire;",
-                                                                                  "Equal to 0 if there is no record of a response to any of the items in EMA questionnaire",
-                                                                                  sep="")))
 
-write.csv(docs, file.path(path.pns.output_data, paste("docs_", "buttonpress_smoking_part_one.csv", sep="")), row.names = FALSE)
-rm(docs)
 
 #------------------------------------------------------------------------------
 # Format output of: create-database-smoking.R
@@ -431,7 +235,8 @@ df.smoking <- df.smoking %>%
          time_unixts_shift_minus_1 = time.unixts_shift_minus_1,
          assessment_type_shift_minus_1 = assessment.type_shift_minus_1,
          record_id_shift_minus_1 = record.id_shift_minus_1,
-         hours_between_past_and_present = hours.between.past.and.present)
+         hours_between_past_and_present = hours.between.past.and.present) %>%
+  select(-rawdata_indicator, -rawdata_qty, -rawdata_timing)
 
 write.csv(df.smoking, file.path(path.pns.output_data, "smoking.csv"), row.names=FALSE, na="")
 
