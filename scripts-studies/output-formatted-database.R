@@ -12,6 +12,14 @@ path.pns.input_data <- Sys.getenv("path.pns.input_data")
 path.pns.output_data <- Sys.getenv("path.pns.output_data")
 path.pns.staged_data <- Sys.getenv("path.pns.staged_data")
 
+
+#------------------------------------------------------------------------------
+# Work with df.baseline
+#------------------------------------------------------------------------------
+
+df.baseline <- readRDS(file.path(path.pns.staged_data, "baseline.RData"))
+write.csv(df.baseline, file.path(path.pns.output_data, "baseline.csv"), na="", row.names = FALSE)
+
 #------------------------------------------------------------------------------
 # Format output of: create-dictionary.R
 # Output was: ema_item_names.RData
