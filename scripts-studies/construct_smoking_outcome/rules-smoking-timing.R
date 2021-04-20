@@ -87,7 +87,7 @@ ApplyRulesSmokingTiming <- function(df.all){
   
   df.all <- df.all %>%
     mutate(smoking.delta.minutes = case_when(
-      # Pre-Quit assessments
+      # Post-Quit assessments
       (assessment.type == "Post-Quit About to Slip Part Two") & (assessment.type_shift_minus_1 != "Post-Quit About to Slip Part One") & (this.ave.hours.between.past.and.present <= hours.between.past.and.present) ~ this.ave.hours.between.past.and.present*60/2,
       (assessment.type == "Post-Quit About to Slip Part Two") & (assessment.type_shift_minus_1 != "Post-Quit About to Slip Part One") & (this.ave.hours.between.past.and.present > hours.between.past.and.present) ~ hours.between.past.and.present*60/2,
       # Else
@@ -95,6 +95,15 @@ ApplyRulesSmokingTiming <- function(df.all){
     ))
   
   remove(this.ave.hours.between.past.and.present)
+  
+  # Final clean up
+  df.all <- df.all %>%
+    mutate(smoking.delta.minutes = replace(smoking.delta.minutes, (assessment.type == "Pre-Quit Smoking Part Two") & (smoking.qty == 0), NA_real_)) %>%
+    mutate(smoking.delta.minutes = replace(smoking.delta.minutes, (assessment.type == "Post-Quit About to Slip Part Two") & (smoking.qty == 0), NA_real_))
+  
+  df.all <- df.all %>%
+    mutate(smoking.delta.minutes = replace(smoking.delta.minutes, (assessment.type == "Pre-Quit Smoking Part Two") & (is.na(smoking.qty)) & (is.na(smoking.indicator)), NA_real_)) %>%
+    mutate(smoking.delta.minutes = replace(smoking.delta.minutes, (assessment.type == "Post-Quit About to Slip Part Two") & (is.na(smoking.qty)) & (is.na(smoking.indicator)), NA_real_))
   
   return(df.all)
 }
