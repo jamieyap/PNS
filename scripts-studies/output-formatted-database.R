@@ -24,8 +24,8 @@ write.csv(df.baseline, file.path(path.pns.output_data, "baseline.csv"), na="", r
 # Format output of: create-dictionary.R
 # Output was: ema_item_names.RData
 #
-# Change periods in column names to underscrores
-# This is mostly to accomodate a wider range of end-users of the curated data
+# Change periods in column names to underscores
+# This is mostly to accommodate a wider range of end-users of the curated data
 # who may use a varied range of data analysis software, some of which
 # make it easier to work with column names with an underscore (rather than
 # dots) than others
@@ -121,7 +121,8 @@ df.smoking <- df.smoking %>%
          hours_between_past_and_present = hours.between.past.and.present) %>%
   select(-rawdata_indicator, -rawdata_qty, -rawdata_timing,
          -time_hrts_shift_minus_1, -time_unixts_shift_minus_1, -assessment_type_shift_minus_1,
-         -record_id_shift_minus_1, -hours_between_past_and_present)
+         -record_id_shift_minus_1, -hours_between_past_and_present) %>%
+  select(-start_study_unixts, -end_study_unixts, -quit_unixts, -delivered_unixts, -begin_unixts, -end_unixts, -time_unixts)
 
 write.csv(df.smoking, file.path(path.pns.output_data, "smoking.csv"), row.names=FALSE, na="")
 
@@ -181,7 +182,8 @@ for(i in 1:length(list.clean.launched)){
            delivered_unixts = delivered.unixts,
            begin_unixts = begin.unixts,
            end_unixts = end.unixts,
-           time_unixts = time.unixts)
+           time_unixts = time.unixts) %>%
+    select(-start_study_unixts, -end_study_unixts, -quit_unixts, -delivered_unixts, -begin_unixts, -end_unixts, -time_unixts)
   
   list.clean.launched[[i]] <- this.df
 }
@@ -200,10 +202,9 @@ for(i in 1:length(list.clean.launched)){
   this.df <- left_join(x = this.df, y = subset.df.smoking, by = c("id", "callnumr", "record_id", "assessment_type"))
   this.df <- this.df %>% 
     select(id, callnumr, start_study_hrts, quit_hrts, end_study_hrts, 
-           start_study_unixts, quit_unixts, end_study_unixts, record_id,
+           record_id,
            assessment_type, use_as_postquit, sensitivity, 
            delivered_hrts, begin_hrts, end_hrts, time_hrts,
-           delivered_unixts, begin_unixts, end_unixts, time_unixts,
            record_status, with_any_response, 
            ema_order, smoking_qty, smoking_indicator, smoking_delta_minutes,
            everything())
@@ -265,7 +266,8 @@ this.df <- this.df %>%
          delivered_unixts = delivered.unixts,
          begin_unixts = begin.unixts,
          end_unixts = end.unixts,
-         time_unixts = time.unixts)
+         time_unixts = time.unixts) %>%
+  select(-start_study_unixts, -end_study_unixts, -quit_unixts, -delivered_unixts, -begin_unixts, -end_unixts, -time_unixts)
 
 # Partition out records attributed to button press
 df.buttonpress <- this.df %>% filter(assessment_type == "Pre-Quit Smoking Part One" | assessment_type == "Post-Quit About to Slip Part One")
@@ -323,12 +325,10 @@ for(i in 1:length(list.all)){
   current.df <- current.df %>% 
     select(id, callnumr, 
            start_study_hrts, quit_hrts, end_study_hrts, 
-           start_study_unixts, quit_unixts, end_study_unixts,
            sensitivity,
            record_id, assessment_type, 
            use_as_postquit, with_any_response,
            delivered_hrts, begin_hrts, end_hrts, time_hrts,
-           delivered_unixts, begin_unixts, end_unixts, time_unixts,
            ema_order, smoking_qty, smoking_indicator, smoking_delta_minutes,
            all_of(all.names))
   

@@ -1,0 +1,40 @@
+Steps to set up repository when working with RStudio:
+
+1. Install R packages recorded in the lock file ('renv.lock').
+   - See renv package documentation for details:
+     https://rstudio.github.io/renv/articles/renv.html
+
+2. The lock file records the version of R used (specifically, it is R 4.0.3).
+   Check to see whether your version of R matches the version in the lock file
+
+3. Tell R where to pull data from and where to save data to
+   - Run the file scripts-shared/create-user-specific-environ.R;
+     this step will display an .Renviron file when working within RStudio
+     
+   - Within the .Renviron file, add the following lines. 
+     Note that the dots '...' should be replaced with the relevant path;
+     also note the use of forward slashes '/' (and not backslashes '\')
+     when specifying paths
+   
+     path.pns.input_data = ".../Raw Data/PNS"
+     path.pns.staged_data = ".../staged_data"
+     path.pns.output_data = ".../output_data"
+     path.pns.code = ".../PNS/scripts-studies"
+     path.shared.code = ".../PNS/scripts-shared"
+     
+   - A restart of RStudio is required to enable the variables above to be
+     called from within RStudio
+
+4. (Windows OS users) Starting R 4.0.0, R for Windows uses a toolchain bundle 
+   called rtools40. If you have not done so, install rtools40. 
+   You still need to perform one additional step to be able to compile 
+   R packages: you will need to put the location of Rtools make utilities
+   on the PATH variable. One way is to add the following line to the 
+   .Renviron file (a restart of RStudio is required each time new changes
+   to the .Renviron file are made)
+   
+   PATH="${RTOOLS40_HOME}\usr\bin;${PATH}"
+   
+   - For more details, see https://cran.r-project.org/bin/windows/Rtools/
+
+
