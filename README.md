@@ -23,7 +23,7 @@ Open source code and documentation were created to:
 
 | <img height=0 width=350> File <img height=0 width=350> | <img height=0 width=800> Brief Description <img height=0 width=800> |
 |:------------------------------------------:|:--------------------------------------------------------------------------------------------------|
-| [documentation](https://github.com/jamieyap/PNS/blob/master/documentation/pns_documentation_20210122.pdf) | Documentation of the key assumptions and decisions made in data preprocessing and preparation implemented after the conduct of the study.|
+| [documentation](https://github.com/jamieyap/PNS/blob/master/documentation) | Documentation of the key assumptions and decisions made in data preprocessing and preparation implemented after the conduct of the study.|
 
 # Code in this Repository
 
